@@ -1,0 +1,7 @@
+numpy
+torch
+tqdm
+tensorboard
+nnunetv2
+dynamic-network-architectures
+mamba-ssm
