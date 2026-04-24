@@ -19,6 +19,30 @@ LOSS_TYPE=comb2 \
 bash lcrc_run_interactive.sh
 ```
 
+## Mamba 环境诊断
+
+在服务器上先跑下面这个脚本，可以比单纯 `import mamba_ssm` 更可靠地判断安装是否正常：
+
+```bash
+python check_mamba_env.py
+```
+
+这个脚本会依次检查：
+
+1. Python / PyTorch / CUDA 基础环境
+2. `causal_conv1d` 是否可导入
+3. `mamba_ssm` 和 `selective_scan` 是否可导入
+4. `causal_conv1d` 小规模 CUDA 前向和反向
+5. `Mamba` 模块小规模 CUDA 前向和反向
+
+如果它全部通过，说明 Mamba 的核心安装大概率没有问题；但这仍然不能 100% 保证完整训练一定成功，因为训练还依赖：
+
+- `nnunetv2`
+- `dynamic-network-architectures`
+- 数据读取路径和 dtype
+- 更大 batch / mixed precision 下的显存与数值稳定性
+- 当前项目里的具体网络与训练代码路径
+
 ## 链路说明
 
 1. `lcrc_run_interactive.sh` 设置 GPU、数据路径、超参数和输出目录。
