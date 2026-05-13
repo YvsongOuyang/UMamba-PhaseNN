@@ -1,0 +1,385 @@
+{
+  "checkpoint": "/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt",
+  "data_val_diff": "/data_ssd/oyys/autophasenn/val_diff.npy",
+  "data_val_real": "/data_ssd/oyys/autophasenn/val_real.npy",
+  "num_batches": 100,
+  "batch_size": 4,
+  "losses": {
+    "loss_l1": 3.7677977418899538,
+    "loss_mae": 1.283287227153778,
+    "loss_sq": 0.034213011590763925,
+    "loss_mse": 0.034213011590763925,
+    "loss_paper": 2.7776387119293213,
+    "loss_huber": 3.31105975151062,
+    "loss_pcc": 0.015739183723926544,
+    "loss_comb": 0.02497609917074442,
+    "loss_comb2": 0.09952124007046223
+  },
+  "heatmaps": {
+    "encoder.stem.0.act1": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stem_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stem_0_act1.npy"
+    },
+    "encoder.stem.0.act2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stem_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stem_0_act2.npy"
+    },
+    "encoder.stem.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stem_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stem_1_conv1_nonlin.npy"
+    },
+    "encoder.stem.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stem_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stem_1_nonlin2.npy"
+    },
+    "encoder.stages.0.0.act1": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_0_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_0_0_act1.npy"
+    },
+    "encoder.stages.0.0.act2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_0_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_0_0_act2.npy"
+    },
+    "encoder.stages.0.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_0_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_0_1_conv1_nonlin.npy"
+    },
+    "encoder.stages.0.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_0_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_0_1_nonlin2.npy"
+    },
+    "encoder.stages.1.0.act1": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_1_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_1_0_act1.npy"
+    },
+    "encoder.stages.1.0.act2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_1_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_1_0_act2.npy"
+    },
+    "encoder.stages.1.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_1_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_1_1_conv1_nonlin.npy"
+    },
+    "encoder.stages.1.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_1_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_1_1_nonlin2.npy"
+    },
+    "encoder.stages.2.0.act1": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_2_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_2_0_act1.npy"
+    },
+    "encoder.stages.2.0.act2": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_2_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_2_0_act2.npy"
+    },
+    "encoder.stages.3.0.act1": {
+      "count": 100,
+      "shape": [
+        8,
+        8,
+        8
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_3_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_3_0_act1.npy"
+    },
+    "encoder.stages.3.0.act2": {
+      "count": 100,
+      "shape": [
+        8,
+        8,
+        8
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/encoder_stages_3_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/encoder_stages_3_0_act2.npy"
+    },
+    "decoder1.stages.0.0.act1": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_0_act1.npy"
+    },
+    "decoder1.stages.0.0.act2": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_0_act2.npy"
+    },
+    "decoder1.stages.0.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_1_conv1_nonlin.npy"
+    },
+    "decoder1.stages.0.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_0_1_nonlin2.npy"
+    },
+    "decoder1.stages.1.0.act1": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_0_act1.npy"
+    },
+    "decoder1.stages.1.0.act2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_0_act2.npy"
+    },
+    "decoder1.stages.1.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_1_conv1_nonlin.npy"
+    },
+    "decoder1.stages.1.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_1_1_nonlin2.npy"
+    },
+    "decoder1.stages.2.0.act1": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_2_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_2_0_act1.npy"
+    },
+    "decoder1.stages.2.0.act2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder1_stages_2_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder1_stages_2_0_act2.npy"
+    },
+    "decoder2.stages.0.0.act1": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_0_act1.npy"
+    },
+    "decoder2.stages.0.0.act2": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_0_act2.npy"
+    },
+    "decoder2.stages.0.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_1_conv1_nonlin.npy"
+    },
+    "decoder2.stages.0.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        16,
+        16,
+        16
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_0_1_nonlin2.npy"
+    },
+    "decoder2.stages.1.0.act1": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_0_act1.npy"
+    },
+    "decoder2.stages.1.0.act2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_0_act2.npy"
+    },
+    "decoder2.stages.1.1.conv1.nonlin": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_1_conv1_nonlin.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_1_conv1_nonlin.npy"
+    },
+    "decoder2.stages.1.1.nonlin2": {
+      "count": 100,
+      "shape": [
+        32,
+        32,
+        32
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_1_nonlin2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_1_1_nonlin2.npy"
+    },
+    "decoder2.stages.2.0.act1": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_2_0_act1.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_2_0_act1.npy"
+    },
+    "decoder2.stages.2.0.act2": {
+      "count": 100,
+      "shape": [
+        64,
+        64,
+        64
+      ],
+      "png": "autophasenn_heatmap_results/aggregate/decoder2_stages_2_0_act2.png",
+      "npy": "autophasenn_heatmap_results/aggregate/decoder2_stages_2_0_act2.npy"
+    }
+  },
+  "reconstruction_slice_plots": [
+    "autophasenn_heatmap_results/reconstruction_slices/ft_comparison.png",
+    "autophasenn_heatmap_results/reconstruction_slices/amp_comparison.png",
+    "autophasenn_heatmap_results/reconstruction_slices/phase_comparison.png"
+  ]
+}

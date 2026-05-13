@@ -1,0 +1,1732 @@
+nohup: 忽略输入
+Which python?
+/home/oyys/anaconda3/envs/mamba/bin/python
+Current Directory: 
+/home/oyys/code/U-Mamba/AutoPhaseNN
+Dataset path /data_ssd/oyys/autophasenn
+supervised_on_defect_free_data
+Saving path /data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1
+Starting script 
+ pytorch version: 2.2.2
+device: cuda
+OutputFolder: /data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1
+model_name: umamba
+checkpoint: /data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt
+DataFolder: /data_ssd/oyys/autophasenn
+data_train_diff: train_diff.npy
+data_train_real: train_real.npy
+data_val_diff: val_diff.npy
+num_samples_train: 25000
+num_samples_val: 5000
+data_val_real: val_real.npy
+batch_size: 8
+epoch: 100
+train_size: 25000
+train_perc: 0.9
+loss_type: comb2
+Initlr: 0.001
+lr_type: plateau
+clr_step_epochs: 6.0
+optim_type: adam
+num_workers: 8
+save_model: 10
+num_threads: 0
+fp16: False
+seed: 42
+notes: supervised_on_defect_free_data
+shape: 64
+T: 0.1
+nconv: 32
+use_down_stride: True
+use_up_stride: True
+n_blocks: 4
+unsupervise: True
+scale_I: 1
+use device: cuda
+Torch Thread setup: 
+ Number of threads:  1
+{'num_workers': 8, 'pin_memory': True, 'prefetch_factor': 2, 'persistent_workers': True}
+feature_map_sizes: [[64, 64, 64], [32, 32, 32], [16, 16, 16], [8, 8, 8]]
+do_channel_token: [False, False, False, False]
+MambaLayer: dim: 32
+MambaLayer: dim: 64
+MambaLayer: dim: 128
+MambaLayer: dim: 256
+deep_supervision: False
+✅ 成功加载检查点文件：/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt
+✅ 模型权重加载完成！缺失层: 0, 多余层: 0
+🔍 训练模式：断点续训
+model parameters: 10419270
+✅ 优化器状态已恢复
+✅ 学习率调度器状态已恢复
+✅ 将从 epoch 38 继续训练 | global_step=115625
+Epoch[38] Batch[1/3125] | Loss: 3.5895e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:51:53
+Epoch[38] Batch[101/3125] | Loss: 3.7322e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:11
+Epoch[38] Batch[201/3125] | Loss: 3.5277e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:14
+Epoch[38] Batch[301/3125] | Loss: 3.5705e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:13
+Epoch[38] Batch[401/3125] | Loss: 3.5463e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:14
+Epoch[38] Batch[501/3125] | Loss: 3.8992e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:17
+Epoch[38] Batch[601/3125] | Loss: 3.5400e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:19
+Epoch[38] Batch[701/3125] | Loss: 3.7981e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[38] Batch[801/3125] | Loss: 3.7729e+00 | Grad: True  | Update: True  | Elapsed: 0:07:43 | ETA: 0:22:23
+Epoch[38] Batch[901/3125] | Loss: 3.6662e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[38] Batch[1001/3125] | Loss: 3.8852e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[38] Batch[1101/3125] | Loss: 3.8098e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[38] Batch[1201/3125] | Loss: 3.6001e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[38] Batch[1301/3125] | Loss: 3.6659e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[38] Batch[1401/3125] | Loss: 3.6606e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:35
+Epoch[38] Batch[1501/3125] | Loss: 4.0771e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[38] Batch[1601/3125] | Loss: 3.5422e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:40
+Epoch[38] Batch[1701/3125] | Loss: 3.8029e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[38] Batch[1801/3125] | Loss: 3.8148e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[38] Batch[1901/3125] | Loss: 3.7374e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[38] Batch[2001/3125] | Loss: 3.7540e+00 | Grad: True  | Update: True  | Elapsed: 0:19:15 | ETA: 0:10:49
+Epoch[38] Batch[2101/3125] | Loss: 3.5806e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[38] Batch[2201/3125] | Loss: 3.7114e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[38] Batch[2301/3125] | Loss: 3.7970e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:55
+Epoch[38] Batch[2401/3125] | Loss: 3.9170e+00 | Grad: True  | Update: True  | Elapsed: 0:23:06 | ETA: 0:06:58
+Epoch[38] Batch[2501/3125] | Loss: 3.6806e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[38] Batch[2601/3125] | Loss: 3.5320e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[38] Batch[2701/3125] | Loss: 3.8838e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[38] Batch[2801/3125] | Loss: 3.6910e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[38] Batch[2901/3125] | Loss: 3.7761e+00 | Grad: True  | Update: True  | Elapsed: 0:27:55 | ETA: 0:02:09
+Epoch[38] Batch[3001/3125] | Loss: 3.9812e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[38] Batch[3101/3125] | Loss: 3.8500e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 38 完成 | 总耗时: 1805.20s | 平均 Loss: 3.7411e+00
+================================================================================
+
+Validation Epoch [38] | Batch [100/625] | L1: 3.9000e+00 | MAE: 2.5546e+00 | MSE: 3.0961e-02 | PCC: 1.4957e-02
+Validation Epoch [38] | Batch [200/625] | L1: 3.8228e+00 | MAE: 2.5857e+00 | MSE: 3.8426e-02 | PCC: 1.8716e-02
+Validation Epoch [38] | Batch [300/625] | L1: 3.8865e+00 | MAE: 2.5686e+00 | MSE: 3.1651e-02 | PCC: 1.5078e-02
+Validation Epoch [38] | Batch [400/625] | L1: 3.8197e+00 | MAE: 2.6245e+00 | MSE: 3.8058e-02 | PCC: 1.8155e-02
+Validation Epoch [38] | Batch [500/625] | L1: 3.9518e+00 | MAE: 2.8755e+00 | MSE: 5.4857e-02 | PCC: 2.6698e-02
+Validation Epoch [38] | Batch [600/625] | L1: 3.9928e+00 | MAE: 2.7159e+00 | MSE: 4.0032e-02 | PCC: 1.8887e-02
+Validation Epoch [38] | Batch [625/625] | L1: 3.5621e+00 | MAE: 2.6912e+00 | MSE: 3.8077e-02 | PCC: 1.8683e-02
+
+================================================================================
+✅ Epoch 38 验证完成
+📉 平均损失:
+   MAE:   2.6398e+00 | MSE:   3.8094e-02
+   Huber: 3.4234e+00 | PCC:   1.8268e-02
+   Comb:  2.8181e-02 | Comb2: 1.0621e-01
+================================================================================
+
+Epoch[39] Batch[1/3125] | Loss: 3.5841e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:40:17
+Epoch[39] Batch[101/3125] | Loss: 3.7326e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:14
+Epoch[39] Batch[201/3125] | Loss: 3.5300e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:14
+Epoch[39] Batch[301/3125] | Loss: 3.6384e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:13
+Epoch[39] Batch[401/3125] | Loss: 3.5219e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:14
+Epoch[39] Batch[501/3125] | Loss: 3.8742e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:17
+Epoch[39] Batch[601/3125] | Loss: 3.5691e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:19
+Epoch[39] Batch[701/3125] | Loss: 3.7737e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[39] Batch[801/3125] | Loss: 3.7358e+00 | Grad: True  | Update: True  | Elapsed: 0:07:43 | ETA: 0:22:23
+Epoch[39] Batch[901/3125] | Loss: 3.6586e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[39] Batch[1001/3125] | Loss: 3.8661e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[39] Batch[1101/3125] | Loss: 3.8379e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[39] Batch[1201/3125] | Loss: 3.6178e+00 | Grad: True  | Update: True  | Elapsed: 0:11:34 | ETA: 0:18:31
+Epoch[39] Batch[1301/3125] | Loss: 3.6772e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[39] Batch[1401/3125] | Loss: 3.6934e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:36
+Epoch[39] Batch[1501/3125] | Loss: 4.0791e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[39] Batch[1601/3125] | Loss: 3.5683e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:40
+Epoch[39] Batch[1701/3125] | Loss: 3.8089e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[39] Batch[1801/3125] | Loss: 3.8169e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:45
+Epoch[39] Batch[1901/3125] | Loss: 3.7674e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[39] Batch[2001/3125] | Loss: 3.7646e+00 | Grad: True  | Update: True  | Elapsed: 0:19:15 | ETA: 0:10:49
+Epoch[39] Batch[2101/3125] | Loss: 3.5797e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[39] Batch[2201/3125] | Loss: 3.7515e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[39] Batch[2301/3125] | Loss: 3.8237e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:56
+Epoch[39] Batch[2401/3125] | Loss: 3.8576e+00 | Grad: True  | Update: True  | Elapsed: 0:23:07 | ETA: 0:06:58
+Epoch[39] Batch[2501/3125] | Loss: 3.6567e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[39] Batch[2601/3125] | Loss: 3.5556e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[39] Batch[2701/3125] | Loss: 3.9064e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[39] Batch[2801/3125] | Loss: 3.7566e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[39] Batch[2901/3125] | Loss: 3.7749e+00 | Grad: True  | Update: True  | Elapsed: 0:27:55 | ETA: 0:02:09
+Epoch[39] Batch[3001/3125] | Loss: 3.9759e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[39] Batch[3101/3125] | Loss: 3.8228e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 39 完成 | 总耗时: 1805.47s | 平均 Loss: 3.7387e+00
+================================================================================
+
+Validation Epoch [39] | Batch [100/625] | L1: 3.9192e+00 | MAE: 2.5665e+00 | MSE: 3.6223e-02 | PCC: 1.6423e-02
+Validation Epoch [39] | Batch [200/625] | L1: 3.8394e+00 | MAE: 2.5962e+00 | MSE: 4.3215e-02 | PCC: 1.9918e-02
+Validation Epoch [39] | Batch [300/625] | L1: 3.9410e+00 | MAE: 2.6042e+00 | MSE: 3.6882e-02 | PCC: 1.6763e-02
+Validation Epoch [39] | Batch [400/625] | L1: 3.8513e+00 | MAE: 2.6464e+00 | MSE: 4.4722e-02 | PCC: 2.0095e-02
+Validation Epoch [39] | Batch [500/625] | L1: 3.9602e+00 | MAE: 2.8808e+00 | MSE: 6.2184e-02 | PCC: 2.8223e-02
+Validation Epoch [39] | Batch [600/625] | L1: 4.0391e+00 | MAE: 2.7447e+00 | MSE: 4.7420e-02 | PCC: 2.0858e-02
+Validation Epoch [39] | Batch [625/625] | L1: 3.5726e+00 | MAE: 2.6989e+00 | MSE: 4.4076e-02 | PCC: 2.0564e-02
+
+================================================================================
+✅ Epoch 39 验证完成
+📉 平均损失:
+   MAE:   2.6581e+00 | MSE:   4.3880e-02
+   Huber: 3.4516e+00 | PCC:   1.9874e-02
+   Comb:  3.1877e-02 | Comb2: 1.1417e-01
+================================================================================
+
+Epoch[40] Batch[1/3125] | Loss: 3.6013e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:33:48
+Epoch[40] Batch[101/3125] | Loss: 3.6889e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:17
+Epoch[40] Batch[201/3125] | Loss: 3.4925e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:12
+Epoch[40] Batch[301/3125] | Loss: 3.6378e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:12
+Epoch[40] Batch[401/3125] | Loss: 3.4935e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:15
+Epoch[40] Batch[501/3125] | Loss: 3.8866e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:16
+Epoch[40] Batch[601/3125] | Loss: 3.5873e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[40] Batch[701/3125] | Loss: 3.7374e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[40] Batch[801/3125] | Loss: 3.7406e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:23
+Epoch[40] Batch[901/3125] | Loss: 3.6399e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[40] Batch[1001/3125] | Loss: 3.8428e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[40] Batch[1101/3125] | Loss: 3.8338e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[40] Batch[1201/3125] | Loss: 3.5649e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[40] Batch[1301/3125] | Loss: 3.6997e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[40] Batch[1401/3125] | Loss: 3.7232e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:36
+Epoch[40] Batch[1501/3125] | Loss: 4.0808e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[40] Batch[1601/3125] | Loss: 3.5500e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:40
+Epoch[40] Batch[1701/3125] | Loss: 3.7794e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[40] Batch[1801/3125] | Loss: 3.7853e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[40] Batch[1901/3125] | Loss: 3.7363e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[40] Batch[2001/3125] | Loss: 3.7315e+00 | Grad: True  | Update: True  | Elapsed: 0:19:16 | ETA: 0:10:49
+Epoch[40] Batch[2101/3125] | Loss: 3.6089e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[40] Batch[2201/3125] | Loss: 3.7714e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[40] Batch[2301/3125] | Loss: 3.8488e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:56
+Epoch[40] Batch[2401/3125] | Loss: 3.8116e+00 | Grad: True  | Update: True  | Elapsed: 0:23:07 | ETA: 0:06:58
+Epoch[40] Batch[2501/3125] | Loss: 3.6407e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[40] Batch[2601/3125] | Loss: 3.5171e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[40] Batch[2701/3125] | Loss: 3.9181e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[40] Batch[2801/3125] | Loss: 3.6727e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[40] Batch[2901/3125] | Loss: 3.7474e+00 | Grad: True  | Update: True  | Elapsed: 0:27:55 | ETA: 0:02:09
+Epoch[40] Batch[3001/3125] | Loss: 3.9606e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[40] Batch[3101/3125] | Loss: 3.8013e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 40 完成 | 总耗时: 1805.44s | 平均 Loss: 3.7303e+00
+================================================================================
+
+Validation Epoch [40] | Batch [100/625] | L1: 3.9104e+00 | MAE: 2.5600e+00 | MSE: 3.4420e-02 | PCC: 1.4705e-02
+Validation Epoch [40] | Batch [200/625] | L1: 3.8479e+00 | MAE: 2.6011e+00 | MSE: 4.1204e-02 | PCC: 1.8459e-02
+Validation Epoch [40] | Batch [300/625] | L1: 3.9321e+00 | MAE: 2.5985e+00 | MSE: 3.5686e-02 | PCC: 1.5564e-02
+Validation Epoch [40] | Batch [400/625] | L1: 3.8531e+00 | MAE: 2.6483e+00 | MSE: 4.2987e-02 | PCC: 1.8416e-02
+Validation Epoch [40] | Batch [500/625] | L1: 3.9557e+00 | MAE: 2.8770e+00 | MSE: 6.0028e-02 | PCC: 2.5987e-02
+Validation Epoch [40] | Batch [600/625] | L1: 4.0116e+00 | MAE: 2.7255e+00 | MSE: 4.4637e-02 | PCC: 1.9028e-02
+Validation Epoch [40] | Batch [625/625] | L1: 3.5606e+00 | MAE: 2.6903e+00 | MSE: 4.1478e-02 | PCC: 1.8422e-02
+
+================================================================================
+✅ Epoch 40 验证完成
+📉 平均损失:
+   MAE:   2.6559e+00 | MSE:   4.2270e-02
+   Huber: 3.4493e+00 | PCC:   1.8317e-02
+   Comb:  3.0293e-02 | Comb2: 1.1143e-01
+================================================================================
+
+checkpoint saved!
+Epoch[41] Batch[1/3125] | Loss: 3.5560e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:31
+Epoch[41] Batch[101/3125] | Loss: 3.6759e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:14
+Epoch[41] Batch[201/3125] | Loss: 3.4812e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:11
+Epoch[41] Batch[301/3125] | Loss: 3.5710e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:11
+Epoch[41] Batch[401/3125] | Loss: 3.5120e+00 | Grad: True  | Update: True  | Elapsed: 0:03:52 | ETA: 0:26:16
+Epoch[41] Batch[501/3125] | Loss: 3.8713e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:17
+Epoch[41] Batch[601/3125] | Loss: 3.5286e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[41] Batch[701/3125] | Loss: 3.7359e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:22
+Epoch[41] Batch[801/3125] | Loss: 3.7124e+00 | Grad: True  | Update: True  | Elapsed: 0:07:43 | ETA: 0:22:23
+Epoch[41] Batch[901/3125] | Loss: 3.6622e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[41] Batch[1001/3125] | Loss: 3.8229e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:28
+Epoch[41] Batch[1101/3125] | Loss: 3.7882e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:30
+Epoch[41] Batch[1201/3125] | Loss: 3.5520e+00 | Grad: True  | Update: True  | Elapsed: 0:11:34 | ETA: 0:18:32
+Epoch[41] Batch[1301/3125] | Loss: 3.6784e+00 | Grad: True  | Update: True  | Elapsed: 0:12:32 | ETA: 0:17:34
+Epoch[41] Batch[1401/3125] | Loss: 3.6595e+00 | Grad: True  | Update: True  | Elapsed: 0:13:30 | ETA: 0:16:36
+Epoch[41] Batch[1501/3125] | Loss: 4.0877e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[41] Batch[1601/3125] | Loss: 3.5565e+00 | Grad: True  | Update: True  | Elapsed: 0:15:25 | ETA: 0:14:41
+Epoch[41] Batch[1701/3125] | Loss: 3.7960e+00 | Grad: True  | Update: True  | Elapsed: 0:16:23 | ETA: 0:13:43
+Epoch[41] Batch[1801/3125] | Loss: 3.7832e+00 | Grad: True  | Update: True  | Elapsed: 0:17:21 | ETA: 0:12:45
+Epoch[41] Batch[1901/3125] | Loss: 3.7990e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[41] Batch[2001/3125] | Loss: 3.7460e+00 | Grad: True  | Update: True  | Elapsed: 0:19:16 | ETA: 0:10:49
+Epoch[41] Batch[2101/3125] | Loss: 3.5895e+00 | Grad: True  | Update: True  | Elapsed: 0:20:14 | ETA: 0:09:51
+Epoch[41] Batch[2201/3125] | Loss: 3.7020e+00 | Grad: True  | Update: True  | Elapsed: 0:21:12 | ETA: 0:08:54
+Epoch[41] Batch[2301/3125] | Loss: 3.7919e+00 | Grad: True  | Update: True  | Elapsed: 0:22:10 | ETA: 0:07:56
+Epoch[41] Batch[2401/3125] | Loss: 3.8193e+00 | Grad: True  | Update: True  | Elapsed: 0:23:07 | ETA: 0:06:58
+Epoch[41] Batch[2501/3125] | Loss: 3.6385e+00 | Grad: True  | Update: True  | Elapsed: 0:24:05 | ETA: 0:06:00
+Epoch[41] Batch[2601/3125] | Loss: 3.5210e+00 | Grad: True  | Update: True  | Elapsed: 0:25:03 | ETA: 0:05:02
+Epoch[41] Batch[2701/3125] | Loss: 3.8595e+00 | Grad: True  | Update: True  | Elapsed: 0:26:01 | ETA: 0:04:05
+Epoch[41] Batch[2801/3125] | Loss: 3.6590e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[41] Batch[2901/3125] | Loss: 3.7637e+00 | Grad: True  | Update: True  | Elapsed: 0:27:56 | ETA: 0:02:09
+Epoch[41] Batch[3001/3125] | Loss: 3.9843e+00 | Grad: True  | Update: True  | Elapsed: 0:28:54 | ETA: 0:01:11
+Epoch[41] Batch[3101/3125] | Loss: 3.8132e+00 | Grad: True  | Update: True  | Elapsed: 0:29:52 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 41 完成 | 总耗时: 1806.11s | 平均 Loss: 3.7245e+00
+================================================================================
+
+Validation Epoch [41] | Batch [100/625] | L1: 3.8773e+00 | MAE: 2.5386e+00 | MSE: 3.2581e-02 | PCC: 1.4854e-02
+Validation Epoch [41] | Batch [200/625] | L1: 3.8180e+00 | MAE: 2.5827e+00 | MSE: 4.0514e-02 | PCC: 1.8566e-02
+Validation Epoch [41] | Batch [300/625] | L1: 3.8821e+00 | MAE: 2.5659e+00 | MSE: 3.2677e-02 | PCC: 1.5067e-02
+Validation Epoch [41] | Batch [400/625] | L1: 3.8116e+00 | MAE: 2.6179e+00 | MSE: 4.0068e-02 | PCC: 1.8136e-02
+Validation Epoch [41] | Batch [500/625] | L1: 3.9255e+00 | MAE: 2.8552e+00 | MSE: 5.7773e-02 | PCC: 2.5987e-02
+Validation Epoch [41] | Batch [600/625] | L1: 3.9998e+00 | MAE: 2.7161e+00 | MSE: 4.3163e-02 | PCC: 1.9316e-02
+Validation Epoch [41] | Batch [625/625] | L1: 3.5493e+00 | MAE: 2.6805e+00 | MSE: 4.1291e-02 | PCC: 1.8671e-02
+
+================================================================================
+✅ Epoch 41 验证完成
+📉 平均损失:
+   MAE:   2.6344e+00 | MSE:   4.0341e-02
+   Huber: 3.4174e+00 | PCC:   1.8309e-02
+   Comb:  2.9325e-02 | Comb2: 1.0906e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.880597
+✅ 已保存新最优模型 | 当前最优损失: 3.874634 | Epoch: 41
+Epoch[42] Batch[1/3125] | Loss: 3.5418e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:26
+Epoch[42] Batch[101/3125] | Loss: 3.7225e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:06
+Epoch[42] Batch[201/3125] | Loss: 3.5226e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:07
+Epoch[42] Batch[301/3125] | Loss: 3.6302e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:11
+Epoch[42] Batch[401/3125] | Loss: 3.5203e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:13
+Epoch[42] Batch[501/3125] | Loss: 3.8777e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:15
+Epoch[42] Batch[601/3125] | Loss: 3.5399e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:17
+Epoch[42] Batch[701/3125] | Loss: 3.7299e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[42] Batch[801/3125] | Loss: 3.7388e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[42] Batch[901/3125] | Loss: 3.6338e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:24
+Epoch[42] Batch[1001/3125] | Loss: 3.8445e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[42] Batch[1101/3125] | Loss: 3.7947e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[42] Batch[1201/3125] | Loss: 3.5594e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[42] Batch[1301/3125] | Loss: 3.6639e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[42] Batch[1401/3125] | Loss: 3.6590e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:36
+Epoch[42] Batch[1501/3125] | Loss: 4.0549e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[42] Batch[1601/3125] | Loss: 3.6225e+00 | Grad: True  | Update: True  | Elapsed: 0:15:25 | ETA: 0:14:40
+Epoch[42] Batch[1701/3125] | Loss: 3.7720e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[42] Batch[1801/3125] | Loss: 3.7948e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[42] Batch[1901/3125] | Loss: 3.7784e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[42] Batch[2001/3125] | Loss: 3.7385e+00 | Grad: True  | Update: True  | Elapsed: 0:19:16 | ETA: 0:10:49
+Epoch[42] Batch[2101/3125] | Loss: 3.5701e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[42] Batch[2201/3125] | Loss: 3.6980e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[42] Batch[2301/3125] | Loss: 3.8143e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:56
+Epoch[42] Batch[2401/3125] | Loss: 3.8289e+00 | Grad: True  | Update: True  | Elapsed: 0:23:07 | ETA: 0:06:58
+Epoch[42] Batch[2501/3125] | Loss: 3.6264e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[42] Batch[2601/3125] | Loss: 3.5062e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[42] Batch[2701/3125] | Loss: 3.8823e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[42] Batch[2801/3125] | Loss: 3.7021e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[42] Batch[2901/3125] | Loss: 3.7225e+00 | Grad: True  | Update: True  | Elapsed: 0:27:56 | ETA: 0:02:09
+Epoch[42] Batch[3001/3125] | Loss: 4.0147e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[42] Batch[3101/3125] | Loss: 3.7899e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 42 完成 | 总耗时: 1805.23s | 平均 Loss: 3.7218e+00
+================================================================================
+
+Validation Epoch [42] | Batch [100/625] | L1: 3.9118e+00 | MAE: 2.5612e+00 | MSE: 3.6543e-02 | PCC: 1.4397e-02
+Validation Epoch [42] | Batch [200/625] | L1: 3.8420e+00 | MAE: 2.5981e+00 | MSE: 4.3896e-02 | PCC: 1.8157e-02
+Validation Epoch [42] | Batch [300/625] | L1: 3.9336e+00 | MAE: 2.6000e+00 | MSE: 3.7313e-02 | PCC: 1.5089e-02
+Validation Epoch [42] | Batch [400/625] | L1: 3.8374e+00 | MAE: 2.6373e+00 | MSE: 4.5148e-02 | PCC: 1.8021e-02
+Validation Epoch [42] | Batch [500/625] | L1: 3.9558e+00 | MAE: 2.8776e+00 | MSE: 6.1994e-02 | PCC: 2.5541e-02
+Validation Epoch [42] | Batch [600/625] | L1: 4.0147e+00 | MAE: 2.7295e+00 | MSE: 4.5957e-02 | PCC: 1.8652e-02
+Validation Epoch [42] | Batch [625/625] | L1: 3.5690e+00 | MAE: 2.6974e+00 | MSE: 4.4050e-02 | PCC: 1.8154e-02
+
+================================================================================
+✅ Epoch 42 验证完成
+📉 平均损失:
+   MAE:   2.6584e+00 | MSE:   4.4500e-02
+   Huber: 3.4512e+00 | PCC:   1.8107e-02
+   Comb:  3.1304e-02 | Comb2: 1.1399e-01
+================================================================================
+
+Epoch[43] Batch[1/3125] | Loss: 3.5584e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:35:10
+Epoch[43] Batch[101/3125] | Loss: 3.6972e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:06
+Epoch[43] Batch[201/3125] | Loss: 3.4979e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:07
+Epoch[43] Batch[301/3125] | Loss: 3.5485e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:12
+Epoch[43] Batch[401/3125] | Loss: 3.5001e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:13
+Epoch[43] Batch[501/3125] | Loss: 3.8718e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:15
+Epoch[43] Batch[601/3125] | Loss: 3.5439e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[43] Batch[701/3125] | Loss: 3.7590e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[43] Batch[801/3125] | Loss: 3.6976e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[43] Batch[901/3125] | Loss: 3.6561e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[43] Batch[1001/3125] | Loss: 3.8753e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[43] Batch[1101/3125] | Loss: 3.8053e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[43] Batch[1201/3125] | Loss: 3.5426e+00 | Grad: True  | Update: True  | Elapsed: 0:11:34 | ETA: 0:18:31
+Epoch[43] Batch[1301/3125] | Loss: 3.6938e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:34
+Epoch[43] Batch[1401/3125] | Loss: 3.6445e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:36
+Epoch[43] Batch[1501/3125] | Loss: 4.0865e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:15:38
+Epoch[43] Batch[1601/3125] | Loss: 3.5341e+00 | Grad: True  | Update: True  | Elapsed: 0:15:25 | ETA: 0:14:40
+Epoch[43] Batch[1701/3125] | Loss: 3.7672e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[43] Batch[1801/3125] | Loss: 3.8594e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[43] Batch[1901/3125] | Loss: 3.7289e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[43] Batch[2001/3125] | Loss: 3.7008e+00 | Grad: True  | Update: True  | Elapsed: 0:19:16 | ETA: 0:10:49
+Epoch[43] Batch[2101/3125] | Loss: 3.5648e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[43] Batch[2201/3125] | Loss: 3.6761e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[43] Batch[2301/3125] | Loss: 3.7884e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:56
+Epoch[43] Batch[2401/3125] | Loss: 3.7988e+00 | Grad: True  | Update: True  | Elapsed: 0:23:07 | ETA: 0:06:58
+Epoch[43] Batch[2501/3125] | Loss: 3.6169e+00 | Grad: True  | Update: True  | Elapsed: 0:24:05 | ETA: 0:06:00
+Epoch[43] Batch[2601/3125] | Loss: 3.5295e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[43] Batch[2701/3125] | Loss: 3.9057e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[43] Batch[2801/3125] | Loss: 3.7035e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[43] Batch[2901/3125] | Loss: 3.7168e+00 | Grad: True  | Update: True  | Elapsed: 0:27:56 | ETA: 0:02:09
+Epoch[43] Batch[3001/3125] | Loss: 3.9857e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[43] Batch[3101/3125] | Loss: 3.8126e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 43 完成 | 总耗时: 1805.58s | 平均 Loss: 3.7165e+00
+================================================================================
+
+Validation Epoch [43] | Batch [100/625] | L1: 3.9129e+00 | MAE: 2.5620e+00 | MSE: 3.2539e-02 | PCC: 1.4159e-02
+Validation Epoch [43] | Batch [200/625] | L1: 3.8411e+00 | MAE: 2.5983e+00 | MSE: 4.0113e-02 | PCC: 1.7863e-02
+Validation Epoch [43] | Batch [300/625] | L1: 3.9399e+00 | MAE: 2.6037e+00 | MSE: 3.3964e-02 | PCC: 1.5074e-02
+Validation Epoch [43] | Batch [400/625] | L1: 3.8363e+00 | MAE: 2.6371e+00 | MSE: 4.0209e-02 | PCC: 1.7629e-02
+Validation Epoch [43] | Batch [500/625] | L1: 3.9566e+00 | MAE: 2.8792e+00 | MSE: 5.7329e-02 | PCC: 2.5101e-02
+Validation Epoch [43] | Batch [600/625] | L1: 4.0292e+00 | MAE: 2.7407e+00 | MSE: 4.3154e-02 | PCC: 1.8426e-02
+Validation Epoch [43] | Batch [625/625] | L1: 3.5682e+00 | MAE: 2.6975e+00 | MSE: 3.9546e-02 | PCC: 1.7797e-02
+
+================================================================================
+✅ Epoch 43 验证完成
+📉 平均损失:
+   MAE:   2.6567e+00 | MSE:   4.0088e-02
+   Huber: 3.4495e+00 | PCC:   1.7658e-02
+   Comb:  2.8873e-02 | Comb2: 1.0840e-01
+================================================================================
+
+Epoch[44] Batch[1/3125] | Loss: 3.5850e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:26
+Epoch[44] Batch[101/3125] | Loss: 3.6716e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:05
+Epoch[44] Batch[201/3125] | Loss: 3.4810e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:11
+Epoch[44] Batch[301/3125] | Loss: 3.5545e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:12
+Epoch[44] Batch[401/3125] | Loss: 3.5173e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:13
+Epoch[44] Batch[501/3125] | Loss: 3.8352e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:16
+Epoch[44] Batch[601/3125] | Loss: 3.5461e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[44] Batch[701/3125] | Loss: 3.7307e+00 | Grad: True  | Update: True  | Elapsed: 0:06:44 | ETA: 0:23:20
+Epoch[44] Batch[801/3125] | Loss: 3.7169e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[44] Batch[901/3125] | Loss: 3.6188e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[44] Batch[1001/3125] | Loss: 3.8066e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:26
+Epoch[44] Batch[1101/3125] | Loss: 3.7849e+00 | Grad: True  | Update: True  | Elapsed: 0:10:35 | ETA: 0:19:28
+Epoch[44] Batch[1201/3125] | Loss: 3.5475e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[44] Batch[1301/3125] | Loss: 3.6762e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[44] Batch[1401/3125] | Loss: 3.6374e+00 | Grad: True  | Update: True  | Elapsed: 0:13:28 | ETA: 0:16:35
+Epoch[44] Batch[1501/3125] | Loss: 4.1012e+00 | Grad: True  | Update: True  | Elapsed: 0:14:26 | ETA: 0:15:37
+Epoch[44] Batch[1601/3125] | Loss: 3.6230e+00 | Grad: True  | Update: True  | Elapsed: 0:15:23 | ETA: 0:14:39
+Epoch[44] Batch[1701/3125] | Loss: 3.7903e+00 | Grad: True  | Update: True  | Elapsed: 0:16:21 | ETA: 0:13:41
+Epoch[44] Batch[1801/3125] | Loss: 3.7493e+00 | Grad: True  | Update: True  | Elapsed: 0:17:19 | ETA: 0:12:43
+Epoch[44] Batch[1901/3125] | Loss: 3.7255e+00 | Grad: True  | Update: True  | Elapsed: 0:18:16 | ETA: 0:11:46
+Epoch[44] Batch[2001/3125] | Loss: 3.6921e+00 | Grad: True  | Update: True  | Elapsed: 0:19:14 | ETA: 0:10:48
+Epoch[44] Batch[2101/3125] | Loss: 3.5462e+00 | Grad: True  | Update: True  | Elapsed: 0:20:11 | ETA: 0:09:50
+Epoch[44] Batch[2201/3125] | Loss: 3.7419e+00 | Grad: True  | Update: True  | Elapsed: 0:21:09 | ETA: 0:08:52
+Epoch[44] Batch[2301/3125] | Loss: 3.7894e+00 | Grad: True  | Update: True  | Elapsed: 0:22:07 | ETA: 0:07:55
+Epoch[44] Batch[2401/3125] | Loss: 3.7960e+00 | Grad: True  | Update: True  | Elapsed: 0:23:04 | ETA: 0:06:57
+Epoch[44] Batch[2501/3125] | Loss: 3.6319e+00 | Grad: True  | Update: True  | Elapsed: 0:24:02 | ETA: 0:05:59
+Epoch[44] Batch[2601/3125] | Loss: 3.5027e+00 | Grad: True  | Update: True  | Elapsed: 0:24:59 | ETA: 0:05:02
+Epoch[44] Batch[2701/3125] | Loss: 3.8550e+00 | Grad: True  | Update: True  | Elapsed: 0:25:57 | ETA: 0:04:04
+Epoch[44] Batch[2801/3125] | Loss: 3.6846e+00 | Grad: True  | Update: True  | Elapsed: 0:26:55 | ETA: 0:03:06
+Epoch[44] Batch[2901/3125] | Loss: 3.7029e+00 | Grad: True  | Update: True  | Elapsed: 0:27:52 | ETA: 0:02:09
+Epoch[44] Batch[3001/3125] | Loss: 3.9575e+00 | Grad: True  | Update: True  | Elapsed: 0:28:50 | ETA: 0:01:11
+Epoch[44] Batch[3101/3125] | Loss: 3.8072e+00 | Grad: True  | Update: True  | Elapsed: 0:29:47 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 44 完成 | 总耗时: 1801.73s | 平均 Loss: 3.7095e+00
+================================================================================
+
+Validation Epoch [44] | Batch [100/625] | L1: 3.8918e+00 | MAE: 2.5471e+00 | MSE: 3.1383e-02 | PCC: 1.4356e-02
+Validation Epoch [44] | Batch [200/625] | L1: 3.8426e+00 | MAE: 2.5986e+00 | MSE: 3.9517e-02 | PCC: 1.8205e-02
+Validation Epoch [44] | Batch [300/625] | L1: 3.9311e+00 | MAE: 2.5981e+00 | MSE: 3.2633e-02 | PCC: 1.5059e-02
+Validation Epoch [44] | Batch [400/625] | L1: 3.8312e+00 | MAE: 2.6322e+00 | MSE: 3.9318e-02 | PCC: 1.7959e-02
+Validation Epoch [44] | Batch [500/625] | L1: 3.9440e+00 | MAE: 2.8690e+00 | MSE: 5.5255e-02 | PCC: 2.5395e-02
+Validation Epoch [44] | Batch [600/625] | L1: 4.0125e+00 | MAE: 2.7286e+00 | MSE: 4.1437e-02 | PCC: 1.8511e-02
+Validation Epoch [44] | Batch [625/625] | L1: 3.5679e+00 | MAE: 2.6955e+00 | MSE: 3.9373e-02 | PCC: 1.8174e-02
+
+================================================================================
+✅ Epoch 44 验证完成
+📉 平均损失:
+   MAE:   2.6473e+00 | MSE:   3.8887e-02
+   Huber: 3.4358e+00 | PCC:   1.7815e-02
+   Comb:  2.8351e-02 | Comb2: 1.0698e-01
+================================================================================
+
+Epoch[45] Batch[1/3125] | Loss: 3.5532e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:33:17
+Epoch[45] Batch[101/3125] | Loss: 3.6486e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[45] Batch[201/3125] | Loss: 3.4633e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[45] Batch[301/3125] | Loss: 3.5613e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:06
+Epoch[45] Batch[401/3125] | Loss: 3.4753e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[45] Batch[501/3125] | Loss: 3.8545e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[45] Batch[601/3125] | Loss: 3.5315e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[45] Batch[701/3125] | Loss: 3.7505e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[45] Batch[801/3125] | Loss: 3.7340e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[45] Batch[901/3125] | Loss: 3.6552e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:20
+Epoch[45] Batch[1001/3125] | Loss: 3.8654e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[45] Batch[1101/3125] | Loss: 3.7736e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[45] Batch[1201/3125] | Loss: 3.5468e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[45] Batch[1301/3125] | Loss: 3.6522e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[45] Batch[1401/3125] | Loss: 3.6395e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[45] Batch[1501/3125] | Loss: 4.1016e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[45] Batch[1601/3125] | Loss: 3.5415e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[45] Batch[1701/3125] | Loss: 3.7626e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[45] Batch[1801/3125] | Loss: 3.7790e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[45] Batch[1901/3125] | Loss: 3.7700e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[45] Batch[2001/3125] | Loss: 3.7290e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[45] Batch[2101/3125] | Loss: 3.5606e+00 | Grad: True  | Update: True  | Elapsed: 0:20:09 | ETA: 0:09:49
+Epoch[45] Batch[2201/3125] | Loss: 3.6754e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[45] Batch[2301/3125] | Loss: 3.7875e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[45] Batch[2401/3125] | Loss: 3.8006e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[45] Batch[2501/3125] | Loss: 3.6403e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[45] Batch[2601/3125] | Loss: 3.5109e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:05:01
+Epoch[45] Batch[2701/3125] | Loss: 3.8675e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[45] Batch[2801/3125] | Loss: 3.7406e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[45] Batch[2901/3125] | Loss: 3.7129e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[45] Batch[3001/3125] | Loss: 3.9480e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[45] Batch[3101/3125] | Loss: 3.7727e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 45 完成 | 总耗时: 1799.66s | 平均 Loss: 3.7070e+00
+================================================================================
+
+Validation Epoch [45] | Batch [100/625] | L1: 3.9243e+00 | MAE: 2.5685e+00 | MSE: 3.5139e-02 | PCC: 1.4761e-02
+Validation Epoch [45] | Batch [200/625] | L1: 3.8779e+00 | MAE: 2.6223e+00 | MSE: 4.3119e-02 | PCC: 1.8548e-02
+Validation Epoch [45] | Batch [300/625] | L1: 3.9759e+00 | MAE: 2.6271e+00 | MSE: 3.6530e-02 | PCC: 1.5676e-02
+Validation Epoch [45] | Batch [400/625] | L1: 3.8534e+00 | MAE: 2.6481e+00 | MSE: 4.1220e-02 | PCC: 1.7598e-02
+Validation Epoch [45] | Batch [500/625] | L1: 3.9922e+00 | MAE: 2.9045e+00 | MSE: 6.3145e-02 | PCC: 2.7030e-02
+Validation Epoch [45] | Batch [600/625] | L1: 4.0408e+00 | MAE: 2.7471e+00 | MSE: 4.6125e-02 | PCC: 1.9306e-02
+Validation Epoch [45] | Batch [625/625] | L1: 3.5940e+00 | MAE: 2.7158e+00 | MSE: 4.3362e-02 | PCC: 1.8527e-02
+
+================================================================================
+✅ Epoch 45 验证完成
+📉 平均损失:
+   MAE:   2.6749e+00 | MSE:   4.2850e-02
+   Huber: 3.4758e+00 | PCC:   1.8325e-02
+   Comb:  3.0588e-02 | Comb2: 1.1211e-01
+================================================================================
+
+Epoch[46] Batch[1/3125] | Loss: 3.5814e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:27
+Epoch[46] Batch[101/3125] | Loss: 3.6364e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:05
+Epoch[46] Batch[201/3125] | Loss: 3.4645e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:06
+Epoch[46] Batch[301/3125] | Loss: 3.5309e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:08
+Epoch[46] Batch[401/3125] | Loss: 3.5110e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:10
+Epoch[46] Batch[501/3125] | Loss: 3.8599e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:12
+Epoch[46] Batch[601/3125] | Loss: 3.5138e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[46] Batch[701/3125] | Loss: 3.7305e+00 | Grad: True  | Update: True  | Elapsed: 0:06:44 | ETA: 0:23:17
+Epoch[46] Batch[801/3125] | Loss: 3.6853e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:19
+Epoch[46] Batch[901/3125] | Loss: 3.6036e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[46] Batch[1001/3125] | Loss: 3.8266e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:24
+Epoch[46] Batch[1101/3125] | Loss: 3.7785e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[46] Batch[1201/3125] | Loss: 3.5244e+00 | Grad: True  | Update: True  | Elapsed: 0:11:32 | ETA: 0:18:28
+Epoch[46] Batch[1301/3125] | Loss: 3.6410e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:31
+Epoch[46] Batch[1401/3125] | Loss: 3.7012e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[46] Batch[1501/3125] | Loss: 4.0430e+00 | Grad: True  | Update: True  | Elapsed: 0:14:25 | ETA: 0:15:35
+Epoch[46] Batch[1601/3125] | Loss: 3.5600e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[46] Batch[1701/3125] | Loss: 3.7721e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[46] Batch[1801/3125] | Loss: 3.7689e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[46] Batch[1901/3125] | Loss: 3.7337e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[46] Batch[2001/3125] | Loss: 3.7049e+00 | Grad: True  | Update: True  | Elapsed: 0:19:13 | ETA: 0:10:47
+Epoch[46] Batch[2101/3125] | Loss: 3.5380e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[46] Batch[2201/3125] | Loss: 3.7179e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[46] Batch[2301/3125] | Loss: 3.8173e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[46] Batch[2401/3125] | Loss: 3.7909e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[46] Batch[2501/3125] | Loss: 3.5895e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[46] Batch[2601/3125] | Loss: 3.4870e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[46] Batch[2701/3125] | Loss: 3.8515e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[46] Batch[2801/3125] | Loss: 3.7938e+00 | Grad: True  | Update: True  | Elapsed: 0:26:54 | ETA: 0:03:06
+Epoch[46] Batch[2901/3125] | Loss: 3.7172e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[46] Batch[3001/3125] | Loss: 3.9296e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[46] Batch[3101/3125] | Loss: 3.7794e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 46 完成 | 总耗时: 1800.72s | 平均 Loss: 3.7021e+00
+================================================================================
+
+Validation Epoch [46] | Batch [100/625] | L1: 3.9370e+00 | MAE: 2.5780e+00 | MSE: 3.9189e-02 | PCC: 1.5097e-02
+Validation Epoch [46] | Batch [200/625] | L1: 3.8786e+00 | MAE: 2.6228e+00 | MSE: 4.7284e-02 | PCC: 1.8562e-02
+Validation Epoch [46] | Batch [300/625] | L1: 3.9402e+00 | MAE: 2.6038e+00 | MSE: 3.9551e-02 | PCC: 1.5617e-02
+Validation Epoch [46] | Batch [400/625] | L1: 3.8372e+00 | MAE: 2.6372e+00 | MSE: 4.6541e-02 | PCC: 1.7971e-02
+Validation Epoch [46] | Batch [500/625] | L1: 3.9845e+00 | MAE: 2.8991e+00 | MSE: 6.7523e-02 | PCC: 2.6317e-02
+Validation Epoch [46] | Batch [600/625] | L1: 4.0356e+00 | MAE: 2.7428e+00 | MSE: 5.0535e-02 | PCC: 1.9264e-02
+Validation Epoch [46] | Batch [625/625] | L1: 3.5920e+00 | MAE: 2.7150e+00 | MSE: 4.8292e-02 | PCC: 1.8717e-02
+
+================================================================================
+✅ Epoch 46 验证完成
+📉 平均损失:
+   MAE:   2.6686e+00 | MSE:   4.7273e-02
+   Huber: 3.4660e+00 | PCC:   1.8456e-02
+   Comb:  3.2865e-02 | Comb2: 1.1743e-01
+================================================================================
+
+Epoch[47] Batch[1/3125] | Loss: 3.5619e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:31
+Epoch[47] Batch[101/3125] | Loss: 3.6490e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[47] Batch[201/3125] | Loss: 3.4716e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[47] Batch[301/3125] | Loss: 3.5269e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[47] Batch[401/3125] | Loss: 3.4668e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[47] Batch[501/3125] | Loss: 3.8269e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[47] Batch[601/3125] | Loss: 3.4947e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[47] Batch[701/3125] | Loss: 3.7072e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[47] Batch[801/3125] | Loss: 3.7289e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[47] Batch[901/3125] | Loss: 3.6234e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[47] Batch[1001/3125] | Loss: 3.8022e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[47] Batch[1101/3125] | Loss: 3.7558e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[47] Batch[1201/3125] | Loss: 3.5574e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[47] Batch[1301/3125] | Loss: 3.6321e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[47] Batch[1401/3125] | Loss: 3.6379e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[47] Batch[1501/3125] | Loss: 4.0166e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[47] Batch[1601/3125] | Loss: 3.5400e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[47] Batch[1701/3125] | Loss: 3.7524e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[47] Batch[1801/3125] | Loss: 3.7695e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[47] Batch[1901/3125] | Loss: 3.7227e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[47] Batch[2001/3125] | Loss: 3.6864e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[47] Batch[2101/3125] | Loss: 3.5955e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[47] Batch[2201/3125] | Loss: 3.6884e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[47] Batch[2301/3125] | Loss: 3.7952e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[47] Batch[2401/3125] | Loss: 3.8092e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[47] Batch[2501/3125] | Loss: 3.6060e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[47] Batch[2601/3125] | Loss: 3.4715e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[47] Batch[2701/3125] | Loss: 3.8278e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[47] Batch[2801/3125] | Loss: 3.7248e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[47] Batch[2901/3125] | Loss: 3.6791e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[47] Batch[3001/3125] | Loss: 3.9454e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[47] Batch[3101/3125] | Loss: 3.7804e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 47 完成 | 总耗时: 1800.64s | 平均 Loss: 3.6973e+00
+================================================================================
+
+Validation Epoch [47] | Batch [100/625] | L1: 3.9091e+00 | MAE: 2.5602e+00 | MSE: 3.4507e-02 | PCC: 1.4716e-02
+Validation Epoch [47] | Batch [200/625] | L1: 3.8689e+00 | MAE: 2.6184e+00 | MSE: 4.3796e-02 | PCC: 1.8057e-02
+Validation Epoch [47] | Batch [300/625] | L1: 3.9186e+00 | MAE: 2.5894e+00 | MSE: 3.5148e-02 | PCC: 1.5345e-02
+Validation Epoch [47] | Batch [400/625] | L1: 3.8254e+00 | MAE: 2.6305e+00 | MSE: 4.2082e-02 | PCC: 1.7565e-02
+Validation Epoch [47] | Batch [500/625] | L1: 3.9412e+00 | MAE: 2.8703e+00 | MSE: 5.9712e-02 | PCC: 2.5497e-02
+Validation Epoch [47] | Batch [600/625] | L1: 4.0303e+00 | MAE: 2.7417e+00 | MSE: 4.5149e-02 | PCC: 1.8799e-02
+Validation Epoch [47] | Batch [625/625] | L1: 3.5833e+00 | MAE: 2.7109e+00 | MSE: 4.2201e-02 | PCC: 1.7987e-02
+
+================================================================================
+✅ Epoch 47 验证完成
+📉 平均损失:
+   MAE:   2.6533e+00 | MSE:   4.2190e-02
+   Huber: 3.4419e+00 | PCC:   1.7980e-02
+   Comb:  3.0085e-02 | Comb2: 1.1118e-01
+================================================================================
+
+Epoch[48] Batch[1/3125] | Loss: 3.5724e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:18
+Epoch[48] Batch[101/3125] | Loss: 3.6069e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:05
+Epoch[48] Batch[201/3125] | Loss: 3.4442e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:07
+Epoch[48] Batch[301/3125] | Loss: 3.4875e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:12
+Epoch[48] Batch[401/3125] | Loss: 3.4539e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:13
+Epoch[48] Batch[501/3125] | Loss: 3.8254e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:15
+Epoch[48] Batch[601/3125] | Loss: 3.4921e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[48] Batch[701/3125] | Loss: 3.6729e+00 | Grad: True  | Update: True  | Elapsed: 0:06:44 | ETA: 0:23:20
+Epoch[48] Batch[801/3125] | Loss: 3.6915e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[48] Batch[901/3125] | Loss: 3.5854e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:25
+Epoch[48] Batch[1001/3125] | Loss: 3.7796e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[48] Batch[1101/3125] | Loss: 3.7730e+00 | Grad: True  | Update: True  | Elapsed: 0:10:35 | ETA: 0:19:29
+Epoch[48] Batch[1201/3125] | Loss: 3.5084e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[48] Batch[1301/3125] | Loss: 3.6081e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[48] Batch[1401/3125] | Loss: 3.6389e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:35
+Epoch[48] Batch[1501/3125] | Loss: 3.9964e+00 | Grad: True  | Update: True  | Elapsed: 0:14:26 | ETA: 0:15:37
+Epoch[48] Batch[1601/3125] | Loss: 3.5052e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:40
+Epoch[48] Batch[1701/3125] | Loss: 3.7025e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[48] Batch[1801/3125] | Loss: 3.7532e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[48] Batch[1901/3125] | Loss: 3.7017e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[48] Batch[2001/3125] | Loss: 3.6617e+00 | Grad: True  | Update: True  | Elapsed: 0:19:15 | ETA: 0:10:49
+Epoch[48] Batch[2101/3125] | Loss: 3.5146e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[48] Batch[2201/3125] | Loss: 3.6548e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[48] Batch[2301/3125] | Loss: 3.7541e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:55
+Epoch[48] Batch[2401/3125] | Loss: 3.7857e+00 | Grad: True  | Update: True  | Elapsed: 0:23:06 | ETA: 0:06:58
+Epoch[48] Batch[2501/3125] | Loss: 3.5967e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[48] Batch[2601/3125] | Loss: 3.4543e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[48] Batch[2701/3125] | Loss: 3.8216e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[48] Batch[2801/3125] | Loss: 3.6376e+00 | Grad: True  | Update: True  | Elapsed: 0:26:57 | ETA: 0:03:07
+Epoch[48] Batch[2901/3125] | Loss: 3.6995e+00 | Grad: True  | Update: True  | Elapsed: 0:27:55 | ETA: 0:02:09
+Epoch[48] Batch[3001/3125] | Loss: 3.9191e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[48] Batch[3101/3125] | Loss: 3.7191e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 48 完成 | 总耗时: 1804.85s | 平均 Loss: 3.6656e+00
+================================================================================
+
+Validation Epoch [48] | Batch [100/625] | L1: 3.8657e+00 | MAE: 2.5323e+00 | MSE: 3.2619e-02 | PCC: 1.4116e-02
+Validation Epoch [48] | Batch [200/625] | L1: 3.7824e+00 | MAE: 2.5602e+00 | MSE: 4.1503e-02 | PCC: 1.7730e-02
+Validation Epoch [48] | Batch [300/625] | L1: 3.8480e+00 | MAE: 2.5433e+00 | MSE: 3.3109e-02 | PCC: 1.4356e-02
+Validation Epoch [48] | Batch [400/625] | L1: 3.7595e+00 | MAE: 2.5844e+00 | MSE: 4.0100e-02 | PCC: 1.7066e-02
+Validation Epoch [48] | Batch [500/625] | L1: 3.8907e+00 | MAE: 2.8328e+00 | MSE: 5.8170e-02 | PCC: 2.4939e-02
+Validation Epoch [48] | Batch [600/625] | L1: 3.9601e+00 | MAE: 2.6932e+00 | MSE: 4.2542e-02 | PCC: 1.7864e-02
+Validation Epoch [48] | Batch [625/625] | L1: 3.5135e+00 | MAE: 2.6576e+00 | MSE: 4.1078e-02 | PCC: 1.7520e-02
+
+================================================================================
+✅ Epoch 48 验证完成
+📉 平均损失:
+   MAE:   2.6138e+00 | MSE:   4.0367e-02
+   Huber: 3.3848e+00 | PCC:   1.7289e-02
+   Comb:  2.8828e-02 | Comb2: 1.0855e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.874634
+✅ 已保存新最优模型 | 当前最优损失: 3.842001 | Epoch: 48
+Epoch[49] Batch[1/3125] | Loss: 3.5315e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:33:07
+Epoch[49] Batch[101/3125] | Loss: 3.5879e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:07
+Epoch[49] Batch[201/3125] | Loss: 3.4306e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:07
+Epoch[49] Batch[301/3125] | Loss: 3.4656e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:12
+Epoch[49] Batch[401/3125] | Loss: 3.4340e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:14
+Epoch[49] Batch[501/3125] | Loss: 3.7890e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:15
+Epoch[49] Batch[601/3125] | Loss: 3.4742e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:18
+Epoch[49] Batch[701/3125] | Loss: 3.6533e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[49] Batch[801/3125] | Loss: 3.6622e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[49] Batch[901/3125] | Loss: 3.5746e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:24
+Epoch[49] Batch[1001/3125] | Loss: 3.7675e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[49] Batch[1101/3125] | Loss: 3.7483e+00 | Grad: True  | Update: True  | Elapsed: 0:10:35 | ETA: 0:19:29
+Epoch[49] Batch[1201/3125] | Loss: 3.4874e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[49] Batch[1301/3125] | Loss: 3.5931e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[49] Batch[1401/3125] | Loss: 3.6175e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:35
+Epoch[49] Batch[1501/3125] | Loss: 3.9785e+00 | Grad: True  | Update: True  | Elapsed: 0:14:26 | ETA: 0:15:37
+Epoch[49] Batch[1601/3125] | Loss: 3.4915e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:40
+Epoch[49] Batch[1701/3125] | Loss: 3.6905e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[49] Batch[1801/3125] | Loss: 3.7421e+00 | Grad: True  | Update: True  | Elapsed: 0:17:20 | ETA: 0:12:44
+Epoch[49] Batch[1901/3125] | Loss: 3.6807e+00 | Grad: True  | Update: True  | Elapsed: 0:18:18 | ETA: 0:11:47
+Epoch[49] Batch[2001/3125] | Loss: 3.6344e+00 | Grad: True  | Update: True  | Elapsed: 0:19:15 | ETA: 0:10:49
+Epoch[49] Batch[2101/3125] | Loss: 3.5011e+00 | Grad: True  | Update: True  | Elapsed: 0:20:13 | ETA: 0:09:51
+Epoch[49] Batch[2201/3125] | Loss: 3.6368e+00 | Grad: True  | Update: True  | Elapsed: 0:21:11 | ETA: 0:08:53
+Epoch[49] Batch[2301/3125] | Loss: 3.7292e+00 | Grad: True  | Update: True  | Elapsed: 0:22:09 | ETA: 0:07:56
+Epoch[49] Batch[2401/3125] | Loss: 3.7699e+00 | Grad: True  | Update: True  | Elapsed: 0:23:06 | ETA: 0:06:58
+Epoch[49] Batch[2501/3125] | Loss: 3.5720e+00 | Grad: True  | Update: True  | Elapsed: 0:24:04 | ETA: 0:06:00
+Epoch[49] Batch[2601/3125] | Loss: 3.4487e+00 | Grad: True  | Update: True  | Elapsed: 0:25:02 | ETA: 0:05:02
+Epoch[49] Batch[2701/3125] | Loss: 3.7928e+00 | Grad: True  | Update: True  | Elapsed: 0:26:00 | ETA: 0:04:04
+Epoch[49] Batch[2801/3125] | Loss: 3.6274e+00 | Grad: True  | Update: True  | Elapsed: 0:26:58 | ETA: 0:03:07
+Epoch[49] Batch[2901/3125] | Loss: 3.6753e+00 | Grad: True  | Update: True  | Elapsed: 0:27:55 | ETA: 0:02:09
+Epoch[49] Batch[3001/3125] | Loss: 3.8833e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:01:11
+Epoch[49] Batch[3101/3125] | Loss: 3.6996e+00 | Grad: True  | Update: True  | Elapsed: 0:29:51 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 49 完成 | 总耗时: 1805.16s | 平均 Loss: 3.6445e+00
+================================================================================
+
+Validation Epoch [49] | Batch [100/625] | L1: 3.8640e+00 | MAE: 2.5313e+00 | MSE: 3.3695e-02 | PCC: 1.4256e-02
+Validation Epoch [49] | Batch [200/625] | L1: 3.7844e+00 | MAE: 2.5618e+00 | MSE: 4.2329e-02 | PCC: 1.7712e-02
+Validation Epoch [49] | Batch [300/625] | L1: 3.8475e+00 | MAE: 2.5429e+00 | MSE: 3.4005e-02 | PCC: 1.4431e-02
+Validation Epoch [49] | Batch [400/625] | L1: 3.7603e+00 | MAE: 2.5854e+00 | MSE: 4.1295e-02 | PCC: 1.7151e-02
+Validation Epoch [49] | Batch [500/625] | L1: 3.8962e+00 | MAE: 2.8374e+00 | MSE: 6.0246e-02 | PCC: 2.5262e-02
+Validation Epoch [49] | Batch [600/625] | L1: 3.9579e+00 | MAE: 2.6920e+00 | MSE: 4.3601e-02 | PCC: 1.7991e-02
+Validation Epoch [49] | Batch [625/625] | L1: 3.5173e+00 | MAE: 2.6609e+00 | MSE: 4.1789e-02 | PCC: 1.7698e-02
+
+================================================================================
+✅ Epoch 49 验证完成
+📉 平均损失:
+   MAE:   2.6142e+00 | MSE:   4.1492e-02
+   Huber: 3.3848e+00 | PCC:   1.7416e-02
+   Comb:  2.9454e-02 | Comb2: 1.1000e-01
+================================================================================
+
+Epoch[50] Batch[1/3125] | Loss: 3.5132e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:11
+Epoch[50] Batch[101/3125] | Loss: 3.5804e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:07
+Epoch[50] Batch[201/3125] | Loss: 3.4261e+00 | Grad: True  | Update: True  | Elapsed: 0:01:56 | ETA: 0:28:08
+Epoch[50] Batch[301/3125] | Loss: 3.4567e+00 | Grad: True  | Update: True  | Elapsed: 0:02:54 | ETA: 0:27:13
+Epoch[50] Batch[401/3125] | Loss: 3.4184e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:14
+Epoch[50] Batch[501/3125] | Loss: 3.7791e+00 | Grad: True  | Update: True  | Elapsed: 0:04:49 | ETA: 0:25:16
+Epoch[50] Batch[601/3125] | Loss: 3.4592e+00 | Grad: True  | Update: True  | Elapsed: 0:05:47 | ETA: 0:24:19
+Epoch[50] Batch[701/3125] | Loss: 3.6445e+00 | Grad: True  | Update: True  | Elapsed: 0:06:45 | ETA: 0:23:20
+Epoch[50] Batch[801/3125] | Loss: 3.6621e+00 | Grad: True  | Update: True  | Elapsed: 0:07:42 | ETA: 0:22:22
+Epoch[50] Batch[901/3125] | Loss: 3.5686e+00 | Grad: True  | Update: True  | Elapsed: 0:08:40 | ETA: 0:21:24
+Epoch[50] Batch[1001/3125] | Loss: 3.7537e+00 | Grad: True  | Update: True  | Elapsed: 0:09:38 | ETA: 0:20:27
+Epoch[50] Batch[1101/3125] | Loss: 3.7015e+00 | Grad: True  | Update: True  | Elapsed: 0:10:36 | ETA: 0:19:29
+Epoch[50] Batch[1201/3125] | Loss: 3.4778e+00 | Grad: True  | Update: True  | Elapsed: 0:11:33 | ETA: 0:18:31
+Epoch[50] Batch[1301/3125] | Loss: 3.5774e+00 | Grad: True  | Update: True  | Elapsed: 0:12:31 | ETA: 0:17:33
+Epoch[50] Batch[1401/3125] | Loss: 3.5932e+00 | Grad: True  | Update: True  | Elapsed: 0:13:29 | ETA: 0:16:35
+Epoch[50] Batch[1501/3125] | Loss: 3.9625e+00 | Grad: True  | Update: True  | Elapsed: 0:14:26 | ETA: 0:15:37
+Epoch[50] Batch[1601/3125] | Loss: 3.4900e+00 | Grad: True  | Update: True  | Elapsed: 0:15:24 | ETA: 0:14:39
+Epoch[50] Batch[1701/3125] | Loss: 3.6809e+00 | Grad: True  | Update: True  | Elapsed: 0:16:22 | ETA: 0:13:42
+Epoch[50] Batch[1801/3125] | Loss: 3.7116e+00 | Grad: True  | Update: True  | Elapsed: 0:17:19 | ETA: 0:12:44
+Epoch[50] Batch[1901/3125] | Loss: 3.6641e+00 | Grad: True  | Update: True  | Elapsed: 0:18:17 | ETA: 0:11:46
+Epoch[50] Batch[2001/3125] | Loss: 3.6210e+00 | Grad: True  | Update: True  | Elapsed: 0:19:14 | ETA: 0:10:48
+Epoch[50] Batch[2101/3125] | Loss: 3.4925e+00 | Grad: True  | Update: True  | Elapsed: 0:20:12 | ETA: 0:09:50
+Epoch[50] Batch[2201/3125] | Loss: 3.6226e+00 | Grad: True  | Update: True  | Elapsed: 0:21:10 | ETA: 0:08:53
+Epoch[50] Batch[2301/3125] | Loss: 3.7106e+00 | Grad: True  | Update: True  | Elapsed: 0:22:07 | ETA: 0:07:55
+Epoch[50] Batch[2401/3125] | Loss: 3.7435e+00 | Grad: True  | Update: True  | Elapsed: 0:23:05 | ETA: 0:06:57
+Epoch[50] Batch[2501/3125] | Loss: 3.5597e+00 | Grad: True  | Update: True  | Elapsed: 0:24:03 | ETA: 0:06:00
+Epoch[50] Batch[2601/3125] | Loss: 3.4332e+00 | Grad: True  | Update: True  | Elapsed: 0:25:00 | ETA: 0:05:02
+Epoch[50] Batch[2701/3125] | Loss: 3.7898e+00 | Grad: True  | Update: True  | Elapsed: 0:25:58 | ETA: 0:04:04
+Epoch[50] Batch[2801/3125] | Loss: 3.6032e+00 | Grad: True  | Update: True  | Elapsed: 0:26:55 | ETA: 0:03:06
+Epoch[50] Batch[2901/3125] | Loss: 3.6550e+00 | Grad: True  | Update: True  | Elapsed: 0:27:53 | ETA: 0:02:09
+Epoch[50] Batch[3001/3125] | Loss: 3.8568e+00 | Grad: True  | Update: True  | Elapsed: 0:28:51 | ETA: 0:01:11
+Epoch[50] Batch[3101/3125] | Loss: 3.6835e+00 | Grad: True  | Update: True  | Elapsed: 0:29:48 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 50 完成 | 总耗时: 1802.62s | 平均 Loss: 3.6318e+00
+================================================================================
+
+Validation Epoch [50] | Batch [100/625] | L1: 3.8292e+00 | MAE: 2.5078e+00 | MSE: 3.2030e-02 | PCC: 1.3881e-02
+Validation Epoch [50] | Batch [200/625] | L1: 3.7658e+00 | MAE: 2.5494e+00 | MSE: 4.0461e-02 | PCC: 1.7308e-02
+Validation Epoch [50] | Batch [300/625] | L1: 3.8246e+00 | MAE: 2.5274e+00 | MSE: 3.2479e-02 | PCC: 1.4207e-02
+Validation Epoch [50] | Batch [400/625] | L1: 3.7462e+00 | MAE: 2.5755e+00 | MSE: 3.9644e-02 | PCC: 1.6930e-02
+Validation Epoch [50] | Batch [500/625] | L1: 3.8731e+00 | MAE: 2.8202e+00 | MSE: 5.7980e-02 | PCC: 2.4729e-02
+Validation Epoch [50] | Batch [600/625] | L1: 3.9402e+00 | MAE: 2.6796e+00 | MSE: 4.1911e-02 | PCC: 1.7629e-02
+Validation Epoch [50] | Batch [625/625] | L1: 3.4965e+00 | MAE: 2.6449e+00 | MSE: 4.0009e-02 | PCC: 1.7209e-02
+
+================================================================================
+✅ Epoch 50 验证完成
+📉 平均损失:
+   MAE:   2.5991e+00 | MSE:   3.9739e-02
+   Huber: 3.3630e+00 | PCC:   1.7080e-02
+   Comb:  2.8410e-02 | Comb2: 1.0764e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.842001
+✅ 已保存新最优模型 | 当前最优损失: 3.820178 | Epoch: 50
+checkpoint saved!
+Epoch[51] Batch[1/3125] | Loss: 3.4829e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:33
+Epoch[51] Batch[101/3125] | Loss: 3.5810e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[51] Batch[201/3125] | Loss: 3.4152e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[51] Batch[301/3125] | Loss: 3.4560e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[51] Batch[401/3125] | Loss: 3.4180e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:10
+Epoch[51] Batch[501/3125] | Loss: 3.7769e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:12
+Epoch[51] Batch[601/3125] | Loss: 3.4599e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[51] Batch[701/3125] | Loss: 3.6260e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[51] Batch[801/3125] | Loss: 3.6458e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:19
+Epoch[51] Batch[901/3125] | Loss: 3.5591e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[51] Batch[1001/3125] | Loss: 3.7572e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:24
+Epoch[51] Batch[1101/3125] | Loss: 3.7398e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[51] Batch[1201/3125] | Loss: 3.4903e+00 | Grad: True  | Update: True  | Elapsed: 0:11:32 | ETA: 0:18:28
+Epoch[51] Batch[1301/3125] | Loss: 3.5727e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:31
+Epoch[51] Batch[1401/3125] | Loss: 3.5985e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[51] Batch[1501/3125] | Loss: 3.9541e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[51] Batch[1601/3125] | Loss: 3.4742e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[51] Batch[1701/3125] | Loss: 3.7023e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[51] Batch[1801/3125] | Loss: 3.7020e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[51] Batch[1901/3125] | Loss: 3.6506e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[51] Batch[2001/3125] | Loss: 3.6093e+00 | Grad: True  | Update: True  | Elapsed: 0:19:13 | ETA: 0:10:47
+Epoch[51] Batch[2101/3125] | Loss: 3.4745e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[51] Batch[2201/3125] | Loss: 3.6147e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[51] Batch[2301/3125] | Loss: 3.7144e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[51] Batch[2401/3125] | Loss: 3.7460e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[51] Batch[2501/3125] | Loss: 3.5470e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[51] Batch[2601/3125] | Loss: 3.4212e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[51] Batch[2701/3125] | Loss: 3.7942e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[51] Batch[2801/3125] | Loss: 3.6154e+00 | Grad: True  | Update: True  | Elapsed: 0:26:54 | ETA: 0:03:06
+Epoch[51] Batch[2901/3125] | Loss: 3.6538e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[51] Batch[3001/3125] | Loss: 3.8364e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[51] Batch[3101/3125] | Loss: 3.6846e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 51 完成 | 总耗时: 1800.83s | 平均 Loss: 3.6263e+00
+================================================================================
+
+Validation Epoch [51] | Batch [100/625] | L1: 3.8663e+00 | MAE: 2.5319e+00 | MSE: 3.3592e-02 | PCC: 1.4253e-02
+Validation Epoch [51] | Batch [200/625] | L1: 3.7897e+00 | MAE: 2.5653e+00 | MSE: 4.1660e-02 | PCC: 1.7571e-02
+Validation Epoch [51] | Batch [300/625] | L1: 3.8637e+00 | MAE: 2.5533e+00 | MSE: 3.3919e-02 | PCC: 1.4562e-02
+Validation Epoch [51] | Batch [400/625] | L1: 3.7691e+00 | MAE: 2.5913e+00 | MSE: 4.1307e-02 | PCC: 1.7163e-02
+Validation Epoch [51] | Batch [500/625] | L1: 3.9003e+00 | MAE: 2.8408e+00 | MSE: 6.0225e-02 | PCC: 2.5222e-02
+Validation Epoch [51] | Batch [600/625] | L1: 3.9737e+00 | MAE: 2.7024e+00 | MSE: 4.4208e-02 | PCC: 1.8225e-02
+Validation Epoch [51] | Batch [625/625] | L1: 3.5262e+00 | MAE: 2.6674e+00 | MSE: 4.1828e-02 | PCC: 1.7666e-02
+
+================================================================================
+✅ Epoch 51 验证完成
+📉 平均损失:
+   MAE:   2.6207e+00 | MSE:   4.1352e-02
+   Huber: 3.3945e+00 | PCC:   1.7434e-02
+   Comb:  2.9393e-02 | Comb2: 1.0982e-01
+================================================================================
+
+Epoch[52] Batch[1/3125] | Loss: 3.5156e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:26
+Epoch[52] Batch[101/3125] | Loss: 3.5657e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[52] Batch[201/3125] | Loss: 3.4041e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[52] Batch[301/3125] | Loss: 3.4498e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[52] Batch[401/3125] | Loss: 3.4086e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[52] Batch[501/3125] | Loss: 3.8068e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:12
+Epoch[52] Batch[601/3125] | Loss: 3.4434e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[52] Batch[701/3125] | Loss: 3.6141e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[52] Batch[801/3125] | Loss: 3.6316e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:19
+Epoch[52] Batch[901/3125] | Loss: 3.5631e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[52] Batch[1001/3125] | Loss: 3.7538e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:24
+Epoch[52] Batch[1101/3125] | Loss: 3.7211e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[52] Batch[1201/3125] | Loss: 3.4736e+00 | Grad: True  | Update: True  | Elapsed: 0:11:32 | ETA: 0:18:28
+Epoch[52] Batch[1301/3125] | Loss: 3.5709e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:31
+Epoch[52] Batch[1401/3125] | Loss: 3.5892e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[52] Batch[1501/3125] | Loss: 3.9435e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[52] Batch[1601/3125] | Loss: 3.4868e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[52] Batch[1701/3125] | Loss: 3.6808e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[52] Batch[1801/3125] | Loss: 3.6723e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[52] Batch[1901/3125] | Loss: 3.6412e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[52] Batch[2001/3125] | Loss: 3.6153e+00 | Grad: True  | Update: True  | Elapsed: 0:19:13 | ETA: 0:10:47
+Epoch[52] Batch[2101/3125] | Loss: 3.4832e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[52] Batch[2201/3125] | Loss: 3.6070e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[52] Batch[2301/3125] | Loss: 3.6933e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[52] Batch[2401/3125] | Loss: 3.7478e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[52] Batch[2501/3125] | Loss: 3.5376e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[52] Batch[2601/3125] | Loss: 3.4179e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[52] Batch[2701/3125] | Loss: 3.7716e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[52] Batch[2801/3125] | Loss: 3.5978e+00 | Grad: True  | Update: True  | Elapsed: 0:26:54 | ETA: 0:03:06
+Epoch[52] Batch[2901/3125] | Loss: 3.6422e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[52] Batch[3001/3125] | Loss: 3.8450e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[52] Batch[3101/3125] | Loss: 3.6747e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 52 完成 | 总耗时: 1800.79s | 平均 Loss: 3.6188e+00
+================================================================================
+
+Validation Epoch [52] | Batch [100/625] | L1: 3.8565e+00 | MAE: 2.5257e+00 | MSE: 3.0974e-02 | PCC: 1.3824e-02
+Validation Epoch [52] | Batch [200/625] | L1: 3.7829e+00 | MAE: 2.5606e+00 | MSE: 3.9781e-02 | PCC: 1.7442e-02
+Validation Epoch [52] | Batch [300/625] | L1: 3.8357e+00 | MAE: 2.5348e+00 | MSE: 3.1482e-02 | PCC: 1.4150e-02
+Validation Epoch [52] | Batch [400/625] | L1: 3.7586e+00 | MAE: 2.5840e+00 | MSE: 3.8732e-02 | PCC: 1.6776e-02
+Validation Epoch [52] | Batch [500/625] | L1: 3.8906e+00 | MAE: 2.8332e+00 | MSE: 5.6218e-02 | PCC: 2.4244e-02
+Validation Epoch [52] | Batch [600/625] | L1: 3.9414e+00 | MAE: 2.6795e+00 | MSE: 4.0233e-02 | PCC: 1.7351e-02
+Validation Epoch [52] | Batch [625/625] | L1: 3.5118e+00 | MAE: 2.6554e+00 | MSE: 3.9384e-02 | PCC: 1.7172e-02
+
+================================================================================
+✅ Epoch 52 验证完成
+📉 平均损失:
+   MAE:   2.6081e+00 | MSE:   3.8542e-02
+   Huber: 3.3766e+00 | PCC:   1.6930e-02
+   Comb:  2.7736e-02 | Comb2: 1.0605e-01
+================================================================================
+
+Epoch[53] Batch[1/3125] | Loss: 3.5070e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:35
+Epoch[53] Batch[101/3125] | Loss: 3.5541e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:03
+Epoch[53] Batch[201/3125] | Loss: 3.4050e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[53] Batch[301/3125] | Loss: 3.4615e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[53] Batch[401/3125] | Loss: 3.4415e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[53] Batch[501/3125] | Loss: 3.7619e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:12
+Epoch[53] Batch[601/3125] | Loss: 3.4358e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[53] Batch[701/3125] | Loss: 3.6112e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[53] Batch[801/3125] | Loss: 3.6322e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:19
+Epoch[53] Batch[901/3125] | Loss: 3.5556e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[53] Batch[1001/3125] | Loss: 3.7500e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:24
+Epoch[53] Batch[1101/3125] | Loss: 3.7243e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[53] Batch[1201/3125] | Loss: 3.4639e+00 | Grad: True  | Update: True  | Elapsed: 0:11:32 | ETA: 0:18:28
+Epoch[53] Batch[1301/3125] | Loss: 3.5600e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:31
+Epoch[53] Batch[1401/3125] | Loss: 3.5732e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[53] Batch[1501/3125] | Loss: 3.9718e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[53] Batch[1601/3125] | Loss: 3.4683e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[53] Batch[1701/3125] | Loss: 3.6769e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[53] Batch[1801/3125] | Loss: 3.6959e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[53] Batch[1901/3125] | Loss: 3.6368e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[53] Batch[2001/3125] | Loss: 3.6005e+00 | Grad: True  | Update: True  | Elapsed: 0:19:13 | ETA: 0:10:47
+Epoch[53] Batch[2101/3125] | Loss: 3.4723e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[53] Batch[2201/3125] | Loss: 3.5921e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[53] Batch[2301/3125] | Loss: 3.6862e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[53] Batch[2401/3125] | Loss: 3.7378e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[53] Batch[2501/3125] | Loss: 3.5216e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[53] Batch[2601/3125] | Loss: 3.4160e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[53] Batch[2701/3125] | Loss: 3.7813e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[53] Batch[2801/3125] | Loss: 3.5931e+00 | Grad: True  | Update: True  | Elapsed: 0:26:54 | ETA: 0:03:06
+Epoch[53] Batch[2901/3125] | Loss: 3.6322e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[53] Batch[3001/3125] | Loss: 3.8192e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[53] Batch[3101/3125] | Loss: 3.6708e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 53 完成 | 总耗时: 1800.76s | 平均 Loss: 3.6158e+00
+================================================================================
+
+Validation Epoch [53] | Batch [100/625] | L1: 3.8533e+00 | MAE: 2.5237e+00 | MSE: 3.1884e-02 | PCC: 1.3702e-02
+Validation Epoch [53] | Batch [200/625] | L1: 3.7758e+00 | MAE: 2.5561e+00 | MSE: 4.0940e-02 | PCC: 1.7364e-02
+Validation Epoch [53] | Batch [300/625] | L1: 3.8395e+00 | MAE: 2.5375e+00 | MSE: 3.2350e-02 | PCC: 1.4093e-02
+Validation Epoch [53] | Batch [400/625] | L1: 3.7567e+00 | MAE: 2.5825e+00 | MSE: 3.9931e-02 | PCC: 1.6772e-02
+Validation Epoch [53] | Batch [500/625] | L1: 3.8865e+00 | MAE: 2.8301e+00 | MSE: 5.7881e-02 | PCC: 2.4189e-02
+Validation Epoch [53] | Batch [600/625] | L1: 3.9521e+00 | MAE: 2.6867e+00 | MSE: 4.1727e-02 | PCC: 1.7436e-02
+Validation Epoch [53] | Batch [625/625] | L1: 3.5059e+00 | MAE: 2.6516e+00 | MSE: 4.0653e-02 | PCC: 1.7068e-02
+
+================================================================================
+✅ Epoch 53 验证完成
+📉 平均损失:
+   MAE:   2.6083e+00 | MSE:   3.9841e-02
+   Huber: 3.3766e+00 | PCC:   1.6910e-02
+   Comb:  2.8376e-02 | Comb2: 1.0769e-01
+================================================================================
+
+Epoch[54] Batch[1/3125] | Loss: 3.4898e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:01
+Epoch[54] Batch[101/3125] | Loss: 3.5572e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[54] Batch[201/3125] | Loss: 3.3998e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[54] Batch[301/3125] | Loss: 3.4475e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[54] Batch[401/3125] | Loss: 3.4062e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:10
+Epoch[54] Batch[501/3125] | Loss: 3.7743e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:12
+Epoch[54] Batch[601/3125] | Loss: 3.4382e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[54] Batch[701/3125] | Loss: 3.6077e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[54] Batch[801/3125] | Loss: 3.6189e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:19
+Epoch[54] Batch[901/3125] | Loss: 3.5414e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[54] Batch[1001/3125] | Loss: 3.7299e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:24
+Epoch[54] Batch[1101/3125] | Loss: 3.7094e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[54] Batch[1201/3125] | Loss: 3.4680e+00 | Grad: True  | Update: True  | Elapsed: 0:11:32 | ETA: 0:18:28
+Epoch[54] Batch[1301/3125] | Loss: 3.5600e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:31
+Epoch[54] Batch[1401/3125] | Loss: 3.5927e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[54] Batch[1501/3125] | Loss: 3.9648e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[54] Batch[1601/3125] | Loss: 3.4678e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[54] Batch[1701/3125] | Loss: 3.6991e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[54] Batch[1801/3125] | Loss: 3.6677e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[54] Batch[1901/3125] | Loss: 3.6265e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[54] Batch[2001/3125] | Loss: 3.5961e+00 | Grad: True  | Update: True  | Elapsed: 0:19:13 | ETA: 0:10:47
+Epoch[54] Batch[2101/3125] | Loss: 3.4613e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[54] Batch[2201/3125] | Loss: 3.5979e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[54] Batch[2301/3125] | Loss: 3.7046e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[54] Batch[2401/3125] | Loss: 3.7383e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[54] Batch[2501/3125] | Loss: 3.5391e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[54] Batch[2601/3125] | Loss: 3.4154e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[54] Batch[2701/3125] | Loss: 3.7687e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[54] Batch[2801/3125] | Loss: 3.5998e+00 | Grad: True  | Update: True  | Elapsed: 0:26:54 | ETA: 0:03:06
+Epoch[54] Batch[2901/3125] | Loss: 3.6198e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[54] Batch[3001/3125] | Loss: 3.8259e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[54] Batch[3101/3125] | Loss: 3.6720e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 54 完成 | 总耗时: 1800.78s | 平均 Loss: 3.6118e+00
+================================================================================
+
+Validation Epoch [54] | Batch [100/625] | L1: 3.8655e+00 | MAE: 2.5315e+00 | MSE: 3.2112e-02 | PCC: 1.3524e-02
+Validation Epoch [54] | Batch [200/625] | L1: 3.7900e+00 | MAE: 2.5650e+00 | MSE: 4.0983e-02 | PCC: 1.7145e-02
+Validation Epoch [54] | Batch [300/625] | L1: 3.8523e+00 | MAE: 2.5459e+00 | MSE: 3.2985e-02 | PCC: 1.4064e-02
+Validation Epoch [54] | Batch [400/625] | L1: 3.7704e+00 | MAE: 2.5919e+00 | MSE: 4.0388e-02 | PCC: 1.6626e-02
+Validation Epoch [54] | Batch [500/625] | L1: 3.9006e+00 | MAE: 2.8406e+00 | MSE: 5.8321e-02 | PCC: 2.4067e-02
+Validation Epoch [54] | Batch [600/625] | L1: 3.9563e+00 | MAE: 2.6893e+00 | MSE: 4.1917e-02 | PCC: 1.7072e-02
+Validation Epoch [54] | Batch [625/625] | L1: 3.5294e+00 | MAE: 2.6693e+00 | MSE: 4.0823e-02 | PCC: 1.6916e-02
+
+================================================================================
+✅ Epoch 54 验证完成
+📉 平均损失:
+   MAE:   2.6185e+00 | MSE:   4.0090e-02
+   Huber: 3.3918e+00 | PCC:   1.6721e-02
+   Comb:  2.8406e-02 | Comb2: 1.0793e-01
+================================================================================
+
+Epoch[55] Batch[1/3125] | Loss: 3.4858e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:38
+Epoch[55] Batch[101/3125] | Loss: 3.5421e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[55] Batch[201/3125] | Loss: 3.3886e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[55] Batch[301/3125] | Loss: 3.4462e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[55] Batch[401/3125] | Loss: 3.4024e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[55] Batch[501/3125] | Loss: 3.7650e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[55] Batch[601/3125] | Loss: 3.4289e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[55] Batch[701/3125] | Loss: 3.5963e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[55] Batch[801/3125] | Loss: 3.6225e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[55] Batch[901/3125] | Loss: 3.5406e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[55] Batch[1001/3125] | Loss: 3.7462e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[55] Batch[1101/3125] | Loss: 3.7289e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[55] Batch[1201/3125] | Loss: 3.4786e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[55] Batch[1301/3125] | Loss: 3.5546e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[55] Batch[1401/3125] | Loss: 3.5791e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[55] Batch[1501/3125] | Loss: 3.9290e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[55] Batch[1601/3125] | Loss: 3.4681e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[55] Batch[1701/3125] | Loss: 3.6776e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[55] Batch[1801/3125] | Loss: 3.6778e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[55] Batch[1901/3125] | Loss: 3.6249e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[55] Batch[2001/3125] | Loss: 3.5945e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[55] Batch[2101/3125] | Loss: 3.4991e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:49
+Epoch[55] Batch[2201/3125] | Loss: 3.5974e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[55] Batch[2301/3125] | Loss: 3.6851e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[55] Batch[2401/3125] | Loss: 3.7593e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[55] Batch[2501/3125] | Loss: 3.5328e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[55] Batch[2601/3125] | Loss: 3.4165e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[55] Batch[2701/3125] | Loss: 3.7690e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[55] Batch[2801/3125] | Loss: 3.5754e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[55] Batch[2901/3125] | Loss: 3.6178e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[55] Batch[3001/3125] | Loss: 3.8550e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[55] Batch[3101/3125] | Loss: 3.6807e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 55 完成 | 总耗时: 1799.80s | 平均 Loss: 3.6095e+00
+================================================================================
+
+Validation Epoch [55] | Batch [100/625] | L1: 3.8569e+00 | MAE: 2.5261e+00 | MSE: 2.9993e-02 | PCC: 1.3684e-02
+Validation Epoch [55] | Batch [200/625] | L1: 3.7670e+00 | MAE: 2.5490e+00 | MSE: 3.7626e-02 | PCC: 1.7020e-02
+Validation Epoch [55] | Batch [300/625] | L1: 3.8295e+00 | MAE: 2.5307e+00 | MSE: 3.0524e-02 | PCC: 1.4017e-02
+Validation Epoch [55] | Batch [400/625] | L1: 3.7531e+00 | MAE: 2.5796e+00 | MSE: 3.7108e-02 | PCC: 1.6461e-02
+Validation Epoch [55] | Batch [500/625] | L1: 3.8939e+00 | MAE: 2.8353e+00 | MSE: 5.3776e-02 | PCC: 2.4135e-02
+Validation Epoch [55] | Batch [600/625] | L1: 3.9392e+00 | MAE: 2.6781e+00 | MSE: 3.9364e-02 | PCC: 1.7383e-02
+Validation Epoch [55] | Batch [625/625] | L1: 3.5191e+00 | MAE: 2.6612e+00 | MSE: 3.7612e-02 | PCC: 1.7226e-02
+
+================================================================================
+✅ Epoch 55 验证完成
+📉 平均损失:
+   MAE:   2.6079e+00 | MSE:   3.7151e-02
+   Huber: 3.3762e+00 | PCC:   1.6756e-02
+   Comb:  2.6953e-02 | Comb2: 1.0420e-01
+================================================================================
+
+Epoch[56] Batch[1/3125] | Loss: 3.4865e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:34
+Epoch[56] Batch[101/3125] | Loss: 3.5737e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:03
+Epoch[56] Batch[201/3125] | Loss: 3.4150e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:04
+Epoch[56] Batch[301/3125] | Loss: 3.4350e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:06
+Epoch[56] Batch[401/3125] | Loss: 3.4210e+00 | Grad: True  | Update: True  | Elapsed: 0:03:50 | ETA: 0:26:09
+Epoch[56] Batch[501/3125] | Loss: 3.7748e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[56] Batch[601/3125] | Loss: 3.4328e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[56] Batch[701/3125] | Loss: 3.5963e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[56] Batch[801/3125] | Loss: 3.6174e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[56] Batch[901/3125] | Loss: 3.5729e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:20
+Epoch[56] Batch[1001/3125] | Loss: 3.7240e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[56] Batch[1101/3125] | Loss: 3.6902e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[56] Batch[1201/3125] | Loss: 3.4548e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[56] Batch[1301/3125] | Loss: 3.5507e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[56] Batch[1401/3125] | Loss: 3.5983e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[56] Batch[1501/3125] | Loss: 3.9318e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[56] Batch[1601/3125] | Loss: 3.4616e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[56] Batch[1701/3125] | Loss: 3.6686e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[56] Batch[1801/3125] | Loss: 3.6543e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[56] Batch[1901/3125] | Loss: 3.6122e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[56] Batch[2001/3125] | Loss: 3.6059e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[56] Batch[2101/3125] | Loss: 3.4702e+00 | Grad: True  | Update: True  | Elapsed: 0:20:09 | ETA: 0:09:49
+Epoch[56] Batch[2201/3125] | Loss: 3.5749e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[56] Batch[2301/3125] | Loss: 3.6782e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[56] Batch[2401/3125] | Loss: 3.7720e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[56] Batch[2501/3125] | Loss: 3.5362e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[56] Batch[2601/3125] | Loss: 3.4126e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:05:01
+Epoch[56] Batch[2701/3125] | Loss: 3.7754e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[56] Batch[2801/3125] | Loss: 3.5664e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[56] Batch[2901/3125] | Loss: 3.6239e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[56] Batch[3001/3125] | Loss: 3.8457e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[56] Batch[3101/3125] | Loss: 3.6696e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 56 完成 | 总耗时: 1799.69s | 平均 Loss: 3.6093e+00
+================================================================================
+
+Validation Epoch [56] | Batch [100/625] | L1: 3.8154e+00 | MAE: 2.4990e+00 | MSE: 3.0453e-02 | PCC: 1.3318e-02
+Validation Epoch [56] | Batch [200/625] | L1: 3.7440e+00 | MAE: 2.5343e+00 | MSE: 3.8304e-02 | PCC: 1.6890e-02
+Validation Epoch [56] | Batch [300/625] | L1: 3.8062e+00 | MAE: 2.5153e+00 | MSE: 3.1341e-02 | PCC: 1.3933e-02
+Validation Epoch [56] | Batch [400/625] | L1: 3.7279e+00 | MAE: 2.5624e+00 | MSE: 3.7936e-02 | PCC: 1.6410e-02
+Validation Epoch [56] | Batch [500/625] | L1: 3.8666e+00 | MAE: 2.8158e+00 | MSE: 5.5327e-02 | PCC: 2.3995e-02
+Validation Epoch [56] | Batch [600/625] | L1: 3.9177e+00 | MAE: 2.6633e+00 | MSE: 3.9953e-02 | PCC: 1.7261e-02
+Validation Epoch [56] | Batch [625/625] | L1: 3.4839e+00 | MAE: 2.6353e+00 | MSE: 3.7728e-02 | PCC: 1.6743e-02
+
+================================================================================
+✅ Epoch 56 验证完成
+📉 平均损失:
+   MAE:   2.5882e+00 | MSE:   3.7892e-02
+   Huber: 3.3467e+00 | PCC:   1.6580e-02
+   Comb:  2.7236e-02 | Comb2: 1.0505e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.820178
+✅ 已保存新最优模型 | 当前最优损失: 3.804021 | Epoch: 56
+Epoch[57] Batch[1/3125] | Loss: 3.4543e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:29
+Epoch[57] Batch[101/3125] | Loss: 3.5595e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[57] Batch[201/3125] | Loss: 3.3860e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[57] Batch[301/3125] | Loss: 3.4312e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[57] Batch[401/3125] | Loss: 3.4334e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[57] Batch[501/3125] | Loss: 3.7490e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[57] Batch[601/3125] | Loss: 3.4200e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[57] Batch[701/3125] | Loss: 3.5814e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[57] Batch[801/3125] | Loss: 3.6052e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[57] Batch[901/3125] | Loss: 3.5308e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[57] Batch[1001/3125] | Loss: 3.7197e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[57] Batch[1101/3125] | Loss: 3.7303e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:26
+Epoch[57] Batch[1201/3125] | Loss: 3.4660e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[57] Batch[1301/3125] | Loss: 3.5406e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[57] Batch[1401/3125] | Loss: 3.5618e+00 | Grad: True  | Update: True  | Elapsed: 0:13:27 | ETA: 0:16:33
+Epoch[57] Batch[1501/3125] | Loss: 3.9279e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[57] Batch[1601/3125] | Loss: 3.4451e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:38
+Epoch[57] Batch[1701/3125] | Loss: 3.6643e+00 | Grad: True  | Update: True  | Elapsed: 0:16:20 | ETA: 0:13:40
+Epoch[57] Batch[1801/3125] | Loss: 3.6680e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[57] Batch[1901/3125] | Loss: 3.6371e+00 | Grad: True  | Update: True  | Elapsed: 0:18:15 | ETA: 0:11:45
+Epoch[57] Batch[2001/3125] | Loss: 3.5982e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[57] Batch[2101/3125] | Loss: 3.4848e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:50
+Epoch[57] Batch[2201/3125] | Loss: 3.5758e+00 | Grad: True  | Update: True  | Elapsed: 0:21:08 | ETA: 0:08:52
+Epoch[57] Batch[2301/3125] | Loss: 3.6967e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[57] Batch[2401/3125] | Loss: 3.7357e+00 | Grad: True  | Update: True  | Elapsed: 0:23:03 | ETA: 0:06:57
+Epoch[57] Batch[2501/3125] | Loss: 3.5151e+00 | Grad: True  | Update: True  | Elapsed: 0:24:01 | ETA: 0:05:59
+Epoch[57] Batch[2601/3125] | Loss: 3.4026e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[57] Batch[2701/3125] | Loss: 3.7561e+00 | Grad: True  | Update: True  | Elapsed: 0:25:56 | ETA: 0:04:04
+Epoch[57] Batch[2801/3125] | Loss: 3.5548e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[57] Batch[2901/3125] | Loss: 3.6129e+00 | Grad: True  | Update: True  | Elapsed: 0:27:51 | ETA: 0:02:09
+Epoch[57] Batch[3001/3125] | Loss: 3.8296e+00 | Grad: True  | Update: True  | Elapsed: 0:28:49 | ETA: 0:01:11
+Epoch[57] Batch[3101/3125] | Loss: 3.6644e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 57 完成 | 总耗时: 1800.69s | 平均 Loss: 3.6017e+00
+================================================================================
+
+Validation Epoch [57] | Batch [100/625] | L1: 3.8434e+00 | MAE: 2.5171e+00 | MSE: 3.0334e-02 | PCC: 1.3336e-02
+Validation Epoch [57] | Batch [200/625] | L1: 3.7716e+00 | MAE: 2.5522e+00 | MSE: 3.8490e-02 | PCC: 1.6731e-02
+Validation Epoch [57] | Batch [300/625] | L1: 3.8272e+00 | MAE: 2.5291e+00 | MSE: 3.1302e-02 | PCC: 1.3950e-02
+Validation Epoch [57] | Batch [400/625] | L1: 3.7481e+00 | MAE: 2.5757e+00 | MSE: 3.8125e-02 | PCC: 1.6367e-02
+Validation Epoch [57] | Batch [500/625] | L1: 3.8858e+00 | MAE: 2.8292e+00 | MSE: 5.4789e-02 | PCC: 2.3592e-02
+Validation Epoch [57] | Batch [600/625] | L1: 3.9452e+00 | MAE: 2.6812e+00 | MSE: 4.0297e-02 | PCC: 1.7176e-02
+Validation Epoch [57] | Batch [625/625] | L1: 3.5179e+00 | MAE: 2.6597e+00 | MSE: 3.8168e-02 | PCC: 1.6834e-02
+
+================================================================================
+✅ Epoch 57 验证完成
+📉 平均损失:
+   MAE:   2.6067e+00 | MSE:   3.7869e-02
+   Huber: 3.3749e+00 | PCC:   1.6538e-02
+   Comb:  2.7203e-02 | Comb2: 1.0502e-01
+================================================================================
+
+Epoch[58] Batch[1/3125] | Loss: 3.4742e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:47
+Epoch[58] Batch[101/3125] | Loss: 3.5412e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:03
+Epoch[58] Batch[201/3125] | Loss: 3.3810e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[58] Batch[301/3125] | Loss: 3.4273e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:06
+Epoch[58] Batch[401/3125] | Loss: 3.4170e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[58] Batch[501/3125] | Loss: 3.7421e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[58] Batch[601/3125] | Loss: 3.4401e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[58] Batch[701/3125] | Loss: 3.5926e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[58] Batch[801/3125] | Loss: 3.5920e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[58] Batch[901/3125] | Loss: 3.5213e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:20
+Epoch[58] Batch[1001/3125] | Loss: 3.7200e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[58] Batch[1101/3125] | Loss: 3.7111e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[58] Batch[1201/3125] | Loss: 3.4540e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[58] Batch[1301/3125] | Loss: 3.5345e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[58] Batch[1401/3125] | Loss: 3.5631e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[58] Batch[1501/3125] | Loss: 3.9536e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[58] Batch[1601/3125] | Loss: 3.4361e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[58] Batch[1701/3125] | Loss: 3.6573e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[58] Batch[1801/3125] | Loss: 3.6760e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[58] Batch[1901/3125] | Loss: 3.6092e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[58] Batch[2001/3125] | Loss: 3.5865e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[58] Batch[2101/3125] | Loss: 3.4551e+00 | Grad: True  | Update: True  | Elapsed: 0:20:09 | ETA: 0:09:49
+Epoch[58] Batch[2201/3125] | Loss: 3.5844e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[58] Batch[2301/3125] | Loss: 3.6935e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[58] Batch[2401/3125] | Loss: 3.7512e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[58] Batch[2501/3125] | Loss: 3.5106e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[58] Batch[2601/3125] | Loss: 3.4014e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:05:01
+Epoch[58] Batch[2701/3125] | Loss: 3.7441e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[58] Batch[2801/3125] | Loss: 3.5521e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[58] Batch[2901/3125] | Loss: 3.6154e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[58] Batch[3001/3125] | Loss: 3.8406e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[58] Batch[3101/3125] | Loss: 3.6792e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 58 完成 | 总耗时: 1799.72s | 平均 Loss: 3.5989e+00
+================================================================================
+
+Validation Epoch [58] | Batch [100/625] | L1: 3.8445e+00 | MAE: 2.5178e+00 | MSE: 3.0531e-02 | PCC: 1.3758e-02
+Validation Epoch [58] | Batch [200/625] | L1: 3.7660e+00 | MAE: 2.5476e+00 | MSE: 3.8724e-02 | PCC: 1.7206e-02
+Validation Epoch [58] | Batch [300/625] | L1: 3.8227e+00 | MAE: 2.5260e+00 | MSE: 3.0900e-02 | PCC: 1.4105e-02
+Validation Epoch [58] | Batch [400/625] | L1: 3.7449e+00 | MAE: 2.5737e+00 | MSE: 3.8104e-02 | PCC: 1.6706e-02
+Validation Epoch [58] | Batch [500/625] | L1: 3.8904e+00 | MAE: 2.8329e+00 | MSE: 5.6280e-02 | PCC: 2.4416e-02
+Validation Epoch [58] | Batch [600/625] | L1: 3.9303e+00 | MAE: 2.6714e+00 | MSE: 4.0168e-02 | PCC: 1.7448e-02
+Validation Epoch [58] | Batch [625/625] | L1: 3.5194e+00 | MAE: 2.6604e+00 | MSE: 3.8517e-02 | PCC: 1.7142e-02
+
+================================================================================
+✅ Epoch 58 验证完成
+📉 平均损失:
+   MAE:   2.6035e+00 | MSE:   3.8012e-02
+   Huber: 3.3703e+00 | PCC:   1.6912e-02
+   Comb:  2.7462e-02 | Comb2: 1.0535e-01
+================================================================================
+
+Epoch[59] Batch[1/3125] | Loss: 3.4722e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:29
+Epoch[59] Batch[101/3125] | Loss: 3.5626e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:03
+Epoch[59] Batch[201/3125] | Loss: 3.3838e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:04
+Epoch[59] Batch[301/3125] | Loss: 3.4409e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:06
+Epoch[59] Batch[401/3125] | Loss: 3.4126e+00 | Grad: True  | Update: True  | Elapsed: 0:03:50 | ETA: 0:26:09
+Epoch[59] Batch[501/3125] | Loss: 3.7465e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[59] Batch[601/3125] | Loss: 3.4375e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[59] Batch[701/3125] | Loss: 3.5811e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[59] Batch[801/3125] | Loss: 3.5984e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[59] Batch[901/3125] | Loss: 3.5355e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:20
+Epoch[59] Batch[1001/3125] | Loss: 3.7173e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[59] Batch[1101/3125] | Loss: 3.6962e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[59] Batch[1201/3125] | Loss: 3.4465e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[59] Batch[1301/3125] | Loss: 3.5778e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[59] Batch[1401/3125] | Loss: 3.5448e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[59] Batch[1501/3125] | Loss: 3.9392e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[59] Batch[1601/3125] | Loss: 3.4448e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[59] Batch[1701/3125] | Loss: 3.6491e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[59] Batch[1801/3125] | Loss: 3.7002e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[59] Batch[1901/3125] | Loss: 3.6226e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[59] Batch[2001/3125] | Loss: 3.5977e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[59] Batch[2101/3125] | Loss: 3.4660e+00 | Grad: True  | Update: True  | Elapsed: 0:20:09 | ETA: 0:09:49
+Epoch[59] Batch[2201/3125] | Loss: 3.6019e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[59] Batch[2301/3125] | Loss: 3.7133e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[59] Batch[2401/3125] | Loss: 3.7628e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[59] Batch[2501/3125] | Loss: 3.5214e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[59] Batch[2601/3125] | Loss: 3.4029e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:05:01
+Epoch[59] Batch[2701/3125] | Loss: 3.7493e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[59] Batch[2801/3125] | Loss: 3.5645e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[59] Batch[2901/3125] | Loss: 3.6423e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[59] Batch[3001/3125] | Loss: 3.8442e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[59] Batch[3101/3125] | Loss: 3.6744e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 59 完成 | 总耗时: 1799.72s | 平均 Loss: 3.6034e+00
+================================================================================
+
+Validation Epoch [59] | Batch [100/625] | L1: 3.8285e+00 | MAE: 2.5068e+00 | MSE: 2.9298e-02 | PCC: 1.3379e-02
+Validation Epoch [59] | Batch [200/625] | L1: 3.7595e+00 | MAE: 2.5436e+00 | MSE: 3.7331e-02 | PCC: 1.6880e-02
+Validation Epoch [59] | Batch [300/625] | L1: 3.8069e+00 | MAE: 2.5155e+00 | MSE: 3.0104e-02 | PCC: 1.3971e-02
+Validation Epoch [59] | Batch [400/625] | L1: 3.7367e+00 | MAE: 2.5673e+00 | MSE: 3.6274e-02 | PCC: 1.6331e-02
+Validation Epoch [59] | Batch [500/625] | L1: 3.8806e+00 | MAE: 2.8252e+00 | MSE: 5.3181e-02 | PCC: 2.3834e-02
+Validation Epoch [59] | Batch [600/625] | L1: 3.9258e+00 | MAE: 2.6686e+00 | MSE: 3.8957e-02 | PCC: 1.7371e-02
+Validation Epoch [59] | Batch [625/625] | L1: 3.5066e+00 | MAE: 2.6504e+00 | MSE: 3.6877e-02 | PCC: 1.6872e-02
+
+================================================================================
+✅ Epoch 59 验证完成
+📉 平均损失:
+   MAE:   2.5965e+00 | MSE:   3.6562e-02
+   Huber: 3.3602e+00 | PCC:   1.6584e-02
+   Comb:  2.6573e-02 | Comb2: 1.0331e-01
+================================================================================
+
+Epoch[60] Batch[1/3125] | Loss: 3.4577e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:04
+Epoch[60] Batch[101/3125] | Loss: 3.5832e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[60] Batch[201/3125] | Loss: 3.4005e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[60] Batch[301/3125] | Loss: 3.4304e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[60] Batch[401/3125] | Loss: 3.3981e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[60] Batch[501/3125] | Loss: 3.7408e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[60] Batch[601/3125] | Loss: 3.4187e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[60] Batch[701/3125] | Loss: 3.5727e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[60] Batch[801/3125] | Loss: 3.5936e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[60] Batch[901/3125] | Loss: 3.5691e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:21
+Epoch[60] Batch[1001/3125] | Loss: 3.7089e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[60] Batch[1101/3125] | Loss: 3.7465e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[60] Batch[1201/3125] | Loss: 3.4546e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[60] Batch[1301/3125] | Loss: 3.5308e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[60] Batch[1401/3125] | Loss: 3.5354e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[60] Batch[1501/3125] | Loss: 3.9233e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[60] Batch[1601/3125] | Loss: 3.4757e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[60] Batch[1701/3125] | Loss: 3.6426e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[60] Batch[1801/3125] | Loss: 3.6520e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[60] Batch[1901/3125] | Loss: 3.6085e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[60] Batch[2001/3125] | Loss: 3.5880e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[60] Batch[2101/3125] | Loss: 3.4460e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:49
+Epoch[60] Batch[2201/3125] | Loss: 3.5927e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[60] Batch[2301/3125] | Loss: 3.7034e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[60] Batch[2401/3125] | Loss: 3.7200e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[60] Batch[2501/3125] | Loss: 3.5032e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[60] Batch[2601/3125] | Loss: 3.4001e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:05:01
+Epoch[60] Batch[2701/3125] | Loss: 3.7663e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[60] Batch[2801/3125] | Loss: 3.5591e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[60] Batch[2901/3125] | Loss: 3.6122e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[60] Batch[3001/3125] | Loss: 3.8364e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[60] Batch[3101/3125] | Loss: 3.6644e+00 | Grad: True  | Update: True  | Elapsed: 0:29:45 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 60 完成 | 总耗时: 1799.76s | 平均 Loss: 3.5972e+00
+================================================================================
+
+Validation Epoch [60] | Batch [100/625] | L1: 3.8354e+00 | MAE: 2.5119e+00 | MSE: 3.0207e-02 | PCC: 1.3722e-02
+Validation Epoch [60] | Batch [200/625] | L1: 3.7605e+00 | MAE: 2.5443e+00 | MSE: 3.8521e-02 | PCC: 1.7131e-02
+Validation Epoch [60] | Batch [300/625] | L1: 3.8168e+00 | MAE: 2.5219e+00 | MSE: 3.0931e-02 | PCC: 1.4157e-02
+Validation Epoch [60] | Batch [400/625] | L1: 3.7433e+00 | MAE: 2.5723e+00 | MSE: 3.7816e-02 | PCC: 1.6685e-02
+Validation Epoch [60] | Batch [500/625] | L1: 3.8938e+00 | MAE: 2.8350e+00 | MSE: 5.5426e-02 | PCC: 2.4408e-02
+Validation Epoch [60] | Batch [600/625] | L1: 3.9311e+00 | MAE: 2.6725e+00 | MSE: 3.9564e-02 | PCC: 1.7361e-02
+Validation Epoch [60] | Batch [625/625] | L1: 3.5262e+00 | MAE: 2.6649e+00 | MSE: 3.8136e-02 | PCC: 1.7260e-02
+
+================================================================================
+✅ Epoch 60 验证完成
+📉 平均损失:
+   MAE:   2.6020e+00 | MSE:   3.7573e-02
+   Huber: 3.3683e+00 | PCC:   1.6870e-02
+   Comb:  2.7221e-02 | Comb2: 1.0477e-01
+================================================================================
+
+checkpoint saved!
+Epoch[61] Batch[1/3125] | Loss: 3.4679e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:34:11
+Epoch[61] Batch[101/3125] | Loss: 3.5540e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:05
+Epoch[61] Batch[201/3125] | Loss: 3.3700e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[61] Batch[301/3125] | Loss: 3.4332e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[61] Batch[401/3125] | Loss: 3.4009e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[61] Batch[501/3125] | Loss: 3.7287e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[61] Batch[601/3125] | Loss: 3.4187e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:14
+Epoch[61] Batch[701/3125] | Loss: 3.5728e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[61] Batch[801/3125] | Loss: 3.6053e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[61] Batch[901/3125] | Loss: 3.5138e+00 | Grad: True  | Update: True  | Elapsed: 0:08:39 | ETA: 0:21:21
+Epoch[61] Batch[1001/3125] | Loss: 3.7419e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[61] Batch[1101/3125] | Loss: 3.6927e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[61] Batch[1201/3125] | Loss: 3.4360e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[61] Batch[1301/3125] | Loss: 3.5548e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[61] Batch[1401/3125] | Loss: 3.5315e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:33
+Epoch[61] Batch[1501/3125] | Loss: 3.9113e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[61] Batch[1601/3125] | Loss: 3.4511e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[61] Batch[1701/3125] | Loss: 3.6569e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[61] Batch[1801/3125] | Loss: 3.6720e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[61] Batch[1901/3125] | Loss: 3.6268e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[61] Batch[2001/3125] | Loss: 3.6116e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[61] Batch[2101/3125] | Loss: 3.4510e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:49
+Epoch[61] Batch[2201/3125] | Loss: 3.6119e+00 | Grad: True  | Update: True  | Elapsed: 0:21:07 | ETA: 0:08:52
+Epoch[61] Batch[2301/3125] | Loss: 3.6636e+00 | Grad: True  | Update: True  | Elapsed: 0:22:05 | ETA: 0:07:54
+Epoch[61] Batch[2401/3125] | Loss: 3.7463e+00 | Grad: True  | Update: True  | Elapsed: 0:23:02 | ETA: 0:06:56
+Epoch[61] Batch[2501/3125] | Loss: 3.5214e+00 | Grad: True  | Update: True  | Elapsed: 0:24:00 | ETA: 0:05:59
+Epoch[61] Batch[2601/3125] | Loss: 3.3983e+00 | Grad: True  | Update: True  | Elapsed: 0:24:58 | ETA: 0:05:01
+Epoch[61] Batch[2701/3125] | Loss: 3.7963e+00 | Grad: True  | Update: True  | Elapsed: 0:25:55 | ETA: 0:04:04
+Epoch[61] Batch[2801/3125] | Loss: 3.5567e+00 | Grad: True  | Update: True  | Elapsed: 0:26:53 | ETA: 0:03:06
+Epoch[61] Batch[2901/3125] | Loss: 3.6154e+00 | Grad: True  | Update: True  | Elapsed: 0:27:50 | ETA: 0:02:09
+Epoch[61] Batch[3001/3125] | Loss: 3.8402e+00 | Grad: True  | Update: True  | Elapsed: 0:28:48 | ETA: 0:01:11
+Epoch[61] Batch[3101/3125] | Loss: 3.6726e+00 | Grad: True  | Update: True  | Elapsed: 0:29:46 | ETA: 0:00:13
+
+================================================================================
+✅ Epoch 61 完成 | 总耗时: 1799.84s | 平均 Loss: 3.5956e+00
+================================================================================
+
+Validation Epoch [61] | Batch [100/625] | L1: 3.8473e+00 | MAE: 2.5194e+00 | MSE: 3.0621e-02 | PCC: 1.3561e-02
+Validation Epoch [61] | Batch [200/625] | L1: 3.7709e+00 | MAE: 2.5515e+00 | MSE: 3.8427e-02 | PCC: 1.6854e-02
+Validation Epoch [61] | Batch [300/625] | L1: 3.8319e+00 | MAE: 2.5318e+00 | MSE: 3.1301e-02 | PCC: 1.4046e-02
+Validation Epoch [61] | Batch [400/625] | L1: 3.7487e+00 | MAE: 2.5762e+00 | MSE: 3.8165e-02 | PCC: 1.6613e-02
+Validation Epoch [61] | Batch [500/625] | L1: 3.8928e+00 | MAE: 2.8345e+00 | MSE: 5.5632e-02 | PCC: 2.4077e-02
+Validation Epoch [61] | Batch [600/625] | L1: 3.9390e+00 | MAE: 2.6776e+00 | MSE: 4.0377e-02 | PCC: 1.7416e-02
+Validation Epoch [61] | Batch [625/625] | L1: 3.5249e+00 | MAE: 2.6652e+00 | MSE: 3.8411e-02 | PCC: 1.6931e-02
+
+================================================================================
+✅ Epoch 61 验证完成
+📉 平均损失:
+   MAE:   2.6072e+00 | MSE:   3.8085e-02
+   Huber: 3.3759e+00 | PCC:   1.6764e-02
+   Comb:  2.7425e-02 | Comb2: 1.0537e-01
+================================================================================
+
+Epoch[62] Batch[1/3125] | Loss: 3.4568e+00 | Grad: True  | Update: True  | Elapsed: 0:00:00 | ETA: 0:32:34
+Epoch[62] Batch[101/3125] | Loss: 3.5350e+00 | Grad: True  | Update: True  | Elapsed: 0:00:58 | ETA: 0:29:04
+Epoch[62] Batch[201/3125] | Loss: 3.3736e+00 | Grad: True  | Update: True  | Elapsed: 0:01:55 | ETA: 0:28:05
+Epoch[62] Batch[301/3125] | Loss: 3.4381e+00 | Grad: True  | Update: True  | Elapsed: 0:02:53 | ETA: 0:27:07
+Epoch[62] Batch[401/3125] | Loss: 3.3863e+00 | Grad: True  | Update: True  | Elapsed: 0:03:51 | ETA: 0:26:09
+Epoch[62] Batch[501/3125] | Loss: 3.7396e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:25:11
+Epoch[62] Batch[601/3125] | Loss: 3.4235e+00 | Grad: True  | Update: True  | Elapsed: 0:05:46 | ETA: 0:24:13
+Epoch[62] Batch[701/3125] | Loss: 3.5664e+00 | Grad: True  | Update: True  | Elapsed: 0:06:43 | ETA: 0:23:16
+Epoch[62] Batch[801/3125] | Loss: 3.5834e+00 | Grad: True  | Update: True  | Elapsed: 0:07:41 | ETA: 0:22:18
+Epoch[62] Batch[901/3125] | Loss: 3.5147e+00 | Grad: True  | Update: True  | Elapsed: 0:08:38 | ETA: 0:21:21
+Epoch[62] Batch[1001/3125] | Loss: 3.7714e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:20:23
+Epoch[62] Batch[1101/3125] | Loss: 3.7163e+00 | Grad: True  | Update: True  | Elapsed: 0:10:34 | ETA: 0:19:25
+Epoch[62] Batch[1201/3125] | Loss: 3.4375e+00 | Grad: True  | Update: True  | Elapsed: 0:11:31 | ETA: 0:18:28
+Epoch[62] Batch[1301/3125] | Loss: 3.5309e+00 | Grad: True  | Update: True  | Elapsed: 0:12:29 | ETA: 0:17:30
+Epoch[62] Batch[1401/3125] | Loss: 3.5470e+00 | Grad: True  | Update: True  | Elapsed: 0:13:26 | ETA: 0:16:32
+Epoch[62] Batch[1501/3125] | Loss: 3.9072e+00 | Grad: True  | Update: True  | Elapsed: 0:14:24 | ETA: 0:15:35
+Epoch[62] Batch[1601/3125] | Loss: 3.4680e+00 | Grad: True  | Update: True  | Elapsed: 0:15:22 | ETA: 0:14:37
+Epoch[62] Batch[1701/3125] | Loss: 3.6947e+00 | Grad: True  | Update: True  | Elapsed: 0:16:19 | ETA: 0:13:40
+Epoch[62] Batch[1801/3125] | Loss: 3.6750e+00 | Grad: True  | Update: True  | Elapsed: 0:17:17 | ETA: 0:12:42
+Epoch[62] Batch[1901/3125] | Loss: 3.6139e+00 | Grad: True  | Update: True  | Elapsed: 0:18:14 | ETA: 0:11:44
+Epoch[62] Batch[2001/3125] | Loss: 3.5945e+00 | Grad: True  | Update: True  | Elapsed: 0:19:12 | ETA: 0:10:47
+Epoch[62] Batch[2101/3125] | Loss: 3.4486e+00 | Grad: True  | Update: True  | Elapsed: 0:20:10 | ETA: 0:09:49
+Epoch[62] Batch[2201/3125] | Loss: 3.5967e+00 | Grad: True  | Update: True  | Elapsed: 0:21:13 | ETA: 0:08:54
+Epoch[62] Batch[2301/3125] | Loss: 3.6988e+00 | Grad: True  | Update: True  | Elapsed: 0:23:01 | ETA: 0:08:14
+Epoch[62] Batch[2401/3125] | Loss: 3.7877e+00 | Grad: True  | Update: True  | Elapsed: 0:24:50 | ETA: 0:07:29
+Epoch[62] Batch[2501/3125] | Loss: 3.5080e+00 | Grad: True  | Update: True  | Elapsed: 0:26:39 | ETA: 0:06:39
+Epoch[62] Batch[2601/3125] | Loss: 3.3995e+00 | Grad: True  | Update: True  | Elapsed: 0:28:28 | ETA: 0:05:44
+Epoch[62] Batch[2701/3125] | Loss: 3.7404e+00 | Grad: True  | Update: True  | Elapsed: 0:30:17 | ETA: 0:04:45
+Epoch[62] Batch[2801/3125] | Loss: 3.5642e+00 | Grad: True  | Update: True  | Elapsed: 0:32:06 | ETA: 0:03:42
+Epoch[62] Batch[2901/3125] | Loss: 3.6445e+00 | Grad: True  | Update: True  | Elapsed: 0:33:56 | ETA: 0:02:37
+Epoch[62] Batch[3001/3125] | Loss: 3.8109e+00 | Grad: True  | Update: True  | Elapsed: 0:35:45 | ETA: 0:01:28
+Epoch[62] Batch[3101/3125] | Loss: 3.6480e+00 | Grad: True  | Update: True  | Elapsed: 0:37:35 | ETA: 0:00:17
+
+================================================================================
+✅ Epoch 62 完成 | 总耗时: 2281.77s | 平均 Loss: 3.5944e+00
+================================================================================
+
+Validation Epoch [62] | Batch [100/625] | L1: 3.8297e+00 | MAE: 2.5078e+00 | MSE: 3.0644e-02 | PCC: 1.3321e-02
+Validation Epoch [62] | Batch [200/625] | L1: 3.7581e+00 | MAE: 2.5424e+00 | MSE: 3.8650e-02 | PCC: 1.6879e-02
+Validation Epoch [62] | Batch [300/625] | L1: 3.8063e+00 | MAE: 2.5152e+00 | MSE: 3.1461e-02 | PCC: 1.3953e-02
+Validation Epoch [62] | Batch [400/625] | L1: 3.7327e+00 | MAE: 2.5646e+00 | MSE: 3.8229e-02 | PCC: 1.6455e-02
+Validation Epoch [62] | Batch [500/625] | L1: 3.8844e+00 | MAE: 2.8277e+00 | MSE: 5.5844e-02 | PCC: 2.4008e-02
+Validation Epoch [62] | Batch [600/625] | L1: 3.9262e+00 | MAE: 2.6684e+00 | MSE: 4.0473e-02 | PCC: 1.7238e-02
+Validation Epoch [62] | Batch [625/625] | L1: 3.5075e+00 | MAE: 2.6512e+00 | MSE: 3.8061e-02 | PCC: 1.6743e-02
+
+================================================================================
+✅ Epoch 62 验证完成
+📉 平均损失:
+   MAE:   2.5969e+00 | MSE:   3.8090e-02
+   Huber: 3.3610e+00 | PCC:   1.6634e-02
+   Comb:  2.7362e-02 | Comb2: 1.0531e-01
+================================================================================
+
+Epoch[63] Batch[1/3125] | Loss: 3.4446e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 1:01:54
+Epoch[63] Batch[101/3125] | Loss: 3.5621e+00 | Grad: True  | Update: True  | Elapsed: 0:01:50 | ETA: 0:55:15
+Epoch[63] Batch[201/3125] | Loss: 3.3623e+00 | Grad: True  | Update: True  | Elapsed: 0:03:40 | ETA: 0:53:29
+Epoch[63] Batch[301/3125] | Loss: 3.4464e+00 | Grad: True  | Update: True  | Elapsed: 0:05:29 | ETA: 0:51:33
+Epoch[63] Batch[401/3125] | Loss: 3.3869e+00 | Grad: True  | Update: True  | Elapsed: 0:07:19 | ETA: 0:49:45
+Epoch[63] Batch[501/3125] | Loss: 3.7354e+00 | Grad: True  | Update: True  | Elapsed: 0:09:09 | ETA: 0:47:56
+Epoch[63] Batch[601/3125] | Loss: 3.4105e+00 | Grad: True  | Update: True  | Elapsed: 0:10:58 | ETA: 0:46:05
+Epoch[63] Batch[701/3125] | Loss: 3.5643e+00 | Grad: True  | Update: True  | Elapsed: 0:12:48 | ETA: 0:44:16
+Epoch[63] Batch[801/3125] | Loss: 3.6019e+00 | Grad: True  | Update: True  | Elapsed: 0:14:37 | ETA: 0:42:27
+Epoch[63] Batch[901/3125] | Loss: 3.5156e+00 | Grad: True  | Update: True  | Elapsed: 0:16:27 | ETA: 0:40:37
+Epoch[63] Batch[1001/3125] | Loss: 3.6997e+00 | Grad: True  | Update: True  | Elapsed: 0:18:16 | ETA: 0:38:47
+Epoch[63] Batch[1101/3125] | Loss: 3.6943e+00 | Grad: True  | Update: True  | Elapsed: 0:20:06 | ETA: 0:36:58
+Epoch[63] Batch[1201/3125] | Loss: 3.4377e+00 | Grad: True  | Update: True  | Elapsed: 0:21:55 | ETA: 0:35:08
+Epoch[63] Batch[1301/3125] | Loss: 3.5283e+00 | Grad: True  | Update: True  | Elapsed: 0:23:45 | ETA: 0:33:18
+Epoch[63] Batch[1401/3125] | Loss: 3.5293e+00 | Grad: True  | Update: True  | Elapsed: 0:25:35 | ETA: 0:31:29
+Epoch[63] Batch[1501/3125] | Loss: 3.9083e+00 | Grad: True  | Update: True  | Elapsed: 0:27:24 | ETA: 0:29:39
+Epoch[63] Batch[1601/3125] | Loss: 3.4193e+00 | Grad: True  | Update: True  | Elapsed: 0:29:12 | ETA: 0:27:48
+Epoch[63] Batch[1701/3125] | Loss: 3.6383e+00 | Grad: True  | Update: True  | Elapsed: 0:31:01 | ETA: 0:25:58
+Epoch[63] Batch[1801/3125] | Loss: 3.6434e+00 | Grad: True  | Update: True  | Elapsed: 0:32:49 | ETA: 0:24:07
+Epoch[63] Batch[1901/3125] | Loss: 3.6018e+00 | Grad: True  | Update: True  | Elapsed: 0:34:37 | ETA: 0:22:17
+Epoch[63] Batch[2001/3125] | Loss: 3.5805e+00 | Grad: True  | Update: True  | Elapsed: 0:36:25 | ETA: 0:20:27
+Epoch[63] Batch[2101/3125] | Loss: 3.4480e+00 | Grad: True  | Update: True  | Elapsed: 0:38:14 | ETA: 0:18:38
+Epoch[63] Batch[2201/3125] | Loss: 3.6119e+00 | Grad: True  | Update: True  | Elapsed: 0:40:03 | ETA: 0:16:48
+Epoch[63] Batch[2301/3125] | Loss: 3.6614e+00 | Grad: True  | Update: True  | Elapsed: 0:41:51 | ETA: 0:14:59
+Epoch[63] Batch[2401/3125] | Loss: 3.7166e+00 | Grad: True  | Update: True  | Elapsed: 0:43:39 | ETA: 0:13:09
+Epoch[63] Batch[2501/3125] | Loss: 3.5124e+00 | Grad: True  | Update: True  | Elapsed: 0:45:27 | ETA: 0:11:20
+Epoch[63] Batch[2601/3125] | Loss: 3.3910e+00 | Grad: True  | Update: True  | Elapsed: 0:47:16 | ETA: 0:09:31
+Epoch[63] Batch[2701/3125] | Loss: 3.7808e+00 | Grad: True  | Update: True  | Elapsed: 0:49:04 | ETA: 0:07:42
+Epoch[63] Batch[2801/3125] | Loss: 3.5749e+00 | Grad: True  | Update: True  | Elapsed: 0:50:51 | ETA: 0:05:53
+Epoch[63] Batch[2901/3125] | Loss: 3.6138e+00 | Grad: True  | Update: True  | Elapsed: 0:52:40 | ETA: 0:04:04
+Epoch[63] Batch[3001/3125] | Loss: 3.8150e+00 | Grad: True  | Update: True  | Elapsed: 0:54:29 | ETA: 0:02:15
+Epoch[63] Batch[3101/3125] | Loss: 3.6429e+00 | Grad: True  | Update: True  | Elapsed: 0:56:17 | ETA: 0:00:26
+
+================================================================================
+✅ Epoch 63 完成 | 总耗时: 3403.09s | 平均 Loss: 3.5875e+00
+================================================================================
+
+Validation Epoch [63] | Batch [100/625] | L1: 3.8190e+00 | MAE: 2.5009e+00 | MSE: 3.1213e-02 | PCC: 1.3328e-02
+Validation Epoch [63] | Batch [200/625] | L1: 3.7549e+00 | MAE: 2.5412e+00 | MSE: 3.9689e-02 | PCC: 1.6851e-02
+Validation Epoch [63] | Batch [300/625] | L1: 3.8209e+00 | MAE: 2.5248e+00 | MSE: 3.2339e-02 | PCC: 1.3866e-02
+Validation Epoch [63] | Batch [400/625] | L1: 3.7341e+00 | MAE: 2.5666e+00 | MSE: 3.8699e-02 | PCC: 1.6417e-02
+Validation Epoch [63] | Batch [500/625] | L1: 3.8761e+00 | MAE: 2.8223e+00 | MSE: 5.7199e-02 | PCC: 2.4228e-02
+Validation Epoch [63] | Batch [600/625] | L1: 3.9172e+00 | MAE: 2.6623e+00 | MSE: 4.0268e-02 | PCC: 1.6919e-02
+Validation Epoch [63] | Batch [625/625] | L1: 3.4992e+00 | MAE: 2.6451e+00 | MSE: 3.9237e-02 | PCC: 1.6714e-02
+
+================================================================================
+✅ Epoch 63 验证完成
+📉 平均损失:
+   MAE:   2.5906e+00 | MSE:   3.8848e-02
+   Huber: 3.3515e+00 | PCC:   1.6564e-02
+   Comb:  2.7706e-02 | Comb2: 1.0628e-01
+================================================================================
+
+Epoch[64] Batch[1/3125] | Loss: 3.4972e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 0:58:52
+Epoch[64] Batch[101/3125] | Loss: 3.5414e+00 | Grad: True  | Update: True  | Elapsed: 0:01:49 | ETA: 0:54:45
+Epoch[64] Batch[201/3125] | Loss: 3.3516e+00 | Grad: True  | Update: True  | Elapsed: 0:03:38 | ETA: 0:52:58
+Epoch[64] Batch[301/3125] | Loss: 3.4276e+00 | Grad: True  | Update: True  | Elapsed: 0:05:25 | ETA: 0:50:54
+Epoch[64] Batch[401/3125] | Loss: 3.3714e+00 | Grad: True  | Update: True  | Elapsed: 0:07:14 | ETA: 0:49:10
+Epoch[64] Batch[501/3125] | Loss: 3.7267e+00 | Grad: True  | Update: True  | Elapsed: 0:09:03 | ETA: 0:47:26
+Epoch[64] Batch[601/3125] | Loss: 3.3971e+00 | Grad: True  | Update: True  | Elapsed: 0:10:52 | ETA: 0:45:38
+Epoch[64] Batch[701/3125] | Loss: 3.5500e+00 | Grad: True  | Update: True  | Elapsed: 0:12:34 | ETA: 0:43:30
+Epoch[64] Batch[801/3125] | Loss: 3.5861e+00 | Grad: True  | Update: True  | Elapsed: 0:14:20 | ETA: 0:41:36
+Epoch[64] Batch[901/3125] | Loss: 3.5028e+00 | Grad: True  | Update: True  | Elapsed: 0:16:00 | ETA: 0:39:30
+Epoch[64] Batch[1001/3125] | Loss: 3.6851e+00 | Grad: True  | Update: True  | Elapsed: 0:17:37 | ETA: 0:37:23
+Epoch[64] Batch[1101/3125] | Loss: 3.6815e+00 | Grad: True  | Update: True  | Elapsed: 0:19:16 | ETA: 0:35:26
+Epoch[64] Batch[1201/3125] | Loss: 3.4334e+00 | Grad: True  | Update: True  | Elapsed: 0:21:01 | ETA: 0:33:41
+Epoch[64] Batch[1301/3125] | Loss: 3.5248e+00 | Grad: True  | Update: True  | Elapsed: 0:22:40 | ETA: 0:31:47
+Epoch[64] Batch[1401/3125] | Loss: 3.5197e+00 | Grad: True  | Update: True  | Elapsed: 0:24:17 | ETA: 0:29:53
+Epoch[64] Batch[1501/3125] | Loss: 3.8944e+00 | Grad: True  | Update: True  | Elapsed: 0:25:51 | ETA: 0:27:58
+Epoch[64] Batch[1601/3125] | Loss: 3.4098e+00 | Grad: True  | Update: True  | Elapsed: 0:27:28 | ETA: 0:26:08
+Epoch[64] Batch[1701/3125] | Loss: 3.6308e+00 | Grad: True  | Update: True  | Elapsed: 0:29:03 | ETA: 0:24:19
+Epoch[64] Batch[1801/3125] | Loss: 3.6319e+00 | Grad: True  | Update: True  | Elapsed: 0:30:39 | ETA: 0:22:32
+Epoch[64] Batch[1901/3125] | Loss: 3.5923e+00 | Grad: True  | Update: True  | Elapsed: 0:32:13 | ETA: 0:20:45
+Epoch[64] Batch[2001/3125] | Loss: 3.5749e+00 | Grad: True  | Update: True  | Elapsed: 0:33:50 | ETA: 0:19:00
+Epoch[64] Batch[2101/3125] | Loss: 3.4364e+00 | Grad: True  | Update: True  | Elapsed: 0:35:28 | ETA: 0:17:17
+Epoch[64] Batch[2201/3125] | Loss: 3.5964e+00 | Grad: True  | Update: True  | Elapsed: 0:37:04 | ETA: 0:15:33
+Epoch[64] Batch[2301/3125] | Loss: 3.6543e+00 | Grad: True  | Update: True  | Elapsed: 0:38:38 | ETA: 0:13:50
+Epoch[64] Batch[2401/3125] | Loss: 3.7015e+00 | Grad: True  | Update: True  | Elapsed: 0:40:15 | ETA: 0:12:08
+Epoch[64] Batch[2501/3125] | Loss: 3.4914e+00 | Grad: True  | Update: True  | Elapsed: 0:41:53 | ETA: 0:10:27
+Epoch[64] Batch[2601/3125] | Loss: 3.3865e+00 | Grad: True  | Update: True  | Elapsed: 0:43:28 | ETA: 0:08:45
+Epoch[64] Batch[2701/3125] | Loss: 3.7681e+00 | Grad: True  | Update: True  | Elapsed: 0:45:03 | ETA: 0:07:04
+Epoch[64] Batch[2801/3125] | Loss: 3.5612e+00 | Grad: True  | Update: True  | Elapsed: 0:46:39 | ETA: 0:05:23
+Epoch[64] Batch[2901/3125] | Loss: 3.6006e+00 | Grad: True  | Update: True  | Elapsed: 0:48:17 | ETA: 0:03:43
+Epoch[64] Batch[3001/3125] | Loss: 3.7962e+00 | Grad: True  | Update: True  | Elapsed: 0:49:53 | ETA: 0:02:03
+Epoch[64] Batch[3101/3125] | Loss: 3.6313e+00 | Grad: True  | Update: True  | Elapsed: 0:51:28 | ETA: 0:00:23
+
+================================================================================
+✅ Epoch 64 完成 | 总耗时: 3112.25s | 平均 Loss: 3.5749e+00
+================================================================================
+
+Validation Epoch [64] | Batch [100/625] | L1: 3.8103e+00 | MAE: 2.4949e+00 | MSE: 3.0011e-02 | PCC: 1.3228e-02
+Validation Epoch [64] | Batch [200/625] | L1: 3.7504e+00 | MAE: 2.5380e+00 | MSE: 3.8402e-02 | PCC: 1.6791e-02
+Validation Epoch [64] | Batch [300/625] | L1: 3.8136e+00 | MAE: 2.5200e+00 | MSE: 3.1120e-02 | PCC: 1.3807e-02
+Validation Epoch [64] | Batch [400/625] | L1: 3.7291e+00 | MAE: 2.5631e+00 | MSE: 3.7495e-02 | PCC: 1.6367e-02
+Validation Epoch [64] | Batch [500/625] | L1: 3.8691e+00 | MAE: 2.8169e+00 | MSE: 5.5442e-02 | PCC: 2.4072e-02
+Validation Epoch [64] | Batch [600/625] | L1: 3.9065e+00 | MAE: 2.6550e+00 | MSE: 3.8828e-02 | PCC: 1.6794e-02
+Validation Epoch [64] | Batch [625/625] | L1: 3.4919e+00 | MAE: 2.6394e+00 | MSE: 3.7684e-02 | PCC: 1.6538e-02
+
+================================================================================
+✅ Epoch 64 验证完成
+📉 平均损失:
+   MAE:   2.5862e+00 | MSE:   3.7563e-02
+   Huber: 3.3452e+00 | PCC:   1.6484e-02
+   Comb:  2.7024e-02 | Comb2: 1.0458e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.804021
+✅ 已保存新最优模型 | 当前最优损失: 3.802071 | Epoch: 64
+Epoch[65] Batch[1/3125] | Loss: 3.4777e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 1:05:50
+Epoch[65] Batch[101/3125] | Loss: 3.5327e+00 | Grad: True  | Update: True  | Elapsed: 0:01:39 | ETA: 0:49:29
+Epoch[65] Batch[201/3125] | Loss: 3.3449e+00 | Grad: True  | Update: True  | Elapsed: 0:03:13 | ETA: 0:46:53
+Epoch[65] Batch[301/3125] | Loss: 3.4197e+00 | Grad: True  | Update: True  | Elapsed: 0:04:47 | ETA: 0:45:02
+Epoch[65] Batch[401/3125] | Loss: 3.3684e+00 | Grad: True  | Update: True  | Elapsed: 0:06:22 | ETA: 0:43:15
+Epoch[65] Batch[501/3125] | Loss: 3.7188e+00 | Grad: True  | Update: True  | Elapsed: 0:07:58 | ETA: 0:41:43
+Epoch[65] Batch[601/3125] | Loss: 3.3925e+00 | Grad: True  | Update: True  | Elapsed: 0:09:36 | ETA: 0:40:22
+Epoch[65] Batch[701/3125] | Loss: 3.5420e+00 | Grad: True  | Update: True  | Elapsed: 0:11:21 | ETA: 0:39:16
+Epoch[65] Batch[801/3125] | Loss: 3.5787e+00 | Grad: True  | Update: True  | Elapsed: 0:13:10 | ETA: 0:38:12
+Epoch[65] Batch[901/3125] | Loss: 3.4920e+00 | Grad: True  | Update: True  | Elapsed: 0:14:58 | ETA: 0:36:56
+Epoch[65] Batch[1001/3125] | Loss: 3.6750e+00 | Grad: True  | Update: True  | Elapsed: 0:16:45 | ETA: 0:35:32
+Epoch[65] Batch[1101/3125] | Loss: 3.6682e+00 | Grad: True  | Update: True  | Elapsed: 0:18:33 | ETA: 0:34:06
+Epoch[65] Batch[1201/3125] | Loss: 3.4272e+00 | Grad: True  | Update: True  | Elapsed: 0:20:18 | ETA: 0:32:32
+Epoch[65] Batch[1301/3125] | Loss: 3.5193e+00 | Grad: True  | Update: True  | Elapsed: 0:22:04 | ETA: 0:30:57
+Epoch[65] Batch[1401/3125] | Loss: 3.5135e+00 | Grad: True  | Update: True  | Elapsed: 0:23:51 | ETA: 0:29:21
+Epoch[65] Batch[1501/3125] | Loss: 3.8847e+00 | Grad: True  | Update: True  | Elapsed: 0:25:40 | ETA: 0:27:46
+Epoch[65] Batch[1601/3125] | Loss: 3.4019e+00 | Grad: True  | Update: True  | Elapsed: 0:27:29 | ETA: 0:26:09
+Epoch[65] Batch[1701/3125] | Loss: 3.6256e+00 | Grad: True  | Update: True  | Elapsed: 0:29:17 | ETA: 0:24:31
+Epoch[65] Batch[1801/3125] | Loss: 3.6250e+00 | Grad: True  | Update: True  | Elapsed: 0:31:04 | ETA: 0:22:50
+Epoch[65] Batch[1901/3125] | Loss: 3.5804e+00 | Grad: True  | Update: True  | Elapsed: 0:32:53 | ETA: 0:21:10
+Epoch[65] Batch[2001/3125] | Loss: 3.5716e+00 | Grad: True  | Update: True  | Elapsed: 0:34:41 | ETA: 0:19:29
+Epoch[65] Batch[2101/3125] | Loss: 3.4299e+00 | Grad: True  | Update: True  | Elapsed: 0:36:30 | ETA: 0:17:47
+Epoch[65] Batch[2201/3125] | Loss: 3.5824e+00 | Grad: True  | Update: True  | Elapsed: 0:38:17 | ETA: 0:16:04
+Epoch[65] Batch[2301/3125] | Loss: 3.6498e+00 | Grad: True  | Update: True  | Elapsed: 0:40:06 | ETA: 0:14:21
+Epoch[65] Batch[2401/3125] | Loss: 3.6938e+00 | Grad: True  | Update: True  | Elapsed: 0:41:55 | ETA: 0:12:38
+Epoch[65] Batch[2501/3125] | Loss: 3.4855e+00 | Grad: True  | Update: True  | Elapsed: 0:43:43 | ETA: 0:10:54
+Epoch[65] Batch[2601/3125] | Loss: 3.3803e+00 | Grad: True  | Update: True  | Elapsed: 0:45:30 | ETA: 0:09:10
+Epoch[65] Batch[2701/3125] | Loss: 3.7564e+00 | Grad: True  | Update: True  | Elapsed: 0:47:18 | ETA: 0:07:25
+Epoch[65] Batch[2801/3125] | Loss: 3.5473e+00 | Grad: True  | Update: True  | Elapsed: 0:49:07 | ETA: 0:05:40
+Epoch[65] Batch[2901/3125] | Loss: 3.5964e+00 | Grad: True  | Update: True  | Elapsed: 0:50:56 | ETA: 0:03:56
+Epoch[65] Batch[3001/3125] | Loss: 3.7887e+00 | Grad: True  | Update: True  | Elapsed: 0:52:42 | ETA: 0:02:10
+Epoch[65] Batch[3101/3125] | Loss: 3.6360e+00 | Grad: True  | Update: True  | Elapsed: 0:54:31 | ETA: 0:00:25
+
+================================================================================
+✅ Epoch 65 完成 | 总耗时: 3297.91s | 平均 Loss: 3.5673e+00
+================================================================================
+
+Validation Epoch [65] | Batch [100/625] | L1: 3.8157e+00 | MAE: 2.4984e+00 | MSE: 3.0228e-02 | PCC: 1.3387e-02
+Validation Epoch [65] | Batch [200/625] | L1: 3.7568e+00 | MAE: 2.5425e+00 | MSE: 3.8807e-02 | PCC: 1.7033e-02
+Validation Epoch [65] | Batch [300/625] | L1: 3.8184e+00 | MAE: 2.5232e+00 | MSE: 3.1198e-02 | PCC: 1.3947e-02
+Validation Epoch [65] | Batch [400/625] | L1: 3.7342e+00 | MAE: 2.5665e+00 | MSE: 3.7998e-02 | PCC: 1.6641e-02
+Validation Epoch [65] | Batch [500/625] | L1: 3.8709e+00 | MAE: 2.8183e+00 | MSE: 5.6084e-02 | PCC: 2.4325e-02
+Validation Epoch [65] | Batch [600/625] | L1: 3.9067e+00 | MAE: 2.6552e+00 | MSE: 3.9018e-02 | PCC: 1.6965e-02
+Validation Epoch [65] | Batch [625/625] | L1: 3.4953e+00 | MAE: 2.6421e+00 | MSE: 3.8147e-02 | PCC: 1.6699e-02
+
+================================================================================
+✅ Epoch 65 验证完成
+📉 平均损失:
+   MAE:   2.5882e+00 | MSE:   3.7842e-02
+   Huber: 3.3481e+00 | PCC:   1.6656e-02
+   Comb:  2.7249e-02 | Comb2: 1.0500e-01
+================================================================================
+
+Epoch[66] Batch[1/3125] | Loss: 3.4728e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 0:59:16
+Epoch[66] Batch[101/3125] | Loss: 3.5265e+00 | Grad: True  | Update: True  | Elapsed: 0:01:48 | ETA: 0:54:14
+Epoch[66] Batch[201/3125] | Loss: 3.3409e+00 | Grad: True  | Update: True  | Elapsed: 0:03:36 | ETA: 0:52:35
+Epoch[66] Batch[301/3125] | Loss: 3.4133e+00 | Grad: True  | Update: True  | Elapsed: 0:05:25 | ETA: 0:50:53
+Epoch[66] Batch[401/3125] | Loss: 3.3591e+00 | Grad: True  | Update: True  | Elapsed: 0:07:13 | ETA: 0:49:07
+Epoch[66] Batch[501/3125] | Loss: 3.7096e+00 | Grad: True  | Update: True  | Elapsed: 0:09:02 | ETA: 0:47:22
+Epoch[66] Batch[601/3125] | Loss: 3.3847e+00 | Grad: True  | Update: True  | Elapsed: 0:10:50 | ETA: 0:45:29
+Epoch[66] Batch[701/3125] | Loss: 3.5393e+00 | Grad: True  | Update: True  | Elapsed: 0:12:38 | ETA: 0:43:42
+Epoch[66] Batch[801/3125] | Loss: 3.5724e+00 | Grad: True  | Update: True  | Elapsed: 0:14:27 | ETA: 0:41:57
+Epoch[66] Batch[901/3125] | Loss: 3.4873e+00 | Grad: True  | Update: True  | Elapsed: 0:16:15 | ETA: 0:40:07
+Epoch[66] Batch[1001/3125] | Loss: 3.6684e+00 | Grad: True  | Update: True  | Elapsed: 0:18:03 | ETA: 0:38:19
+Epoch[66] Batch[1101/3125] | Loss: 3.6652e+00 | Grad: True  | Update: True  | Elapsed: 0:19:51 | ETA: 0:36:30
+Epoch[66] Batch[1201/3125] | Loss: 3.4250e+00 | Grad: True  | Update: True  | Elapsed: 0:21:40 | ETA: 0:34:43
+Epoch[66] Batch[1301/3125] | Loss: 3.5164e+00 | Grad: True  | Update: True  | Elapsed: 0:23:27 | ETA: 0:32:53
+Epoch[66] Batch[1401/3125] | Loss: 3.5083e+00 | Grad: True  | Update: True  | Elapsed: 0:25:16 | ETA: 0:31:05
+Epoch[66] Batch[1501/3125] | Loss: 3.8790e+00 | Grad: True  | Update: True  | Elapsed: 0:27:04 | ETA: 0:29:17
+Epoch[66] Batch[1601/3125] | Loss: 3.3943e+00 | Grad: True  | Update: True  | Elapsed: 0:28:53 | ETA: 0:27:29
+Epoch[66] Batch[1701/3125] | Loss: 3.6192e+00 | Grad: True  | Update: True  | Elapsed: 0:30:40 | ETA: 0:25:40
+Epoch[66] Batch[1801/3125] | Loss: 3.6159e+00 | Grad: True  | Update: True  | Elapsed: 0:32:28 | ETA: 0:23:52
+Epoch[66] Batch[1901/3125] | Loss: 3.5748e+00 | Grad: True  | Update: True  | Elapsed: 0:34:13 | ETA: 0:22:02
+Epoch[66] Batch[2001/3125] | Loss: 3.5721e+00 | Grad: True  | Update: True  | Elapsed: 0:35:59 | ETA: 0:20:12
+Epoch[66] Batch[2101/3125] | Loss: 3.4239e+00 | Grad: True  | Update: True  | Elapsed: 0:37:44 | ETA: 0:18:23
+Epoch[66] Batch[2201/3125] | Loss: 3.5774e+00 | Grad: True  | Update: True  | Elapsed: 0:39:27 | ETA: 0:16:34
+Epoch[66] Batch[2301/3125] | Loss: 3.6436e+00 | Grad: True  | Update: True  | Elapsed: 0:41:12 | ETA: 0:14:45
+Epoch[66] Batch[2401/3125] | Loss: 3.6876e+00 | Grad: True  | Update: True  | Elapsed: 0:42:57 | ETA: 0:12:57
+Epoch[66] Batch[2501/3125] | Loss: 3.4793e+00 | Grad: True  | Update: True  | Elapsed: 0:44:42 | ETA: 0:11:09
+Epoch[66] Batch[2601/3125] | Loss: 3.3774e+00 | Grad: True  | Update: True  | Elapsed: 0:46:28 | ETA: 0:09:21
+Epoch[66] Batch[2701/3125] | Loss: 3.7437e+00 | Grad: True  | Update: True  | Elapsed: 0:48:18 | ETA: 0:07:34
+Epoch[66] Batch[2801/3125] | Loss: 3.5384e+00 | Grad: True  | Update: True  | Elapsed: 0:50:06 | ETA: 0:05:47
+Epoch[66] Batch[2901/3125] | Loss: 3.5828e+00 | Grad: True  | Update: True  | Elapsed: 0:51:51 | ETA: 0:04:00
+Epoch[66] Batch[3001/3125] | Loss: 3.7901e+00 | Grad: True  | Update: True  | Elapsed: 0:53:33 | ETA: 0:02:12
+Epoch[66] Batch[3101/3125] | Loss: 3.6278e+00 | Grad: True  | Update: True  | Elapsed: 0:55:17 | ETA: 0:00:25
+
+================================================================================
+✅ Epoch 66 完成 | 总耗时: 3343.34s | 平均 Loss: 3.5620e+00
+================================================================================
+
+Validation Epoch [66] | Batch [100/625] | L1: 3.8063e+00 | MAE: 2.4921e+00 | MSE: 2.9188e-02 | PCC: 1.3280e-02
+Validation Epoch [66] | Batch [200/625] | L1: 3.7527e+00 | MAE: 2.5397e+00 | MSE: 3.7663e-02 | PCC: 1.6964e-02
+Validation Epoch [66] | Batch [300/625] | L1: 3.8079e+00 | MAE: 2.5163e+00 | MSE: 3.0121e-02 | PCC: 1.3846e-02
+Validation Epoch [66] | Batch [400/625] | L1: 3.7288e+00 | MAE: 2.5627e+00 | MSE: 3.7090e-02 | PCC: 1.6601e-02
+Validation Epoch [66] | Batch [500/625] | L1: 3.8650e+00 | MAE: 2.8142e+00 | MSE: 5.4375e-02 | PCC: 2.4206e-02
+Validation Epoch [66] | Batch [600/625] | L1: 3.8995e+00 | MAE: 2.6501e+00 | MSE: 3.7597e-02 | PCC: 1.6771e-02
+Validation Epoch [66] | Batch [625/625] | L1: 3.4854e+00 | MAE: 2.6349e+00 | MSE: 3.6733e-02 | PCC: 1.6562e-02
+
+================================================================================
+✅ Epoch 66 验证完成
+📉 平均损失:
+   MAE:   2.5832e+00 | MSE:   3.6614e-02
+   Huber: 3.3408e+00 | PCC:   1.6547e-02
+   Comb:  2.6581e-02 | Comb2: 1.0335e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.802071
+✅ 已保存新最优模型 | 当前最优损失: 3.797655 | Epoch: 66
+Epoch[67] Batch[1/3125] | Loss: 3.4562e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 0:59:48
+Epoch[67] Batch[101/3125] | Loss: 3.5164e+00 | Grad: True  | Update: True  | Elapsed: 0:01:43 | ETA: 0:51:31
+Epoch[67] Batch[201/3125] | Loss: 3.3380e+00 | Grad: True  | Update: True  | Elapsed: 0:03:27 | ETA: 0:50:17
+Epoch[67] Batch[301/3125] | Loss: 3.4080e+00 | Grad: True  | Update: True  | Elapsed: 0:05:12 | ETA: 0:48:52
+Epoch[67] Batch[401/3125] | Loss: 3.3592e+00 | Grad: True  | Update: True  | Elapsed: 0:06:58 | ETA: 0:47:20
+Epoch[67] Batch[501/3125] | Loss: 3.6995e+00 | Grad: True  | Update: True  | Elapsed: 0:08:43 | ETA: 0:45:42
+Epoch[67] Batch[601/3125] | Loss: 3.3846e+00 | Grad: True  | Update: True  | Elapsed: 0:10:32 | ETA: 0:44:16
+Epoch[67] Batch[701/3125] | Loss: 3.5335e+00 | Grad: True  | Update: True  | Elapsed: 0:12:20 | ETA: 0:42:42
+Epoch[67] Batch[801/3125] | Loss: 3.5668e+00 | Grad: True  | Update: True  | Elapsed: 0:14:09 | ETA: 0:41:05
+Epoch[67] Batch[901/3125] | Loss: 3.4825e+00 | Grad: True  | Update: True  | Elapsed: 0:15:56 | ETA: 0:39:21
+Epoch[67] Batch[1001/3125] | Loss: 3.6619e+00 | Grad: True  | Update: True  | Elapsed: 0:17:44 | ETA: 0:37:39
+Epoch[67] Batch[1101/3125] | Loss: 3.6551e+00 | Grad: True  | Update: True  | Elapsed: 0:19:33 | ETA: 0:35:57
+Epoch[67] Batch[1201/3125] | Loss: 3.4157e+00 | Grad: True  | Update: True  | Elapsed: 0:21:22 | ETA: 0:34:14
+Epoch[67] Batch[1301/3125] | Loss: 3.5170e+00 | Grad: True  | Update: True  | Elapsed: 0:23:08 | ETA: 0:32:26
+Epoch[67] Batch[1401/3125] | Loss: 3.5046e+00 | Grad: True  | Update: True  | Elapsed: 0:24:57 | ETA: 0:30:42
+Epoch[67] Batch[1501/3125] | Loss: 3.8769e+00 | Grad: True  | Update: True  | Elapsed: 0:26:45 | ETA: 0:28:57
+Epoch[67] Batch[1601/3125] | Loss: 3.3893e+00 | Grad: True  | Update: True  | Elapsed: 0:28:34 | ETA: 0:27:12
+Epoch[67] Batch[1701/3125] | Loss: 3.6131e+00 | Grad: True  | Update: True  | Elapsed: 0:30:20 | ETA: 0:25:24
+Epoch[67] Batch[1801/3125] | Loss: 3.6121e+00 | Grad: True  | Update: True  | Elapsed: 0:32:08 | ETA: 0:23:37
+Epoch[67] Batch[1901/3125] | Loss: 3.5675e+00 | Grad: True  | Update: True  | Elapsed: 0:33:57 | ETA: 0:21:51
+Epoch[67] Batch[2001/3125] | Loss: 3.5661e+00 | Grad: True  | Update: True  | Elapsed: 0:35:45 | ETA: 0:20:05
+Epoch[67] Batch[2101/3125] | Loss: 3.4198e+00 | Grad: True  | Update: True  | Elapsed: 0:37:32 | ETA: 0:18:17
+Epoch[67] Batch[2201/3125] | Loss: 3.5675e+00 | Grad: True  | Update: True  | Elapsed: 0:39:20 | ETA: 0:16:30
+Epoch[67] Batch[2301/3125] | Loss: 3.6408e+00 | Grad: True  | Update: True  | Elapsed: 0:41:20 | ETA: 0:14:48
+Epoch[67] Batch[2401/3125] | Loss: 3.6826e+00 | Grad: True  | Update: True  | Elapsed: 0:43:29 | ETA: 0:13:06
+Epoch[67] Batch[2501/3125] | Loss: 3.4741e+00 | Grad: True  | Update: True  | Elapsed: 0:45:29 | ETA: 0:11:21
+Epoch[67] Batch[2601/3125] | Loss: 3.3732e+00 | Grad: True  | Update: True  | Elapsed: 0:47:18 | ETA: 0:09:31
+Epoch[67] Batch[2701/3125] | Loss: 3.7318e+00 | Grad: True  | Update: True  | Elapsed: 0:49:06 | ETA: 0:07:42
+Epoch[67] Batch[2801/3125] | Loss: 3.5317e+00 | Grad: True  | Update: True  | Elapsed: 0:50:55 | ETA: 0:05:53
+Epoch[67] Batch[2901/3125] | Loss: 3.5911e+00 | Grad: True  | Update: True  | Elapsed: 0:52:41 | ETA: 0:04:04
+Epoch[67] Batch[3001/3125] | Loss: 3.7777e+00 | Grad: True  | Update: True  | Elapsed: 0:54:29 | ETA: 0:02:15
+Epoch[67] Batch[3101/3125] | Loss: 3.6174e+00 | Grad: True  | Update: True  | Elapsed: 0:56:18 | ETA: 0:00:26
+
+================================================================================
+✅ Epoch 67 完成 | 总耗时: 3404.63s | 平均 Loss: 3.5573e+00
+================================================================================
+
+Validation Epoch [67] | Batch [100/625] | L1: 3.7996e+00 | MAE: 2.4879e+00 | MSE: 2.8586e-02 | PCC: 1.3258e-02
+Validation Epoch [67] | Batch [200/625] | L1: 3.7439e+00 | MAE: 2.5335e+00 | MSE: 3.6927e-02 | PCC: 1.6950e-02
+Validation Epoch [67] | Batch [300/625] | L1: 3.7941e+00 | MAE: 2.5071e+00 | MSE: 2.9468e-02 | PCC: 1.3845e-02
+Validation Epoch [67] | Batch [400/625] | L1: 3.7172e+00 | MAE: 2.5547e+00 | MSE: 3.6364e-02 | PCC: 1.6597e-02
+Validation Epoch [67] | Batch [500/625] | L1: 3.8626e+00 | MAE: 2.8123e+00 | MSE: 5.3742e-02 | PCC: 2.4220e-02
+Validation Epoch [67] | Batch [600/625] | L1: 3.8902e+00 | MAE: 2.6437e+00 | MSE: 3.7033e-02 | PCC: 1.6800e-02
+Validation Epoch [67] | Batch [625/625] | L1: 3.4812e+00 | MAE: 2.6317e+00 | MSE: 3.6187e-02 | PCC: 1.6537e-02
+
+================================================================================
+✅ Epoch 67 验证完成
+📉 平均损失:
+   MAE:   2.5780e+00 | MSE:   3.5921e-02
+   Huber: 3.3333e+00 | PCC:   1.6526e-02
+   Comb:  2.6223e-02 | Comb2: 1.0242e-01
+================================================================================
+
+🗑️  已删除旧最优模型 | 历史最优损失: 3.797655
+✅ 已保存新最优模型 | 当前最优损失: 3.790209 | Epoch: 67
+Epoch[68] Batch[1/3125] | Loss: 3.4391e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 0:57:45
+Epoch[68] Batch[101/3125] | Loss: 3.5108e+00 | Grad: True  | Update: True  | Elapsed: 0:01:49 | ETA: 0:54:41
+Epoch[68] Batch[201/3125] | Loss: 3.3378e+00 | Grad: True  | Update: True  | Elapsed: 0:03:38 | ETA: 0:52:59
+Epoch[68] Batch[301/3125] | Loss: 3.4042e+00 | Grad: True  | Update: True  | Elapsed: 0:05:27 | ETA: 0:51:11
+Epoch[68] Batch[401/3125] | Loss: 3.3611e+00 | Grad: True  | Update: True  | Elapsed: 0:07:13 | ETA: 0:49:03
+Epoch[68] Batch[501/3125] | Loss: 3.6957e+00 | Grad: True  | Update: True  | Elapsed: 0:09:02 | ETA: 0:47:19
+Epoch[68] Batch[601/3125] | Loss: 3.3788e+00 | Grad: True  | Update: True  | Elapsed: 0:10:50 | ETA: 0:45:32
+Epoch[68] Batch[701/3125] | Loss: 3.5322e+00 | Grad: True  | Update: True  | Elapsed: 0:12:39 | ETA: 0:43:47
+Epoch[68] Batch[801/3125] | Loss: 3.5673e+00 | Grad: True  | Update: True  | Elapsed: 0:14:28 | ETA: 0:41:59
+Epoch[68] Batch[901/3125] | Loss: 3.4779e+00 | Grad: True  | Update: True  | Elapsed: 0:16:16 | ETA: 0:40:11
+Epoch[68] Batch[1001/3125] | Loss: 3.6527e+00 | Grad: True  | Update: True  | Elapsed: 0:18:08 | ETA: 0:38:30
+Epoch[68] Batch[1101/3125] | Loss: 3.6521e+00 | Grad: True  | Update: True  | Elapsed: 0:19:57 | ETA: 0:36:42
+Epoch[68] Batch[1201/3125] | Loss: 3.4206e+00 | Grad: True  | Update: True  | Elapsed: 0:21:43 | ETA: 0:34:48
+Epoch[68] Batch[1301/3125] | Loss: 3.5136e+00 | Grad: True  | Update: True  | Elapsed: 0:23:30 | ETA: 0:32:57
+Epoch[68] Batch[1401/3125] | Loss: 3.5016e+00 | Grad: True  | Update: True  | Elapsed: 0:25:14 | ETA: 0:31:03
+Epoch[68] Batch[1501/3125] | Loss: 3.8744e+00 | Grad: True  | Update: True  | Elapsed: 0:27:00 | ETA: 0:29:13
+Epoch[68] Batch[1601/3125] | Loss: 3.3858e+00 | Grad: True  | Update: True  | Elapsed: 0:28:37 | ETA: 0:27:15
+Epoch[68] Batch[1701/3125] | Loss: 3.6087e+00 | Grad: True  | Update: True  | Elapsed: 0:30:15 | ETA: 0:25:19
+Epoch[68] Batch[1801/3125] | Loss: 3.6173e+00 | Grad: True  | Update: True  | Elapsed: 0:31:49 | ETA: 0:23:23
+Epoch[68] Batch[1901/3125] | Loss: 3.5671e+00 | Grad: True  | Update: True  | Elapsed: 0:33:27 | ETA: 0:21:32
+Epoch[68] Batch[2001/3125] | Loss: 3.5598e+00 | Grad: True  | Update: True  | Elapsed: 0:35:01 | ETA: 0:19:40
+Epoch[68] Batch[2101/3125] | Loss: 3.4163e+00 | Grad: True  | Update: True  | Elapsed: 0:36:36 | ETA: 0:17:50
+Epoch[68] Batch[2201/3125] | Loss: 3.5623e+00 | Grad: True  | Update: True  | Elapsed: 0:38:13 | ETA: 0:16:02
+Epoch[68] Batch[2301/3125] | Loss: 3.6351e+00 | Grad: True  | Update: True  | Elapsed: 0:39:48 | ETA: 0:14:15
+Epoch[68] Batch[2401/3125] | Loss: 3.6781e+00 | Grad: True  | Update: True  | Elapsed: 0:41:22 | ETA: 0:12:28
+Epoch[68] Batch[2501/3125] | Loss: 3.4707e+00 | Grad: True  | Update: True  | Elapsed: 0:42:56 | ETA: 0:10:42
+Epoch[68] Batch[2601/3125] | Loss: 3.3710e+00 | Grad: True  | Update: True  | Elapsed: 0:44:31 | ETA: 0:08:58
+Epoch[68] Batch[2701/3125] | Loss: 3.7258e+00 | Grad: True  | Update: True  | Elapsed: 0:46:07 | ETA: 0:07:14
+Epoch[68] Batch[2801/3125] | Loss: 3.5257e+00 | Grad: True  | Update: True  | Elapsed: 0:47:42 | ETA: 0:05:31
+Epoch[68] Batch[2901/3125] | Loss: 3.5851e+00 | Grad: True  | Update: True  | Elapsed: 0:49:16 | ETA: 0:03:48
+Epoch[68] Batch[3001/3125] | Loss: 3.7744e+00 | Grad: True  | Update: True  | Elapsed: 0:50:53 | ETA: 0:02:06
+Epoch[68] Batch[3101/3125] | Loss: 3.6138e+00 | Grad: True  | Update: True  | Elapsed: 0:52:28 | ETA: 0:00:24
+
+================================================================================
+✅ Epoch 68 完成 | 总耗时: 3171.31s | 平均 Loss: 3.5541e+00
+================================================================================
+
+Validation Epoch [68] | Batch [100/625] | L1: 3.8014e+00 | MAE: 2.4890e+00 | MSE: 2.9005e-02 | PCC: 1.3282e-02
+Validation Epoch [68] | Batch [200/625] | L1: 3.7454e+00 | MAE: 2.5343e+00 | MSE: 3.7353e-02 | PCC: 1.6985e-02
+Validation Epoch [68] | Batch [300/625] | L1: 3.7958e+00 | MAE: 2.5083e+00 | MSE: 2.9763e-02 | PCC: 1.3819e-02
+Validation Epoch [68] | Batch [400/625] | L1: 3.7183e+00 | MAE: 2.5552e+00 | MSE: 3.6757e-02 | PCC: 1.6572e-02
+Validation Epoch [68] | Batch [500/625] | L1: 3.8639e+00 | MAE: 2.8131e+00 | MSE: 5.4390e-02 | PCC: 2.4238e-02
+Validation Epoch [68] | Batch [600/625] | L1: 3.8958e+00 | MAE: 2.6474e+00 | MSE: 3.7543e-02 | PCC: 1.6867e-02
+Validation Epoch [68] | Batch [625/625] | L1: 3.4792e+00 | MAE: 2.6300e+00 | MSE: 3.6360e-02 | PCC: 1.6483e-02
+
+================================================================================
+✅ Epoch 68 验证完成
+📉 平均损失:
+   MAE:   2.5799e+00 | MSE:   3.6401e-02
+   Huber: 3.3364e+00 | PCC:   1.6553e-02
+   Comb:  2.6477e-02 | Comb2: 1.0306e-01
+================================================================================
+
+Epoch[69] Batch[1/3125] | Loss: 3.4325e+00 | Grad: True  | Update: True  | Elapsed: 0:00:01 | ETA: 0:58:13
+Epoch[69] Batch[101/3125] | Loss: 3.5060e+00 | Grad: True  | Update: True  | Elapsed: 0:01:35 | ETA: 0:47:26
+Epoch[69] Batch[201/3125] | Loss: 3.3370e+00 | Grad: True  | Update: True  | Elapsed: 0:03:11 | ETA: 0:46:26
+Epoch[69] Batch[301/3125] | Loss: 3.3997e+00 | Grad: True  | Update: True  | Elapsed: 0:04:48 | ETA: 0:45:06
+Epoch[69] Batch[401/3125] | Loss: 3.3539e+00 | Grad: True  | Update: True  | Elapsed: 0:06:22 | ETA: 0:43:16
+Epoch[69] Batch[501/3125] | Loss: 3.6941e+00 | Grad: True  | Update: True  | Elapsed: 0:07:58 | ETA: 0:41:45
+Epoch[69] Batch[601/3125] | Loss: 3.3798e+00 | Grad: True  | Update: True  | Elapsed: 0:09:35 | ETA: 0:40:15
+Epoch[69] Batch[701/3125] | Loss: 3.5388e+00 | Grad: True  | Update: True  | Elapsed: 0:11:13 | ETA: 0:38:47
+Epoch[69] Batch[801/3125] | Loss: 3.5742e+00 | Grad: True  | Update: True  | Elapsed: 0:12:48 | ETA: 0:37:09
+已终止
