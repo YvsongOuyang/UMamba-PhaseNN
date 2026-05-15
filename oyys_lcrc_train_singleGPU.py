@@ -17,6 +17,16 @@ from utils import CombinedDiffractionLoss, get_criterion
 
 from datetime import timedelta
 
+def str2bool(value):
+    if isinstance(value, bool):
+        return value
+    value = value.lower()
+    if value in ("true", "1", "yes", "y", "on"):
+        return True
+    if value in ("false", "0", "no", "n", "off"):
+        return False
+    raise argparse.ArgumentTypeError(f"Expected a boolean value, got: {value}")
+
 def loss_log(Y_true, Y_pred):
     # 使用 log10(x + 1)
     pred = torch.log10(Y_pred + 1.0)
@@ -203,6 +213,7 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
         if i % 100 == 0:
             print(f"Epoch[{epoch}] Batch[{current_iter}/{num_batches}] | "
                 f"Loss: {loss.item():.4e} | "
+                f"LR: {optimizer.param_groups[0]['lr']:.3e} | "
                 f"Grad: {str(has_grad):5s} | Update: {str(before!=after):5s} | "
                 f"Elapsed: {elapsed_str} | ETA: {eta_str}",
                 flush=True)
@@ -242,9 +253,7 @@ def validation(args, model, criterion, validloader, epoch):
             with torch.cuda.amp.autocast(enabled=args.fp16 and args.device == 'cuda'):
                 y, _, pred_amps, pred_phs, support = model(ft_images)  # 前向传播
 
-                # 能量对齐
-                scale_raw = torch.sum(ft_images) / (torch.sum(y) + 1e-10)
-                y = y * scale_raw
+                # Keep validation on the same raw diffraction scale as training; no scale_raw normalization is applied.
                 
                 # 计算各项指标
                 details['loss_l1'] = criterion(ft_images, y)
@@ -383,6 +392,7 @@ if __name__ == "__main__":
     parser.add_argument('--loss_type', type=str, default='mae', help='loss type')
     parser.add_argument('--Initlr', type=float, default=1e-5, help='initial lr')
     parser.add_argument('--lr_type', type=str, default='clr', help='lr type')
+    parser.add_argument('--min_lr', type=float, default=1e-6, help='minimum lr for cosine/plateau schedulers')
     parser.add_argument('--clr_step_epochs', type=float, default=6.0, help='epochs for one CLR warm-up half-cycle')
     parser.add_argument('--optim_type', type=str, default='adam', help='lr optim_type')
     #parser.add_argument('--use_down_stride', action='store_true', default=False)
@@ -393,16 +403,18 @@ if __name__ == "__main__":
     parser.add_argument('--save_model', type=int, default=1)
     parser.add_argument('--num_threads', type=int, default=0)
     parser.add_argument('--fp16', action='store_true', default=False, help='enable mixed precision training; disabled by default')
+    parser.add_argument('--reset_optimizer', action='store_true',
+                        help='load checkpoint weights but restart optimizer/scheduler/scaler with the requested lr settings')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
     parser.add_argument('--shape', type=int, default=64)
     parser.add_argument('--T', type=float, default=0.1)
     parser.add_argument('--nconv', type=int, default=32)
-    parser.add_argument('--use_down_stride', type=bool, default=False)
-    parser.add_argument('--use_up_stride', type=bool, default=False)
+    parser.add_argument('--use_down_stride', type=str2bool, default=False)
+    parser.add_argument('--use_up_stride', type=str2bool, default=False)
     parser.add_argument('--n_blocks', type=int, default=4)
-    parser.add_argument('--unsupervise', type=bool, default=True) 
+    parser.add_argument('--unsupervise', type=str2bool, default=True)
     parser.add_argument('--scale_I', type=int, default=1) 
 
     args = parser.parse_args()
@@ -650,6 +662,24 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unsupported optim_type: {args.optim_type}")
 
+    training_losses = []
+    validation_losses = []
+    epochs = 0
+    best_val_loss = float('inf')
+    global_step = 0
+
+    if load_success and isinstance(checkpoint, dict):
+        training_losses = checkpoint.get("training_losses", training_losses)
+        validation_losses = checkpoint.get("validation_losses", validation_losses)
+        best_val_loss = checkpoint.get("best_val_loss", best_val_loss)
+        epochs = int(checkpoint.get("epoch", epochs))
+        global_step = int(checkpoint.get("global_step", epochs * len(train_loader)))
+        if args.reset_optimizer:
+            training_losses = []
+            validation_losses = []
+            best_val_loss = float('inf')
+        print(f"Resume metadata loaded: next_epoch={epochs + 1} | global_step={global_step}")
+
     if args.lr_type == 'clr':
         iterations_per_epoch = len(train_loader)
         step_size = max(1, int(round(args.clr_step_epochs * iterations_per_epoch)))
@@ -657,43 +687,37 @@ if __name__ == "__main__":
         scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=LR/10,
                                                       max_lr=LR, step_size_up=step_size,
                                                       cycle_momentum=False, mode='triangular2')
+    elif args.lr_type == 'cosine':
+        remaining_epochs = max(1, args.epoch - epochs)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=remaining_epochs, eta_min=args.min_lr)
     elif args.lr_type == 'step':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
     elif args.lr_type == 'plateau':
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5, min_lr=1e-6)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=5, min_lr=args.min_lr)
     else:
         raise ValueError(f"Unsupported lr_type: {args.lr_type}")
+    print(f"LR scheduler: {args.lr_type} | init_lr={LR:.3e} | min_lr={args.min_lr:.3e}", flush=True)
 
     scaler = torch.cuda.amp.GradScaler(enabled=(args.fp16 and args.device == 'cuda'))
 
-    training_losses = []
-    validation_losses = []
-    epochs = 0
-
     t_start = time.time()
 
-    best_val_loss = float('inf')
     # 最优模型固定保存路径（只会保留这一个最新最优文件）
     best_model_path = arguments_strOut + '/best_model.pt'
-    global_step = 0
-
     if load_success and isinstance(checkpoint, dict):
-        if "optimizer_state_dict" in checkpoint:
-            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-            print("✅ 优化器状态已恢复")
-        if "scheduler" in checkpoint:
-            scheduler.load_state_dict(checkpoint["scheduler"])
-            print("✅ 学习率调度器状态已恢复")
-        if "scaler" in checkpoint and scaler.is_enabled():
-            scaler.load_state_dict(checkpoint["scaler"])
-            print("✅ GradScaler 状态已恢复")
-
-        training_losses = checkpoint.get("training_losses", training_losses)
-        validation_losses = checkpoint.get("validation_losses", validation_losses)
-        best_val_loss = checkpoint.get("best_val_loss", best_val_loss)
-        epochs = int(checkpoint.get("epoch", epochs))
-        global_step = int(checkpoint.get("global_step", epochs * len(train_loader)))
-        print(f"✅ 将从 epoch {epochs + 1} 继续训练 | global_step={global_step}")
+        if args.reset_optimizer:
+            print("Reset optimizer/scheduler/scaler; checkpoint weights and resume position were kept.")
+        else:
+            if "optimizer_state_dict" in checkpoint:
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                print("Optimizer state restored.")
+            if "scheduler" in checkpoint:
+                scheduler.load_state_dict(checkpoint["scheduler"])
+                print("Scheduler state restored.")
+            if "scaler" in checkpoint and scaler.is_enabled():
+                scaler.load_state_dict(checkpoint["scaler"])
+                print("GradScaler state restored.")
 
     for epoch in range(epochs + 1, args.epoch+1):
         
@@ -710,12 +734,15 @@ if __name__ == "__main__":
 
         if args.lr_type == 'step':
             scheduler.step()
+        elif args.lr_type == 'cosine':
+            scheduler.step()
         elif args.lr_type == 'plateau':
             scheduler.step(val_loss_details['loss_l1'])
 
         # ===================== 修复2：记录学习率（兼容所有调度器） =====================
         current_lr = optimizer.param_groups[0]['lr']
         writer.add_scalar("Lr_epoch", current_lr, epoch)
+        print(f"Epoch {epoch} scheduler lr: {current_lr:.3e}", flush=True)
 
         # ===================== 自动保存【最优模型】 =====================
 

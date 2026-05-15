@@ -12,6 +12,8 @@ class Dataset(torch.utils.data.Dataset):
     def __init__(self, diff_path, real_path, num_samples, shape_diff=(64, 64, 64), shape_real=(64, 64, 64),
                  dtype_diff='float32', dtype_real='complex64', scale_I=0, shuffle=True):
         self.num_samples = num_samples
+        # Kept for CLI compatibility. This memmap loader currently returns raw
+        # diffraction data and does not normalize by scale_I.
         self.scale_I = scale_I
         
         self.mmap_diff = np.memmap(diff_path, dtype=dtype_diff, mode='r', 

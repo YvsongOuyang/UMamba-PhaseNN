@@ -34,6 +34,7 @@ fp16=false
 unsupervise=false
 use_down_stride=false
 use_up_stride=false
+reset_optimizer=true
 
 train_size='25000'
 num_samples_train=25000
@@ -41,12 +42,13 @@ num_samples_val=5000
 train_perc=0.9
 batch_size=8
 n_epoch=100
-Initlr=1e-3
+Initlr=4e-4
+min_lr=1e-5
 T=0.1
-scale_I=1
-lr_type='plateau' #'clr', 'step', 'plateau'
+scale_I=1  # NOTE: current memmap DataLoader keeps this for compatibility but does not normalize by scale_I.
+lr_type='cosine' #'cosine', 'clr', 'step', 'plateau'
 optim_type='adam' #'adam', 'adamw'
-loss_type='comb2'  # 'mae', 'mse', 'combined'
+loss_type='l1'  # Training intentionally uses fixed L1Loss in oyys_lcrc_train_singleGPU.py.
 
 save_model=10
 n_workers=8  # <--- 修改了这里，单机推荐 8-32 之间
@@ -66,6 +68,9 @@ extra_args=()
 if [[ "$fp16" == true ]]; then
     extra_args+=(--fp16)
 fi
+if [[ "$reset_optimizer" == true ]]; then
+    extra_args+=(--reset_optimizer)
+fi
 
 # 直接使用 python 运行即可
 python "$SCRIPT" \
@@ -82,6 +87,7 @@ python "$SCRIPT" \
     --epoch "$n_epoch" \
     --optim_type "$optim_type" \
     --Initlr "$Initlr" \
+    --min_lr "$min_lr" \
     "${extra_args[@]}" \
     --unsupervise "$unsupervise" \
     --use_down_stride "$use_down_stride" \
