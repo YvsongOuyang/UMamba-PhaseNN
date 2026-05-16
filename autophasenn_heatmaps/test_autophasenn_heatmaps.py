@@ -2,8 +2,14 @@ import argparse
 import csv
 import json
 import os
+import sys
 from collections import OrderedDict
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 import matplotlib
 
@@ -349,7 +355,7 @@ def build_args():
     parser.add_argument("--num_samples_val", type=int, default=5000)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--output_dir", type=str, default="autophasenn_heatmap_results")
+    parser.add_argument("--output_dir", type=str, default=str(SCRIPT_DIR / "autophasenn_heatmap_results"))
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--fp16", action="store_true", default=False)
     parser.add_argument("--max_batches", type=int, default=0, help="0 means run the full validation set.")

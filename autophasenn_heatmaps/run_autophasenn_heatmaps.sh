@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 # 预训练权重文件路径；默认假设 best_model.pt 在当前 AutoPhaseNN 文件夹下。
 CHECKPOINT="/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt"
 
@@ -23,7 +26,7 @@ BATCH_SIZE=4
 NUM_WORKERS=0
 
 # 输出目录；会保存 validation_summary.json、validation_batches.csv、每层热力图 PNG 和聚合 npy。
-OUTPUT_DIR="./autophasenn_heatmap_results"
+OUTPUT_DIR="${SCRIPT_DIR}/autophasenn_heatmap_results"
 
 # 运行设备；有 CUDA 时用 cuda，没有 GPU 可改成 cpu。
 DEVICE="cuda"
@@ -60,7 +63,7 @@ NCONV=32
 # Encoder block 数，需和训练模型结构一致。
 N_BLOCKS=4
 
-# 衍射强度缩放参数，需和训练/验证时一致。
+# scale_I 目前在 memmap Dataset 中仅保留兼容性，不会实际归一化衍射强度。
 SCALE_I=1
 
 FP16_ARG=()
@@ -73,7 +76,9 @@ if [[ -n "${SLICE_INDEX}" ]]; then
   SLICE_ARG=(--slice_index "${SLICE_INDEX}")
 fi
 
-python test_autophasenn_heatmaps.py \
+cd "${PROJECT_ROOT}"
+
+python "${SCRIPT_DIR}/test_autophasenn_heatmaps.py" \
   --checkpoint "${CHECKPOINT}" \
   --data_folder "${DATA_FOLDER}" \
   --data_val_diff "${DATA_VAL_DIFF}" \
