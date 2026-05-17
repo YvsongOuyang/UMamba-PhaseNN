@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # 指定只使用第一块显卡（如果机器上有多张卡但你只用一张4090）
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -42,8 +42,8 @@ num_samples_val=5000
 train_perc=0.9
 batch_size=8
 n_epoch=100
-Initlr=4e-4
-min_lr=1e-5
+Initlr=1e-2
+min_lr=4e-4
 T=0.1
 scale_I=1  # NOTE: current memmap DataLoader keeps this for compatibility but does not normalize by scale_I.
 lr_type='cosine' #'cosine', 'clr', 'step', 'plateau'
