@@ -640,13 +640,16 @@ if __name__ == "__main__":
     # print('number of validation:%d' % len(filelist_val))
 
     # Single GPU DataLoaders (Removed DistributedSampler)
+    # Keep Dataset indices in natural order and let DataLoader reshuffle train samples every epoch.
+    train_generator = torch.Generator()
+    train_generator.manual_seed(args.seed)
     train_dataset = Dataset(data_train_diff, data_train_real, num_samples_train, 
-                            dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=True)
+                            dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=False)
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=False, **kwargs)
+        train_dataset, batch_size=batch_size, shuffle=True, generator=train_generator, **kwargs)
 
     validation_dataset = Dataset(data_val_diff, data_val_real, num_samples_val, 
-                                 dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=True)
+                                 dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=False)
     validation_loader = torch.utils.data.DataLoader(
         validation_dataset, batch_size=batch_size, shuffle=False, **kwargs)
 
