@@ -189,8 +189,9 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
             global_step += 1
         if optimizer_stepped and args.lr_type == 'clr':
             scheduler.step()
+        current_batch_lr = optimizer.param_groups[0]['lr']
         if optimizer_stepped and writer is not None:
-            writer.add_scalar("Lr", optimizer.param_groups[0]['lr'], global_step)
+            writer.add_scalar("Lr", current_batch_lr, global_step)
 
         loss_total += loss.detach().item()
 
@@ -213,7 +214,7 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
         if i % 100 == 0:
             print(f"Epoch[{epoch}] Batch[{current_iter}/{num_batches}] | "
                 f"Loss: {loss.item():.4e} | "
-                f"LR: {optimizer.param_groups[0]['lr']:.3e} | "
+                f"BatchLR: {current_batch_lr:.3e} | "
                 f"Grad: {str(has_grad):5s} | Update: {str(before!=after):5s} | "
                 f"Elapsed: {elapsed_str} | ETA: {eta_str}",
                 flush=True)
