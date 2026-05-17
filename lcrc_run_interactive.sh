@@ -52,7 +52,7 @@ loss_type='l1'  # Training intentionally uses fixed L1Loss in oyys_lcrc_train_si
 
 save_model=10
 n_workers=8  # <--- 修改了这里，单机推荐 8-32 之间
-checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt'  # 断点续训模型路径，留空表示不使用断点续训
+checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt'  # 断点续训模型路径，留空表示不使用断点续训、
 # checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt'
 #checkpoint='/home/oyys/code/AutoPhaseNN/PyTorch/AutoPhase/best_model.pth'     
 #checkpoint='/' #断点续训模型路径，留空表示不使用断点续训
