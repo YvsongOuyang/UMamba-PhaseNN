@@ -90,6 +90,14 @@ def poisson_mae_floor(clean_signal):
     """Approximate E[|Poisson(lambda) - lambda|] per voxel for a clean diffraction signal."""
     return torch.sqrt(torch.clamp(clean_signal.detach().float(), min=0.0) * (2.0 / np.pi)).mean()
 
+def inverse_sigmoid(x, eps=1e-4):
+    x = torch.clamp(x.detach().float(), eps, 1.0 - eps)
+    return torch.log(x / (1.0 - x))
+
+def inverse_tanh(x, eps=1e-4):
+    x = torch.clamp(x.detach().float(), -1.0 + eps, 1.0 - eps)
+    return 0.5 * torch.log((1.0 + x) / (1.0 - x))
+
 def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
                           pred_amps, pred_phs, support, amps, phs,
                           writer=None, step=None, pred_obj=None):
@@ -597,6 +605,79 @@ def validation(args, model, criterion, validloader, epoch):
 
     return details_total
 
+def debug_direct_output_optimization(args, model, criterion, dataloader):
+    model.eval()
+    ft_images, amps, phs = next(iter(dataloader))
+    if args.device == 'cuda':
+        ft_images, amps, phs = ft_images.cuda(), amps.cuda(), phs.cuda()
+
+    with torch.no_grad():
+        gt_obj = model.obj_layer(amps, phs)
+        gt_clean_y = model.farfield_layer(gt_obj).detach().float()
+        floor = poisson_mae_floor(gt_clean_y)
+        gt_l1 = criterion(gt_clean_y, ft_images.detach().float())
+
+        if args.debug_direct_opt_init == 'model':
+            y0, pred_obj, _, pred_phs, _ = model(ft_images)
+            init_amp = torch.abs(pred_obj).detach().float()
+            init_phs = pred_phs.detach().float()
+            init_l1 = criterion(y0.detach().float(), ft_images.detach().float())
+        elif args.debug_direct_opt_init == 'gt':
+            init_amp = amps.detach().float()
+            init_phs = phs.detach().float()
+            init_y = model.farfield_layer(model.obj_layer(init_amp, init_phs)).detach().float()
+            init_l1 = criterion(init_y, ft_images.detach().float())
+        elif args.debug_direct_opt_init == 'random':
+            init_amp = torch.rand_like(amps.detach().float())
+            init_phs = (torch.rand_like(phs.detach().float()) * 2.0 - 1.0) * torch.pi
+            init_y = model.farfield_layer(
+                model.masked_obj_layer(
+                    model.obj_layer(init_amp, init_phs),
+                    model.support_layer(init_amp),
+                )
+            ).detach().float()
+            init_l1 = criterion(init_y, ft_images.detach().float())
+        else:
+            raise ValueError(f"Unsupported debug_direct_opt_init: {args.debug_direct_opt_init}")
+
+    amp_param = torch.nn.Parameter(inverse_sigmoid(init_amp))
+    ph_param = torch.nn.Parameter(inverse_tanh(init_phs / torch.pi))
+    optimizer = torch.optim.Adam([amp_param, ph_param], lr=args.debug_direct_opt_lr)
+    print(
+        f"[DIRECT_OPT] init={args.debug_direct_opt_init} | steps={args.debug_direct_opt_steps} | "
+        f"lr={args.debug_direct_opt_lr:.3e} | InitL1={init_l1.item():.4e} | "
+        f"GTCleanL1={gt_l1.item():.4e} | NoiseFloor={floor.item():.4e}",
+        flush=True,
+    )
+
+    target_float = ft_images.detach().float()
+    print_every = max(1, args.debug_direct_opt_print_every)
+    for step in range(args.debug_direct_opt_steps + 1):
+        amp = torch.sigmoid(amp_param)
+        ph = torch.tanh(ph_param) * torch.pi
+        support = model.support_layer(amp)
+        obj = model.obj_layer(amp, ph)
+        masked_obj = model.masked_obj_layer(obj, support)
+        y = model.farfield_layer(masked_obj)
+        loss = criterion(y, target_float)
+
+        if step % print_every == 0 or step == args.debug_direct_opt_steps:
+            ratio = loss.detach().float() / (floor + 1e-8)
+            excess = loss.detach().float() - floor
+            print(
+                f"[DIRECT_OPT] Step[{step}/{args.debug_direct_opt_steps}] | "
+                f"L1={loss.item():.4e} | L1/Floor={ratio.item():.4e} | "
+                f"L1-Floor={excess.item():.4e} | Support={support.detach().float().mean().item():.4e} | "
+                f"Amp={amp.detach().float().mean().item():.4e} | PredMean={y.detach().float().mean().item():.4e}",
+                flush=True,
+            )
+
+        if step == args.debug_direct_opt_steps:
+            break
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+
 # def validation(args, model, criterion, validloader, epoch):
 #     model.eval()
 #     num_batches = len(validloader)
@@ -728,6 +809,16 @@ if __name__ == "__main__":
                         help='keep the learning rate fixed during debug runs')
     parser.add_argument('--eval_noise_floor', action='store_true',
                         help='log clean-GT forward loss, Poisson noise floor, and support compactness metrics')
+    parser.add_argument('--debug_direct_opt_steps', type=int, default=0,
+                        help='optimize amp/phase tensors directly for one debug batch; 0 disables this probe')
+    parser.add_argument('--debug_direct_opt_lr', type=float, default=1e-2,
+                        help='learning rate for direct amp/phase optimization probe')
+    parser.add_argument('--debug_direct_opt_init', choices=('model', 'gt', 'random'), default='model',
+                        help='initialization for direct amp/phase optimization probe')
+    parser.add_argument('--debug_direct_opt_print_every', type=int, default=20,
+                        help='print interval for direct amp/phase optimization probe')
+    parser.add_argument('--debug_direct_opt_exit', action='store_true',
+                        help='exit after direct amp/phase optimization probe')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
@@ -996,6 +1087,13 @@ if __name__ == "__main__":
     #criterion = CombinedDiffractionLoss().to(args.device)
     #criterion = get_criterion(args.loss_type)
     criterion = nn.L1Loss().to(args.device)  # 训练时使用 L1 损失，验证时计算多种指标
+
+    if args.debug_direct_opt_steps > 0:
+        debug_direct_output_optimization(args, model, criterion, train_loader)
+        if args.debug_direct_opt_exit:
+            writer.flush()
+            writer.close()
+            raise SystemExit(0)
 
     if args.optim_type == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)

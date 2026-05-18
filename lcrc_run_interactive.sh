@@ -57,6 +57,11 @@ debug_max_val_batches=${debug_max_val_batches:-0}
 debug_overfit_samples=${debug_overfit_samples:-0}
 debug_skip_scheduler=${debug_skip_scheduler:-false}
 eval_noise_floor=${eval_noise_floor:-false}
+debug_direct_opt_steps=${debug_direct_opt_steps:-0}
+debug_direct_opt_lr=${debug_direct_opt_lr:-1e-2}
+debug_direct_opt_init=${debug_direct_opt_init:-model}
+debug_direct_opt_print_every=${debug_direct_opt_print_every:-20}
+debug_direct_opt_exit=${debug_direct_opt_exit:-false}
 
 save_model=${save_model:-10}
 n_workers=${n_workers:-8}  # 单机推荐 8-32 之间
@@ -70,7 +75,7 @@ model_name='umamba' # autophasenn or umamba
 
 echo "Saving path $result_path"
 echo "TensorBoard dir $tensorboard_dir"
-echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor"
+echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor direct_opt_steps=$debug_direct_opt_steps"
 mkdir -p "$result_path"
 
 extra_args=()
@@ -100,6 +105,15 @@ if [[ "$debug_skip_scheduler" == true ]]; then
 fi
 if [[ "$eval_noise_floor" == true ]]; then
     extra_args+=(--eval_noise_floor)
+fi
+if [[ "$debug_direct_opt_steps" -gt 0 ]]; then
+    extra_args+=(--debug_direct_opt_steps "$debug_direct_opt_steps")
+    extra_args+=(--debug_direct_opt_lr "$debug_direct_opt_lr")
+    extra_args+=(--debug_direct_opt_init "$debug_direct_opt_init")
+    extra_args+=(--debug_direct_opt_print_every "$debug_direct_opt_print_every")
+fi
+if [[ "$debug_direct_opt_exit" == true ]]; then
+    extra_args+=(--debug_direct_opt_exit)
 fi
 
 # 直接使用 python 运行即可
