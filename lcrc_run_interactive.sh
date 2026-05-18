@@ -34,7 +34,7 @@ fp16=false
 unsupervise=false
 use_down_stride=false
 use_up_stride=false
-reset_optimizer=false
+reset_optimizer=${reset_optimizer:-false}
 
 train_size='25000'
 num_samples_train=25000
@@ -42,9 +42,9 @@ num_samples_val=5000
 train_perc=0.9
 batch_size=${batch_size:-10}
 n_epoch=${n_epoch:-100}
-Initlr=1e-3
-min_lr=4e-5
-T=0.1
+Initlr=${Initlr:-1e-3}
+min_lr=${min_lr:-4e-5}
+T=${T:-0.1}
 scale_I=1  # NOTE: current memmap DataLoader keeps this for compatibility but does not normalize by scale_I.
 lr_type='cosine' #'cosine', 'clr', 'step', 'plateau'
 optim_type='adam' #'adam', 'adamw'
@@ -58,14 +58,11 @@ debug_overfit_samples=${debug_overfit_samples:-0}
 debug_skip_scheduler=${debug_skip_scheduler:-false}
 eval_noise_floor=${eval_noise_floor:-false}
 
-save_model=10
-n_workers=8  # <--- 修改了这里，单机推荐 8-32 之间
-checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt'  # 断点续训模型路径，留空表示不使用断点续训、
-# checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt'
-#checkpoint='/home/oyys/code/AutoPhaseNN/PyTorch/AutoPhase/best_model.pth'     
-#checkpoint='/' #断点续训模型路径，留空表示不使用断点续训
-# Active full-resume checkpoint. reset_optimizer=false restores optimizer/scheduler/scaler.
-checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_l1_batch8_cosine_Init1e-3_adam_scale1/best_model.pt'
+save_model=${save_model:-10}
+n_workers=${n_workers:-8}  # 单机推荐 8-32 之间
+default_checkpoint='/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_l1_batch8_cosine_Init1e-3_adam_scale1/best_model.pt'
+# Active full-resume checkpoint. Set checkpoint='' to train from scratch, or reset_optimizer=true to keep weights but restart optimizer state.
+checkpoint=${checkpoint-$default_checkpoint}
 result_path="/data_ssd/oyys/autophasenn/Unsup${unsupervise}_D${use_down_stride}_U${use_up_stride}_T${T}_${loss_type}_batch${batch_size}_${lr_type}_Init${Initlr}_${optim_type}_scale${scale_I}"
 log_file="${result_path}/${output}"
 
