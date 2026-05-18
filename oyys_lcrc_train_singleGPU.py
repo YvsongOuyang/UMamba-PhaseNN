@@ -1002,6 +1002,14 @@ if __name__ == "__main__":
 
     # 最优模型固定保存路径（只会保留这一个最新最优文件）
     best_model_path = arguments_strOut + '/best_model.pt'
+    debug_limited_run = (
+        args.debug_overfit_samples > 0
+        or args.debug_max_train_batches > 0
+        or args.debug_max_val_batches > 0
+    )
+    save_checkpoints = not debug_limited_run
+    if debug_limited_run:
+        print("[DEBUG] Limited debug run detected: checkpoint saving is disabled.", flush=True)
     if load_success and isinstance(checkpoint, dict):
         if args.reset_optimizer:
             print("Reset optimizer/scheduler/scaler; checkpoint weights and resume position were kept.")
@@ -1047,7 +1055,7 @@ if __name__ == "__main__":
 
         current_val_loss = val_loss_details['loss_l1']
         # 对比：当前模型比历史最优更好（损失更小）
-        if current_val_loss < best_val_loss:
+        if save_checkpoints and current_val_loss < best_val_loss:
             # 1. 删除旧的最优模型（如果存在）
             if os.path.exists(best_model_path):
                 os.remove(best_model_path)
@@ -1070,7 +1078,7 @@ if __name__ == "__main__":
             print(f"✅ 已保存新最优模型 | 当前最优损失: {best_val_loss:.6f} | Epoch: {epoch}")
         # ======================================================================
 
-        if epoch % args.save_model == 0:
+        if save_checkpoints and epoch % args.save_model == 0:
             torch.save(
                 {
                     'epoch': epoch,
