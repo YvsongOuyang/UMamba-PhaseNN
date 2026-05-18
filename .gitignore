@@ -1,19 +1,20 @@
+# Large local datasets should stay out of git.
 data/
 datasets/
-outputs/
-checkpoints/
-runs/
-wandb/
-autophasenn_heatmap_results/
-
-*.pth
-*.pt
-*.ckpt
 *.npy
 *.npz
 *.h5
 *.hdf5
-*.log
+
+# Large model/checkpoint artifacts should stay out of git.
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+
+# Training logs, TensorBoard runs, and lightweight result files are intentionally trackable.
 
 __pycache__/
 *.pyc
