@@ -27,6 +27,10 @@ def str2bool(value):
         return False
     raise argparse.ArgumentTypeError(f"Expected a boolean value, got: {value}")
 
+def safe_path_name(value):
+    safe = ''.join(ch if ch.isalnum() or ch in ('-', '_', '.') else '_' for ch in str(value))
+    return safe.strip('._') or 'experiment'
+
 def loss_log(Y_true, Y_pred):
     # 使用 log10(x + 1)
     pred = torch.log10(Y_pred + 1.0)
@@ -406,6 +410,8 @@ if __name__ == "__main__":
     parser.add_argument('--fp16', action='store_true', default=False, help='enable mixed precision training; disabled by default')
     parser.add_argument('--reset_optimizer', action='store_true',
                         help='load checkpoint weights but restart optimizer/scheduler/scaler with the requested lr settings')
+    parser.add_argument('--tensorboard_dir', type=str, default='runs',
+                        help='root directory for TensorBoard logs')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
@@ -465,13 +471,15 @@ if __name__ == "__main__":
 
     layout = {
         "": {
-            "Loss_ft": ["Multiline", ["Loss_ft/train", "Loss_ft/validation"]],
-            "Loss_amp": ["Multiline", ["Loss_amp/train", "Loss_amp/validation"]],
-            "Loss_ph": ["Multiline", ["Loss_ph/train", "Loss_ph/validation"]],
+            "Loss_l1": ["Multiline", ["loss-coarse/train_loss_l1", "loss-coarse-val/loss_l1"]],
             'LR': ["Multiline", ["Lr", "Lr_epoch"]]
         },
     }
-    writer = SummaryWriter(comment=os.path.basename(os.path.dirname(result_path)))
+    experiment_name = safe_path_name(os.path.basename(os.path.normpath(result_path)))
+    tb_run_name = f"{time.strftime('%Y%m%d_%H%M%S')}_{experiment_name}"
+    tb_log_dir = os.path.join(args.tensorboard_dir, tb_run_name)
+    writer = SummaryWriter(log_dir=tb_log_dir)
+    print(f"TensorBoard log dir: {os.path.abspath(tb_log_dir)}", flush=True)
     writer.add_custom_scalars(layout)
 
     plans = {
@@ -790,8 +798,9 @@ if __name__ == "__main__":
                 }, arguments_strOut + '/training_model_{:06d}'.format(epoch) + '.pt')
             print('checkpoint saved!')
 
-        writer.add_scalar('loss-coarse', train_loss_details, epoch)
-        writer.add_scalars('loss-coarse-val', val_loss_details, epoch)
+        writer.add_scalar('loss-coarse/train_loss_l1', train_loss_details, epoch)
+        for key, value in val_loss_details.items():
+            writer.add_scalar(f'loss-coarse-val/{key}', value, epoch)
 
     t1 = time.time()
     print("Total running time: %s seconds" % (t1 - t0))
