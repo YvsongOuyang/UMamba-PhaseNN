@@ -61,6 +61,16 @@ def scaled_l1(pred, target, criterion):
     scale = target.detach().float().sum() / (pred.detach().float().sum() + 1e-8)
     return criterion(pred * scale, target), scale
 
+def support_threshold(model, default=0.1):
+    layer = getattr(model, 'support_layer', None)
+    return float(getattr(layer, 'threshold', default))
+
+def hard_support(amp, threshold):
+    return torch.where(amp >= threshold, torch.ones_like(amp), torch.zeros_like(amp))
+
+def sigmoid_support(amp, threshold, steepness=50.0):
+    return torch.sigmoid(steepness * (amp - threshold))
+
 def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
                           pred_amps, pred_phs, support, amps, phs, writer=None, step=None):
     with torch.no_grad():
@@ -71,16 +81,36 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         rel_l1 = torch.sum(torch.abs(pred - target)) / (torch.sum(torch.abs(target)) + 1e-8)
         pred_scaled_l1, pred_scale = scaled_l1(pred, target, criterion)
 
+        threshold = support_threshold(model)
         gt_support = model.support_layer(amps)
         gt_obj = model.obj_layer(amps, phs)
+        gt_unmasked_y = model.farfield_layer(gt_obj).detach().float()
+
+        gt_hard_support = hard_support(amps, threshold)
+        gt_hard_masked_obj = model.masked_obj_layer(gt_obj, gt_hard_support)
+        gt_hard_y = model.farfield_layer(gt_hard_masked_obj).detach().float()
+
+        gt_sigmoid_support = sigmoid_support(amps, threshold)
+        gt_sigmoid_masked_obj = model.masked_obj_layer(gt_obj, gt_sigmoid_support)
+        gt_sigmoid_y = model.farfield_layer(gt_sigmoid_masked_obj).detach().float()
+
         gt_masked_obj = model.masked_obj_layer(gt_obj, gt_support)
         gt_y = model.farfield_layer(gt_masked_obj).detach().float()
         gt_l1 = criterion(gt_y, target)
         gt_scaled_l1, gt_scale = scaled_l1(gt_y, target, criterion)
+        gt_unmasked_l1 = criterion(gt_unmasked_y, target)
+        gt_hard_l1 = criterion(gt_hard_y, target)
+        gt_sigmoid_l1 = criterion(gt_sigmoid_y, target)
+        gt_unmasked_scaled_l1, gt_unmasked_scale = scaled_l1(gt_unmasked_y, target, criterion)
+        gt_hard_scaled_l1, gt_hard_scale = scaled_l1(gt_hard_y, target, criterion)
+        gt_sigmoid_scaled_l1, gt_sigmoid_scale = scaled_l1(gt_sigmoid_y, target, criterion)
 
         target_stats = tensor_stats(target)
         pred_stats = tensor_stats(pred)
         gt_stats = tensor_stats(gt_y)
+        gt_unmasked_stats = tensor_stats(gt_unmasked_y)
+        gt_hard_stats = tensor_stats(gt_hard_y)
+        gt_sigmoid_stats = tensor_stats(gt_sigmoid_y)
         amp_stats = tensor_stats(amps)
         debug_values = {
             'l1': to_float(l1),
@@ -91,6 +121,15 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'gt_forward_l1': to_float(gt_l1),
             'gt_forward_scaled_l1': to_float(gt_scaled_l1),
             'scale_gt_to_target': to_float(gt_scale),
+            'gt_unmasked_l1': to_float(gt_unmasked_l1),
+            'gt_unmasked_scaled_l1': to_float(gt_unmasked_scaled_l1),
+            'scale_gt_unmasked_to_target': to_float(gt_unmasked_scale),
+            'gt_hard_support_l1': to_float(gt_hard_l1),
+            'gt_hard_support_scaled_l1': to_float(gt_hard_scaled_l1),
+            'scale_gt_hard_to_target': to_float(gt_hard_scale),
+            'gt_sigmoid_support_l1': to_float(gt_sigmoid_l1),
+            'gt_sigmoid_support_scaled_l1': to_float(gt_sigmoid_scaled_l1),
+            'scale_gt_sigmoid_to_target': to_float(gt_sigmoid_scale),
             'target_mean': target_stats['mean'],
             'target_max': target_stats['max'],
             'target_sum': target_stats['sum'],
@@ -100,10 +139,22 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'gt_mean': gt_stats['mean'],
             'gt_max': gt_stats['max'],
             'gt_sum': gt_stats['sum'],
+            'gt_unmasked_mean': gt_unmasked_stats['mean'],
+            'gt_unmasked_max': gt_unmasked_stats['max'],
+            'gt_unmasked_sum': gt_unmasked_stats['sum'],
+            'gt_hard_mean': gt_hard_stats['mean'],
+            'gt_hard_max': gt_hard_stats['max'],
+            'gt_hard_sum': gt_hard_stats['sum'],
+            'gt_sigmoid_mean': gt_sigmoid_stats['mean'],
+            'gt_sigmoid_max': gt_sigmoid_stats['max'],
+            'gt_sigmoid_sum': gt_sigmoid_stats['sum'],
             'amp_mean': amp_stats['mean'],
             'amp_max': amp_stats['max'],
+            'support_threshold': threshold,
             'support_mean': to_float(support.detach().float().mean()),
             'gt_support_mean': to_float(gt_support.detach().float().mean()),
+            'gt_hard_support_mean': to_float(gt_hard_support.detach().float().mean()),
+            'gt_sigmoid_support_mean': to_float(gt_sigmoid_support.detach().float().mean()),
         }
 
     print(
@@ -113,11 +164,17 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         f"ScaledL1={debug_values['scaled_l1']:.4e} scale={debug_values['scale_pred_to_target']:.4e} | "
         f"GT_L1={debug_values['gt_forward_l1']:.4e} | "
         f"GT_ScaledL1={debug_values['gt_forward_scaled_l1']:.4e} gt_scale={debug_values['scale_gt_to_target']:.4e} | "
+        f"GT_unmasked={debug_values['gt_unmasked_l1']:.4e} scale={debug_values['scale_gt_unmasked_to_target']:.4e} | "
+        f"GT_hard={debug_values['gt_hard_support_l1']:.4e} scale={debug_values['scale_gt_hard_to_target']:.4e} | "
+        f"GT_sigmoid={debug_values['gt_sigmoid_support_l1']:.4e} scale={debug_values['scale_gt_sigmoid_to_target']:.4e} | "
         f"target(mean/max/sum)={debug_values['target_mean']:.4e}/{debug_values['target_max']:.4e}/{debug_values['target_sum']:.4e} | "
         f"pred(mean/max/sum)={debug_values['pred_mean']:.4e}/{debug_values['pred_max']:.4e}/{debug_values['pred_sum']:.4e} | "
         f"gt(mean/max/sum)={debug_values['gt_mean']:.4e}/{debug_values['gt_max']:.4e}/{debug_values['gt_sum']:.4e} | "
         f"amp(mean/max)={debug_values['amp_mean']:.4e}/{debug_values['amp_max']:.4e} | "
-        f"support={debug_values['support_mean']:.4e} gt_support={debug_values['gt_support_mean']:.4e}",
+        f"support={debug_values['support_mean']:.4e} gt_support={debug_values['gt_support_mean']:.4e} | "
+        f"hard_support={debug_values['gt_hard_support_mean']:.4e} "
+        f"sigmoid_support={debug_values['gt_sigmoid_support_mean']:.4e} "
+        f"T={debug_values['support_threshold']:.4e}",
         flush=True
     )
 
@@ -537,6 +594,8 @@ if __name__ == "__main__":
                         help='limit validation batches per epoch when debugging; 0 means full validation')
     parser.add_argument('--debug_overfit_samples', type=int, default=0,
                         help='train and validate on the same first N train samples for overfit debugging')
+    parser.add_argument('--debug_skip_scheduler', action='store_true',
+                        help='keep the learning rate fixed during debug runs')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
@@ -883,7 +942,9 @@ if __name__ == "__main__":
         
         validation_losses.append(val_loss_details)
 
-        if args.lr_type == 'step':
+        if args.debug_skip_scheduler:
+            pass
+        elif args.lr_type == 'step':
             scheduler.step()
         elif args.lr_type == 'cosine':
             scheduler.step()
