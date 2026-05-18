@@ -31,6 +31,100 @@ def safe_path_name(value):
     safe = ''.join(ch if ch.isalnum() or ch in ('-', '_', '.') else '_' for ch in str(value))
     return safe.strip('._') or 'experiment'
 
+def to_float(value):
+    if isinstance(value, torch.Tensor):
+        return float(value.detach().float().cpu().item())
+    return float(value)
+
+def tensor_stats(tensor):
+    data = tensor.detach().float()
+    finite = data[torch.isfinite(data)]
+    if finite.numel() == 0:
+        return {
+            'mean': float('nan'),
+            'std': float('nan'),
+            'min': float('nan'),
+            'max': float('nan'),
+            'sum': float('nan'),
+            'abs_mean': float('nan'),
+        }
+    return {
+        'mean': to_float(finite.mean()),
+        'std': to_float(finite.std(unbiased=False)),
+        'min': to_float(finite.min()),
+        'max': to_float(finite.max()),
+        'sum': to_float(finite.sum()),
+        'abs_mean': to_float(finite.abs().mean()),
+    }
+
+def scaled_l1(pred, target, criterion):
+    scale = target.detach().float().sum() / (pred.detach().float().sum() + 1e-8)
+    return criterion(pred * scale, target), scale
+
+def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
+                          pred_amps, pred_phs, support, amps, phs, writer=None, step=None):
+    with torch.no_grad():
+        target = ft_images.detach().float()
+        pred = y.detach().float()
+        l1 = criterion(pred, target)
+        zero_l1 = criterion(torch.zeros_like(target), target)
+        rel_l1 = torch.sum(torch.abs(pred - target)) / (torch.sum(torch.abs(target)) + 1e-8)
+        pred_scaled_l1, pred_scale = scaled_l1(pred, target, criterion)
+
+        gt_support = model.support_layer(amps)
+        gt_obj = model.obj_layer(amps, phs)
+        gt_masked_obj = model.masked_obj_layer(gt_obj, gt_support)
+        gt_y = model.farfield_layer(gt_masked_obj).detach().float()
+        gt_l1 = criterion(gt_y, target)
+        gt_scaled_l1, gt_scale = scaled_l1(gt_y, target, criterion)
+
+        target_stats = tensor_stats(target)
+        pred_stats = tensor_stats(pred)
+        gt_stats = tensor_stats(gt_y)
+        amp_stats = tensor_stats(amps)
+        debug_values = {
+            'l1': to_float(l1),
+            'zero_l1': to_float(zero_l1),
+            'relative_l1': to_float(rel_l1),
+            'scaled_l1': to_float(pred_scaled_l1),
+            'scale_pred_to_target': to_float(pred_scale),
+            'gt_forward_l1': to_float(gt_l1),
+            'gt_forward_scaled_l1': to_float(gt_scaled_l1),
+            'scale_gt_to_target': to_float(gt_scale),
+            'target_mean': target_stats['mean'],
+            'target_max': target_stats['max'],
+            'target_sum': target_stats['sum'],
+            'pred_mean': pred_stats['mean'],
+            'pred_max': pred_stats['max'],
+            'pred_sum': pred_stats['sum'],
+            'gt_mean': gt_stats['mean'],
+            'gt_max': gt_stats['max'],
+            'gt_sum': gt_stats['sum'],
+            'amp_mean': amp_stats['mean'],
+            'amp_max': amp_stats['max'],
+            'support_mean': to_float(support.detach().float().mean()),
+            'gt_support_mean': to_float(gt_support.detach().float().mean()),
+        }
+
+    print(
+        f"[DEBUG][{stage}] Epoch[{epoch}] Batch[{batch_idx}] | "
+        f"L1={debug_values['l1']:.4e} | ZeroL1={debug_values['zero_l1']:.4e} | "
+        f"RelL1={debug_values['relative_l1']:.4e} | "
+        f"ScaledL1={debug_values['scaled_l1']:.4e} scale={debug_values['scale_pred_to_target']:.4e} | "
+        f"GT_L1={debug_values['gt_forward_l1']:.4e} | "
+        f"GT_ScaledL1={debug_values['gt_forward_scaled_l1']:.4e} gt_scale={debug_values['scale_gt_to_target']:.4e} | "
+        f"target(mean/max/sum)={debug_values['target_mean']:.4e}/{debug_values['target_max']:.4e}/{debug_values['target_sum']:.4e} | "
+        f"pred(mean/max/sum)={debug_values['pred_mean']:.4e}/{debug_values['pred_max']:.4e}/{debug_values['pred_sum']:.4e} | "
+        f"gt(mean/max/sum)={debug_values['gt_mean']:.4e}/{debug_values['gt_max']:.4e}/{debug_values['gt_sum']:.4e} | "
+        f"amp(mean/max)={debug_values['amp_mean']:.4e}/{debug_values['amp_max']:.4e} | "
+        f"support={debug_values['support_mean']:.4e} gt_support={debug_values['gt_support_mean']:.4e}",
+        flush=True
+    )
+
+    if writer is not None and step is not None:
+        for key, value in debug_values.items():
+            writer.add_scalar(f"debug/{stage}/{key}", value, step)
+
 def loss_log(Y_true, Y_pred):
     # 使用 log10(x + 1)
     pred = torch.log10(Y_pred + 1.0)
@@ -143,6 +237,8 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
     start_time = time.time()
     model.train()
     num_batches = len(trainloader)
+    if args.debug_max_train_batches > 0:
+        num_batches = min(num_batches, args.debug_max_train_batches)
     loss_total = 0.0
     use_amp = args.fp16 and args.device == 'cuda'
 
@@ -150,6 +246,8 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
     epoch_start_time = time.time()
 
     for i, (ft_images, amps, phs) in enumerate(trainloader):
+        if i >= num_batches:
+            break
 
         if args.device == 'cuda':
             ft_images, amps, phs = ft_images.cuda(), amps.cuda(), phs.cuda()
@@ -160,6 +258,13 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
         with torch.cuda.amp.autocast(enabled=use_amp):
             y, _, pred_amps, pred_phs, support = model(ft_images)
             loss = criterion(y, ft_images)
+
+        if args.debug_diagnostics and i < args.debug_diagnostic_batches:
+            debug_step = global_step if global_step > 0 else (epoch - 1) * len(trainloader) + i + 1
+            log_debug_diagnostics(
+                'train', epoch, i + 1, model, criterion, ft_images, y,
+                pred_amps, pred_phs, support, amps, phs, writer=writer, step=debug_step
+            )
 
         if scaler.is_enabled():
             scaler.scale(loss).backward()
@@ -236,6 +341,8 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
 def validation(args, model, criterion, validloader, epoch):
     model.eval()
     num_batches = len(validloader)
+    if args.debug_max_val_batches > 0:
+        num_batches = min(num_batches, args.debug_max_val_batches)
 
     details_total = {
         'loss_l1':0.0,
@@ -250,6 +357,8 @@ def validation(args, model, criterion, validloader, epoch):
     with torch.no_grad():
         # 1. 移除 tqdm，使用标准 enumerate
         for i, (ft_images, amps, phs) in enumerate(validloader):
+            if i >= num_batches:
+                break
             if args.device == 'cuda':
                 ft_images, amps, phs = ft_images.cuda(), amps.cuda(), phs.cuda()
 
@@ -270,6 +379,12 @@ def validation(args, model, criterion, validloader, epoch):
                 details['loss_comb2'] = loss_comb2(ft_images, y)
 
             # 累积分项损失以计算平均值
+            if args.debug_diagnostics and i < args.debug_diagnostic_batches:
+                log_debug_diagnostics(
+                    'val', epoch, i + 1, model, criterion, ft_images, y,
+                    pred_amps, pred_phs, support, amps, phs
+                )
+
             for key in details_total:
                 details_total[key] += details[key].item() # 使用 .item() 避免显存堆积
 
@@ -412,6 +527,16 @@ if __name__ == "__main__":
                         help='load checkpoint weights but restart optimizer/scheduler/scaler with the requested lr settings')
     parser.add_argument('--tensorboard_dir', type=str, default='runs',
                         help='root directory for TensorBoard logs')
+    parser.add_argument('--debug_diagnostics', action='store_true',
+                        help='print scale and physics-forward diagnostics for early batches')
+    parser.add_argument('--debug_diagnostic_batches', type=int, default=1,
+                        help='number of early batches per epoch to print diagnostics for')
+    parser.add_argument('--debug_max_train_batches', type=int, default=0,
+                        help='limit train batches per epoch when debugging; 0 means full epoch')
+    parser.add_argument('--debug_max_val_batches', type=int, default=0,
+                        help='limit validation batches per epoch when debugging; 0 means full validation')
+    parser.add_argument('--debug_overfit_samples', type=int, default=0,
+                        help='train and validate on the same first N train samples for overfit debugging')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
@@ -653,11 +778,25 @@ if __name__ == "__main__":
     train_generator.manual_seed(args.seed)
     train_dataset = Dataset(data_train_diff, data_train_real, num_samples_train, 
                             dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=False)
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, generator=train_generator, **kwargs)
-
     validation_dataset = Dataset(data_val_diff, data_val_real, num_samples_val, 
                                  dtype_diff='float32', dtype_real='complex64', scale_I=scale_I, shuffle=False)
+
+    train_shuffle = True
+    if args.debug_overfit_samples > 0:
+        debug_sample_count = min(args.debug_overfit_samples, len(train_dataset))
+        debug_indices = list(range(debug_sample_count))
+        debug_subset = torch.utils.data.Subset(train_dataset, debug_indices)
+        train_dataset = debug_subset
+        validation_dataset = debug_subset
+        train_shuffle = False
+        print(
+            f"[DEBUG] Overfit mode enabled: using the same {debug_sample_count} train samples "
+            "for both train and validation.",
+            flush=True
+        )
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=train_shuffle, generator=train_generator, **kwargs)
     validation_loader = torch.utils.data.DataLoader(
         validation_dataset, batch_size=batch_size, shuffle=False, **kwargs)
 

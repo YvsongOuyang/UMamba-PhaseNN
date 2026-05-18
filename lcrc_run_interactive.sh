@@ -40,8 +40,8 @@ train_size='25000'
 num_samples_train=25000
 num_samples_val=5000
 train_perc=0.9
-batch_size=10
-n_epoch=100
+batch_size=${batch_size:-10}
+n_epoch=${n_epoch:-100}
 Initlr=1e-3
 min_lr=4e-5
 T=0.1
@@ -49,6 +49,12 @@ scale_I=1  # NOTE: current memmap DataLoader keeps this for compatibility but do
 lr_type='cosine' #'cosine', 'clr', 'step', 'plateau'
 optim_type='adam' #'adam', 'adamw'
 loss_type='l1'  # Training intentionally uses fixed L1Loss in oyys_lcrc_train_singleGPU.py.
+tensorboard_dir=${tensorboard_dir:-runs}
+debug_diagnostics=${debug_diagnostics:-false}
+debug_diagnostic_batches=${debug_diagnostic_batches:-1}
+debug_max_train_batches=${debug_max_train_batches:-0}
+debug_max_val_batches=${debug_max_val_batches:-0}
+debug_overfit_samples=${debug_overfit_samples:-0}
 
 save_model=10
 n_workers=8  # <--- 修改了这里，单机推荐 8-32 之间
@@ -64,6 +70,8 @@ log_file="${result_path}/${output}"
 model_name='umamba' # autophasenn or umamba
 
 echo "Saving path $result_path"
+echo "TensorBoard dir $tensorboard_dir"
+echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples"
 mkdir -p "$result_path"
 
 extra_args=()
@@ -72,6 +80,21 @@ if [[ "$fp16" == true ]]; then
 fi
 if [[ "$reset_optimizer" == true ]]; then
     extra_args+=(--reset_optimizer)
+fi
+if [[ "$debug_diagnostics" == true ]]; then
+    extra_args+=(--debug_diagnostics)
+fi
+if [[ "$debug_diagnostic_batches" -gt 0 ]]; then
+    extra_args+=(--debug_diagnostic_batches "$debug_diagnostic_batches")
+fi
+if [[ "$debug_max_train_batches" -gt 0 ]]; then
+    extra_args+=(--debug_max_train_batches "$debug_max_train_batches")
+fi
+if [[ "$debug_max_val_batches" -gt 0 ]]; then
+    extra_args+=(--debug_max_val_batches "$debug_max_val_batches")
+fi
+if [[ "$debug_overfit_samples" -gt 0 ]]; then
+    extra_args+=(--debug_overfit_samples "$debug_overfit_samples")
 fi
 
 # 直接使用 python 运行即可
@@ -90,6 +113,7 @@ python "$SCRIPT" \
     --optim_type "$optim_type" \
     --Initlr "$Initlr" \
     --min_lr "$min_lr" \
+    --tensorboard_dir "$tensorboard_dir" \
     "${extra_args[@]}" \
     --unsupervise "$unsupervise" \
     --use_down_stride "$use_down_stride" \
