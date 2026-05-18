@@ -387,6 +387,64 @@ def loss_comb_log(Y_true, Y_pred):
     a1, a2, a3 = 50.0, 50.0, 1.0
     return (a1*l1 + a2*l2 + a3*l3) / (a1 + a2 + a3)
 
+def grad_norm_for_module(module):
+    sq_sum = 0.0
+    max_abs = 0.0
+    tensors = 0
+    for param in module.parameters():
+        if param.grad is None:
+            continue
+        grad = param.grad.detach().float()
+        sq_sum += float(torch.sum(grad * grad).cpu().item())
+        max_abs = max(max_abs, float(grad.abs().max().cpu().item()))
+        tensors += 1
+    return sq_sum ** 0.5, max_abs, tensors
+
+def debug_grad_norm_message(model):
+    parts = []
+    total_sq = 0.0
+    for name in ('encoder', 'decoder1', 'decoder2'):
+        module = getattr(model, name, None)
+        if module is None:
+            continue
+        norm, max_abs, tensors = grad_norm_for_module(module)
+        total_sq += norm * norm
+        parts.append(f"{name}:norm={norm:.3e},max={max_abs:.3e},n={tensors}")
+    return f"total={total_sq ** 0.5:.3e} | " + " | ".join(parts)
+
+def build_optimizer_param_groups(model, lr, head_lr_mult):
+    if head_lr_mult == 1.0:
+        return model.parameters()
+
+    head_params = []
+    head_ids = set()
+    for name in ('decoder1', 'decoder2'):
+        module = getattr(model, name, None)
+        if module is None:
+            continue
+        for param in module.parameters():
+            if param.requires_grad:
+                head_params.append(param)
+                head_ids.add(id(param))
+
+    if not head_params:
+        print("[WARN] head_lr_mult requested but decoder1/decoder2 params were not found; using a single lr group.", flush=True)
+        return model.parameters()
+
+    base_params = [
+        param for param in model.parameters()
+        if param.requires_grad and id(param) not in head_ids
+    ]
+    print(
+        f"Optimizer param groups: base_lr={lr:.3e} ({len(base_params)} tensors) | "
+        f"head_lr={lr * head_lr_mult:.3e} ({len(head_params)} tensors)",
+        flush=True,
+    )
+    return [
+        {'params': base_params, 'lr': lr},
+        {'params': head_params, 'lr': lr * head_lr_mult},
+    ]
+
 
 def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scaler, writer=None, global_step=0):
     start_time = time.time()
@@ -427,6 +485,13 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
             scaler.unscale_(optimizer)
         else:
             loss.backward()
+
+        if args.debug_grad_norm and i < args.debug_grad_norm_batches:
+            print(
+                f"[GRAD] Epoch[{epoch}] Batch[{i + 1}] | Loss={loss.item():.4e} | "
+                f"{debug_grad_norm_message(model)}",
+                flush=True,
+            )
 
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         
@@ -819,6 +884,12 @@ if __name__ == "__main__":
                         help='print interval for direct amp/phase optimization probe')
     parser.add_argument('--debug_direct_opt_exit', action='store_true',
                         help='exit after direct amp/phase optimization probe')
+    parser.add_argument('--head_lr_mult', type=float, default=1.0,
+                        help='optional lr multiplier for decoder1/decoder2 output heads')
+    parser.add_argument('--debug_grad_norm', action='store_true',
+                        help='print encoder/decoder gradient norms for early train batches')
+    parser.add_argument('--debug_grad_norm_batches', type=int, default=1,
+                        help='number of early train batches per epoch for gradient norm logging')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
@@ -1095,10 +1166,11 @@ if __name__ == "__main__":
             writer.close()
             raise SystemExit(0)
 
+    optimizer_params = build_optimizer_param_groups(model, LR, args.head_lr_mult)
     if args.optim_type == 'adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+        optimizer = torch.optim.Adam(optimizer_params, lr=LR)
     elif args.optim_type == 'adamw':
-        optimizer = torch.optim.AdamW(model.parameters(), lr=LR)
+        optimizer = torch.optim.AdamW(optimizer_params, lr=LR)
     else:
         raise ValueError(f"Unsupported optim_type: {args.optim_type}")
 
@@ -1158,11 +1230,17 @@ if __name__ == "__main__":
             print("Reset optimizer/scheduler/scaler; checkpoint weights and resume position were kept.")
         else:
             if "optimizer_state_dict" in checkpoint:
-                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-                print("Optimizer state restored.")
+                try:
+                    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                    print("Optimizer state restored.")
+                except ValueError as exc:
+                    print(f"Optimizer state was not restored ({exc}); continuing with fresh optimizer state.")
             if "scheduler" in checkpoint:
-                scheduler.load_state_dict(checkpoint["scheduler"])
-                print("Scheduler state restored.")
+                try:
+                    scheduler.load_state_dict(checkpoint["scheduler"])
+                    print("Scheduler state restored.")
+                except ValueError as exc:
+                    print(f"Scheduler state was not restored ({exc}); continuing with fresh scheduler state.")
             if "scaler" in checkpoint and scaler.is_enabled():
                 scaler.load_state_dict(checkpoint["scaler"])
                 print("GradScaler state restored.")
