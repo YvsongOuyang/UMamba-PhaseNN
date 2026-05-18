@@ -87,7 +87,8 @@ def pearson_corr(pred, target):
     return torch.sum(pred * target) / denom
 
 def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
-                          pred_amps, pred_phs, support, amps, phs, writer=None, step=None):
+                          pred_amps, pred_phs, support, amps, phs,
+                          writer=None, step=None, pred_obj=None):
     with torch.no_grad():
         target = ft_images.detach().float()
         pred = y.detach().float()
@@ -134,6 +135,29 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         gt_pcc = pearson_corr(gt_y, target)
         gt_unmasked_pcc = pearson_corr(gt_unmasked_y, target)
         target_fraction = torch.abs(target - torch.round(target))
+        poisson_mae_floor = torch.sqrt(torch.clamp(gt_unmasked_y, min=0.0) * (2.0 / np.pi)).mean()
+
+        pred_obj_debug = pred_obj.detach() if pred_obj is not None else None
+        if pred_obj_debug is not None:
+            pred_raw_amp = torch.abs(pred_obj_debug).float()
+            pred_unmasked_y = model.farfield_layer(pred_obj_debug).detach().float()
+            pred_hard_support = hard_support(pred_raw_amp, threshold)
+            pred_hard_y = model.farfield_layer(
+                model.masked_obj_layer(pred_obj_debug, pred_hard_support)
+            ).detach().float()
+            pred_sigmoid_support = sigmoid_support(pred_raw_amp, threshold)
+            pred_sigmoid_y = model.farfield_layer(
+                model.masked_obj_layer(pred_obj_debug, pred_sigmoid_support)
+            ).detach().float()
+            pred_unmasked_l1 = criterion(pred_unmasked_y, target)
+            pred_hard_l1 = criterion(pred_hard_y, target)
+            pred_sigmoid_l1 = criterion(pred_sigmoid_y, target)
+            pred_hard_support_mean = pred_hard_support.detach().float().mean()
+            pred_sigmoid_support_mean = pred_sigmoid_support.detach().float().mean()
+            pred_raw_amp_mean = pred_raw_amp.mean()
+        else:
+            pred_unmasked_l1 = pred_hard_l1 = pred_sigmoid_l1 = torch.tensor(float('nan'), device=target.device)
+            pred_hard_support_mean = pred_sigmoid_support_mean = pred_raw_amp_mean = torch.tensor(float('nan'), device=target.device)
 
         target_stats = tensor_stats(target)
         pred_stats = tensor_stats(pred)
@@ -162,6 +186,7 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'scale_gt_sigmoid_to_target': to_float(gt_sigmoid_scale),
             'gt_forward_pcc': to_float(gt_pcc),
             'gt_unmasked_pcc': to_float(gt_unmasked_pcc),
+            'poisson_mae_floor_est': to_float(poisson_mae_floor),
             'fft_no_pre_shift_l1': to_float(fft_variant_l1['no_pre_shift']),
             'fft_no_post_shift_l1': to_float(fft_variant_l1['no_post_shift']),
             'fft_no_shifts_l1': to_float(fft_variant_l1['no_shifts']),
@@ -176,6 +201,12 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'pred_mean': pred_stats['mean'],
             'pred_max': pred_stats['max'],
             'pred_sum': pred_stats['sum'],
+            'pred_unmasked_l1': to_float(pred_unmasked_l1),
+            'pred_hard_support_l1': to_float(pred_hard_l1),
+            'pred_sigmoid_support_l1': to_float(pred_sigmoid_l1),
+            'pred_raw_amp_mean': to_float(pred_raw_amp_mean),
+            'pred_hard_support_mean': to_float(pred_hard_support_mean),
+            'pred_sigmoid_support_mean': to_float(pred_sigmoid_support_mean),
             'gt_mean': gt_stats['mean'],
             'gt_max': gt_stats['max'],
             'gt_sum': gt_stats['sum'],
@@ -208,6 +239,7 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         f"GT_hard={debug_values['gt_hard_support_l1']:.4e} scale={debug_values['scale_gt_hard_to_target']:.4e} | "
         f"GT_sigmoid={debug_values['gt_sigmoid_support_l1']:.4e} scale={debug_values['scale_gt_sigmoid_to_target']:.4e} | "
         f"GT_PCC={debug_values['gt_forward_pcc']:.4e} | "
+        f"PoissonMAE~{debug_values['poisson_mae_floor_est']:.4e} | "
         f"FFT(no_pre/no_post/no_shift)="
         f"{debug_values['fft_no_pre_shift_l1']:.4e}/"
         f"{debug_values['fft_no_post_shift_l1']:.4e}/"
@@ -216,6 +248,13 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         f"target_frac_mean={debug_values['target_fraction_mean']:.4e} "
         f"target_int_frac={debug_values['target_integer_fraction']:.4e} | "
         f"pred(mean/max/sum)={debug_values['pred_mean']:.4e}/{debug_values['pred_max']:.4e}/{debug_values['pred_sum']:.4e} | "
+        f"PredFFT(unmask/hard/sigmoid)="
+        f"{debug_values['pred_unmasked_l1']:.4e}/"
+        f"{debug_values['pred_hard_support_l1']:.4e}/"
+        f"{debug_values['pred_sigmoid_support_l1']:.4e} | "
+        f"pred_raw_amp_mean={debug_values['pred_raw_amp_mean']:.4e} "
+        f"pred_hard_support={debug_values['pred_hard_support_mean']:.4e} "
+        f"pred_sigmoid_support={debug_values['pred_sigmoid_support_mean']:.4e} | "
         f"gt(mean/max/sum)={debug_values['gt_mean']:.4e}/{debug_values['gt_max']:.4e}/{debug_values['gt_sum']:.4e} | "
         f"amp(mean/max)={debug_values['amp_mean']:.4e}/{debug_values['amp_max']:.4e} | "
         f"support={debug_values['support_mean']:.4e} gt_support={debug_values['gt_support_mean']:.4e} | "
@@ -360,14 +399,15 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
 
         # --- 前向传播开始 ---
         with torch.cuda.amp.autocast(enabled=use_amp):
-            y, _, pred_amps, pred_phs, support = model(ft_images)
+            y, pred_obj, pred_amps, pred_phs, support = model(ft_images)
             loss = criterion(y, ft_images)
 
         if args.debug_diagnostics and i < args.debug_diagnostic_batches:
             debug_step = global_step if global_step > 0 else (epoch - 1) * len(trainloader) + i + 1
             log_debug_diagnostics(
                 'train', epoch, i + 1, model, criterion, ft_images, y,
-                pred_amps, pred_phs, support, amps, phs, writer=writer, step=debug_step
+                pred_amps, pred_phs, support, amps, phs,
+                writer=writer, step=debug_step, pred_obj=pred_obj
             )
 
         if scaler.is_enabled():
@@ -469,7 +509,7 @@ def validation(args, model, criterion, validloader, epoch):
             details = {}
             # 注意：validation 阶段通常建议开启 autocast（如果训练时也开启了）以保持精度一致
             with torch.cuda.amp.autocast(enabled=args.fp16 and args.device == 'cuda'):
-                y, _, pred_amps, pred_phs, support = model(ft_images)  # 前向传播
+                y, pred_obj, pred_amps, pred_phs, support = model(ft_images)  # 前向传播
 
                 # Keep validation on the same raw diffraction scale as training; no scale_raw normalization is applied.
                 
@@ -486,7 +526,7 @@ def validation(args, model, criterion, validloader, epoch):
             if args.debug_diagnostics and i < args.debug_diagnostic_batches:
                 log_debug_diagnostics(
                     'val', epoch, i + 1, model, criterion, ft_images, y,
-                    pred_amps, pred_phs, support, amps, phs
+                    pred_amps, pred_phs, support, amps, phs, pred_obj=pred_obj
                 )
 
             for key in details_total:
