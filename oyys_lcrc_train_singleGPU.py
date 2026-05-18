@@ -86,6 +86,10 @@ def pearson_corr(pred, target):
     denom = torch.sqrt(torch.sum(pred * pred) * torch.sum(target * target)) + 1e-8
     return torch.sum(pred * target) / denom
 
+def poisson_mae_floor(clean_signal):
+    """Approximate E[|Poisson(lambda) - lambda|] per voxel for a clean diffraction signal."""
+    return torch.sqrt(torch.clamp(clean_signal.detach().float(), min=0.0) * (2.0 / np.pi)).mean()
+
 def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
                           pred_amps, pred_phs, support, amps, phs,
                           writer=None, step=None, pred_obj=None):
@@ -135,7 +139,7 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         gt_pcc = pearson_corr(gt_y, target)
         gt_unmasked_pcc = pearson_corr(gt_unmasked_y, target)
         target_fraction = torch.abs(target - torch.round(target))
-        poisson_mae_floor = torch.sqrt(torch.clamp(gt_unmasked_y, min=0.0) * (2.0 / np.pi)).mean()
+        poisson_floor = poisson_mae_floor(gt_unmasked_y)
 
         pred_obj_debug = pred_obj.detach() if pred_obj is not None else None
         if pred_obj_debug is not None:
@@ -186,7 +190,7 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'scale_gt_sigmoid_to_target': to_float(gt_sigmoid_scale),
             'gt_forward_pcc': to_float(gt_pcc),
             'gt_unmasked_pcc': to_float(gt_unmasked_pcc),
-            'poisson_mae_floor_est': to_float(poisson_mae_floor),
+            'poisson_mae_floor_est': to_float(poisson_floor),
             'fft_no_pre_shift_l1': to_float(fft_variant_l1['no_pre_shift']),
             'fft_no_post_shift_l1': to_float(fft_variant_l1['no_post_shift']),
             'fft_no_shifts_l1': to_float(fft_variant_l1['no_shifts']),
@@ -497,6 +501,18 @@ def validation(args, model, criterion, validloader, epoch):
         'loss_comb': 0.0,
         'loss_comb2': 0.0,
     }
+    if args.eval_noise_floor:
+        details_total.update({
+            'gt_clean_l1': 0.0,
+            'gt_clean_pcc': 0.0,
+            'poisson_mae_floor': 0.0,
+            'loss_l1_over_poisson_floor': 0.0,
+            'loss_l1_minus_poisson_floor': 0.0,
+            'pred_support_mean': 0.0,
+            'pred_amp_mean': 0.0,
+            'pred_diff_mean': 0.0,
+            'target_diff_mean': 0.0,
+        })
 
     with torch.no_grad():
         # 1. 移除 tqdm，使用标准 enumerate
@@ -522,6 +538,21 @@ def validation(args, model, criterion, validloader, epoch):
                 details['loss_comb'] = loss_comb(ft_images, y)
                 details['loss_comb2'] = loss_comb2(ft_images, y)
 
+            if args.eval_noise_floor:
+                gt_obj = model.obj_layer(amps, phs)
+                gt_clean_y = model.farfield_layer(gt_obj).detach().float()
+                target_float = ft_images.detach().float()
+                floor = poisson_mae_floor(gt_clean_y)
+                details['gt_clean_l1'] = criterion(gt_clean_y, target_float)
+                details['gt_clean_pcc'] = pearson_corr(gt_clean_y, target_float)
+                details['poisson_mae_floor'] = floor
+                details['loss_l1_over_poisson_floor'] = details['loss_l1'].detach().float() / (floor + 1e-8)
+                details['loss_l1_minus_poisson_floor'] = details['loss_l1'].detach().float() - floor
+                details['pred_support_mean'] = support.detach().float().mean()
+                details['pred_amp_mean'] = pred_amps.detach().float().mean()
+                details['pred_diff_mean'] = y.detach().float().mean()
+                details['target_diff_mean'] = target_float.mean()
+
             # 累积分项损失以计算平均值
             if args.debug_diagnostics and i < args.debug_diagnostic_batches:
                 log_debug_diagnostics(
@@ -534,11 +565,19 @@ def validation(args, model, criterion, validloader, epoch):
 
             # 2. 每 100 个 batch 输出一次，或者在最后一个 batch 输出
             if (i + 1) % 100 == 0 or (i + 1) == num_batches:
+                noise_msg = ""
+                if args.eval_noise_floor:
+                    noise_msg = (
+                        f" | Floor: {details['poisson_mae_floor']:.4e} | "
+                        f"L1/Floor: {details['loss_l1_over_poisson_floor']:.4e} | "
+                        f"L1-Floor: {details['loss_l1_minus_poisson_floor']:.4e}"
+                    )
                 print(f"Validation Epoch [{epoch}] | Batch [{i+1}/{num_batches}] | "
                       f"L1: {details['loss_l1']:.4e} | "
                       f"MAE: {details['loss_mae']:.4e} | "
                       f"MSE: {details['loss_mse']:.4e} | "
-                      f"PCC: {details['loss_pcc']:.4e}", flush=True)
+                      f"PCC: {details['loss_pcc']:.4e}"
+                      f"{noise_msg}", flush=True)
 
     # 计算平均值
     for key in details_total:
@@ -550,6 +589,10 @@ def validation(args, model, criterion, validloader, epoch):
     print(f'   MAE:   {details_total["loss_mae"]:.4e} | MSE:   {details_total["loss_mse"]:.4e}')
     print(f'   Huber: {details_total["loss_huber"]:.4e} | PCC:   {details_total["loss_pcc"]:.4e}')
     print(f'   Comb:  {details_total["loss_comb"]:.4e} | Comb2: {details_total["loss_comb2"]:.4e}')
+    if args.eval_noise_floor:
+        print(f'   GTCleanL1: {details_total["gt_clean_l1"]:.4e} | NoiseFloor: {details_total["poisson_mae_floor"]:.4e}')
+        print(f'   L1/Floor:  {details_total["loss_l1_over_poisson_floor"]:.4e} | L1-Floor: {details_total["loss_l1_minus_poisson_floor"]:.4e}')
+        print(f'   PredSupport: {details_total["pred_support_mean"]:.4e} | PredAmp: {details_total["pred_amp_mean"]:.4e}')
     print("="*80 + "\n")
 
     return details_total
@@ -683,6 +726,8 @@ if __name__ == "__main__":
                         help='train and validate on the same first N train samples for overfit debugging')
     parser.add_argument('--debug_skip_scheduler', action='store_true',
                         help='keep the learning rate fixed during debug runs')
+    parser.add_argument('--eval_noise_floor', action='store_true',
+                        help='log clean-GT forward loss, Poisson noise floor, and support compactness metrics')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 

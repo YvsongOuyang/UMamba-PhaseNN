@@ -56,6 +56,7 @@ debug_max_train_batches=${debug_max_train_batches:-0}
 debug_max_val_batches=${debug_max_val_batches:-0}
 debug_overfit_samples=${debug_overfit_samples:-0}
 debug_skip_scheduler=${debug_skip_scheduler:-false}
+eval_noise_floor=${eval_noise_floor:-false}
 
 save_model=10
 n_workers=8  # <--- 修改了这里，单机推荐 8-32 之间
@@ -72,7 +73,7 @@ model_name='umamba' # autophasenn or umamba
 
 echo "Saving path $result_path"
 echo "TensorBoard dir $tensorboard_dir"
-echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler"
+echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor"
 mkdir -p "$result_path"
 
 extra_args=()
@@ -99,6 +100,9 @@ if [[ "$debug_overfit_samples" -gt 0 ]]; then
 fi
 if [[ "$debug_skip_scheduler" == true ]]; then
     extra_args+=(--debug_skip_scheduler)
+fi
+if [[ "$eval_noise_floor" == true ]]; then
+    extra_args+=(--eval_noise_floor)
 fi
 
 # 直接使用 python 运行即可
