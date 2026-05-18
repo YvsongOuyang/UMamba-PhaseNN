@@ -71,6 +71,21 @@ def hard_support(amp, threshold):
 def sigmoid_support(amp, threshold, steepness=50.0):
     return torch.sigmoid(steepness * (amp - threshold))
 
+def fft_amplitude(obj, pre_shift=False, post_shift=True):
+    spatial_dims = (-3, -2, -1)
+    x = torch.fft.ifftshift(obj, dim=spatial_dims) if pre_shift else obj
+    x = torch.fft.fftn(x, dim=spatial_dims, norm=None)
+    x = torch.fft.fftshift(x, dim=spatial_dims) if post_shift else x
+    return torch.abs(x).to(torch.float32)
+
+def pearson_corr(pred, target):
+    pred = pred.detach().float().reshape(-1)
+    target = target.detach().float().reshape(-1)
+    pred = pred - pred.mean()
+    target = target - target.mean()
+    denom = torch.sqrt(torch.sum(pred * pred) * torch.sum(target * target)) + 1e-8
+    return torch.sum(pred * target) / denom
+
 def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, y,
                           pred_amps, pred_phs, support, amps, phs, writer=None, step=None):
     with torch.no_grad():
@@ -94,6 +109,18 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         gt_sigmoid_masked_obj = model.masked_obj_layer(gt_obj, gt_sigmoid_support)
         gt_sigmoid_y = model.farfield_layer(gt_sigmoid_masked_obj).detach().float()
 
+        fft_variants = {
+            'no_pre_shift': fft_amplitude(gt_obj, pre_shift=False, post_shift=True),
+            'no_post_shift': fft_amplitude(gt_obj, pre_shift=True, post_shift=False),
+            'no_shifts': fft_amplitude(gt_obj, pre_shift=False, post_shift=False),
+        }
+        fft_variant_l1 = {
+            name: criterion(value, target) for name, value in fft_variants.items()
+        }
+        fft_variant_pcc = {
+            name: pearson_corr(value, target) for name, value in fft_variants.items()
+        }
+
         gt_masked_obj = model.masked_obj_layer(gt_obj, gt_support)
         gt_y = model.farfield_layer(gt_masked_obj).detach().float()
         gt_l1 = criterion(gt_y, target)
@@ -104,6 +131,9 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         gt_unmasked_scaled_l1, gt_unmasked_scale = scaled_l1(gt_unmasked_y, target, criterion)
         gt_hard_scaled_l1, gt_hard_scale = scaled_l1(gt_hard_y, target, criterion)
         gt_sigmoid_scaled_l1, gt_sigmoid_scale = scaled_l1(gt_sigmoid_y, target, criterion)
+        gt_pcc = pearson_corr(gt_y, target)
+        gt_unmasked_pcc = pearson_corr(gt_unmasked_y, target)
+        target_fraction = torch.abs(target - torch.round(target))
 
         target_stats = tensor_stats(target)
         pred_stats = tensor_stats(pred)
@@ -130,9 +160,19 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
             'gt_sigmoid_support_l1': to_float(gt_sigmoid_l1),
             'gt_sigmoid_support_scaled_l1': to_float(gt_sigmoid_scaled_l1),
             'scale_gt_sigmoid_to_target': to_float(gt_sigmoid_scale),
+            'gt_forward_pcc': to_float(gt_pcc),
+            'gt_unmasked_pcc': to_float(gt_unmasked_pcc),
+            'fft_no_pre_shift_l1': to_float(fft_variant_l1['no_pre_shift']),
+            'fft_no_post_shift_l1': to_float(fft_variant_l1['no_post_shift']),
+            'fft_no_shifts_l1': to_float(fft_variant_l1['no_shifts']),
+            'fft_no_pre_shift_pcc': to_float(fft_variant_pcc['no_pre_shift']),
+            'fft_no_post_shift_pcc': to_float(fft_variant_pcc['no_post_shift']),
+            'fft_no_shifts_pcc': to_float(fft_variant_pcc['no_shifts']),
             'target_mean': target_stats['mean'],
             'target_max': target_stats['max'],
             'target_sum': target_stats['sum'],
+            'target_fraction_mean': to_float(target_fraction.mean()),
+            'target_integer_fraction': to_float((target_fraction < 1e-6).float().mean()),
             'pred_mean': pred_stats['mean'],
             'pred_max': pred_stats['max'],
             'pred_sum': pred_stats['sum'],
@@ -167,7 +207,14 @@ def log_debug_diagnostics(stage, epoch, batch_idx, model, criterion, ft_images, 
         f"GT_unmasked={debug_values['gt_unmasked_l1']:.4e} scale={debug_values['scale_gt_unmasked_to_target']:.4e} | "
         f"GT_hard={debug_values['gt_hard_support_l1']:.4e} scale={debug_values['scale_gt_hard_to_target']:.4e} | "
         f"GT_sigmoid={debug_values['gt_sigmoid_support_l1']:.4e} scale={debug_values['scale_gt_sigmoid_to_target']:.4e} | "
+        f"GT_PCC={debug_values['gt_forward_pcc']:.4e} | "
+        f"FFT(no_pre/no_post/no_shift)="
+        f"{debug_values['fft_no_pre_shift_l1']:.4e}/"
+        f"{debug_values['fft_no_post_shift_l1']:.4e}/"
+        f"{debug_values['fft_no_shifts_l1']:.4e} | "
         f"target(mean/max/sum)={debug_values['target_mean']:.4e}/{debug_values['target_max']:.4e}/{debug_values['target_sum']:.4e} | "
+        f"target_frac_mean={debug_values['target_fraction_mean']:.4e} "
+        f"target_int_frac={debug_values['target_integer_fraction']:.4e} | "
         f"pred(mean/max/sum)={debug_values['pred_mean']:.4e}/{debug_values['pred_max']:.4e}/{debug_values['pred_sum']:.4e} | "
         f"gt(mean/max/sum)={debug_values['gt_mean']:.4e}/{debug_values['gt_max']:.4e}/{debug_values['gt_sum']:.4e} | "
         f"amp(mean/max)={debug_values['amp_mean']:.4e}/{debug_values['amp_max']:.4e} | "
