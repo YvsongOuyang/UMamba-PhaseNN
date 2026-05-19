@@ -419,6 +419,52 @@ def debug_grad_norm_message(model):
         parts.append(f"{name}:norm={norm:.3e},max={max_abs:.3e},n={tensors}")
     return f"total={total_sq ** 0.5:.3e} | " + " | ".join(parts)
 
+def grad_stats(grad):
+    if grad is None:
+        return 0.0, 0.0
+    grad = grad.detach().float()
+    return float(grad.abs().mean().cpu().item()), float(grad.abs().max().cpu().item())
+
+def debug_phase_probe(args, model, criterion, ft_images, pred_obj, pred_phs, epoch, batch_idx):
+    target = ft_images.detach().float()
+    amp = torch.abs(pred_obj.detach()).float().requires_grad_(True)
+    phase = pred_phs.detach().float().requires_grad_(True)
+    support = model.support_layer(amp)
+    obj = model.obj_layer(amp, phase)
+    y = model.farfield_layer(model.masked_obj_layer(obj, support))
+    loss = criterion(y, target)
+    amp_grad, phase_grad = torch.autograd.grad(
+        loss, (amp, phase), retain_graph=False, allow_unused=True
+    )
+    amp_grad_mean, amp_grad_max = grad_stats(amp_grad)
+    phase_grad_mean, phase_grad_max = grad_stats(phase_grad)
+
+    with torch.no_grad():
+        eps = args.debug_phase_probe_eps
+        noise = torch.randn_like(phase)
+        phase_plus = phase.detach() + eps * noise
+        phase_minus = phase.detach() - eps * noise
+        y_plus = model.farfield_layer(
+            model.masked_obj_layer(model.obj_layer(amp.detach(), phase_plus), support.detach())
+        )
+        y_minus = model.farfield_layer(
+            model.masked_obj_layer(model.obj_layer(amp.detach(), phase_minus), support.detach())
+        )
+        loss_plus = criterion(y_plus, target)
+        loss_minus = criterion(y_minus, target)
+        phase_data = phase.detach().float()
+
+    print(
+        f"[PHASE_PROBE] Epoch[{epoch}] Batch[{batch_idx}] | "
+        f"Loss={loss.item():.4e} | "
+        f"AmpGrad(mean/max)={amp_grad_mean:.4e}/{amp_grad_max:.4e} | "
+        f"PhaseGrad(mean/max)={phase_grad_mean:.4e}/{phase_grad_max:.4e} | "
+        f"Phase(mean/std/maxabs)={phase_data.mean().item():.4e}/"
+        f"{phase_data.std(unbiased=False).item():.4e}/{phase_data.abs().max().item():.4e} | "
+        f"RandPhaseLoss(+/- eps={eps:.1e})={loss_plus.item():.4e}/{loss_minus.item():.4e}",
+        flush=True,
+    )
+
 def build_optimizer_param_groups(model, lr, head_lr_mult):
     if head_lr_mult == 1.0:
         return model.parameters()
@@ -488,6 +534,9 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
             pre_raw_amp = torch.abs(pred_obj.detach()).float()
             pre_phs = pred_phs.detach().float()
             pre_support = support.detach().float()
+
+        if args.debug_phase_probe and i < args.debug_phase_probe_batches:
+            debug_phase_probe(args, model, criterion, ft_images, pred_obj, pred_phs, epoch, i + 1)
 
         if args.debug_diagnostics and i < args.debug_diagnostic_batches:
             debug_step = global_step if global_step > 0 else (epoch - 1) * len(trainloader) + i + 1
@@ -933,6 +982,12 @@ if __name__ == "__main__":
                         help='print same-batch output changes immediately after optimizer.step()')
     parser.add_argument('--debug_output_delta_batches', type=int, default=1,
                         help='number of early train batches per epoch for output delta logging')
+    parser.add_argument('--debug_phase_probe', action='store_true',
+                        help='probe direct tensor gradients and random perturbation sensitivity for phase output')
+    parser.add_argument('--debug_phase_probe_batches', type=int, default=1,
+                        help='number of early train batches per epoch for phase sensitivity probing')
+    parser.add_argument('--debug_phase_probe_eps', type=float, default=1e-2,
+                        help='random phase perturbation scale for phase sensitivity probing')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 
