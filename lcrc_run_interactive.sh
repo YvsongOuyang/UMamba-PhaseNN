@@ -81,7 +81,7 @@ checkpoint=${checkpoint-$default_checkpoint}
 result_path="/data_ssd/oyys/autophasenn/Unsup${unsupervise}_D${use_down_stride}_U${use_up_stride}_T${T}_${loss_type}_batch${batch_size}_${lr_type}_Init${Initlr}_${optim_type}_scale${scale_I}"
 log_file="${result_path}/${output}"
 
-model_name='umamba' # autophasenn or umamba
+model_name=${model_name:-umamba} # umamba, autophasenn, or autophasenn_relu
 
 echo "Saving path $result_path"
 echo "TensorBoard dir $tensorboard_dir"

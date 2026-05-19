@@ -11,7 +11,8 @@ from torch.utils.tensorboard import SummaryWriter
 import json
 
 from UMambaEnc_3d import get_umamba_enc_3d_from_plans
-from AutoPhaseNN_model_relu import Network
+from AutoPhaseNN_model import Network as AutoPhaseNNNetwork
+from AutoPhaseNN_model_relu import Network as AutoPhaseNNReluNetwork
 from data_loader import *
 from utils import CombinedDiffractionLoss, get_criterion
 
@@ -916,7 +917,8 @@ if __name__ == "__main__":
     # shared args
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--OutputFolder', type=str, default='/lcrc/project/AutoPhase/test_pytorch/')
-    parser.add_argument('--model_name', type=str, default='autophasenn', help='model name: autophasenn or umamba')
+    parser.add_argument('--model_name', type=str, default='autophasenn',
+                        help='model name: umamba, autophasenn, or autophasenn_relu')
     parser.add_argument('--phase_activation', choices=('tanh', 'atan'), default='tanh',
                         help='phase output mapping for umamba; atan avoids hard tanh saturation at +/-pi')
     parser.add_argument('--phase_logit_scale', type=float, default=1.0,
@@ -1154,7 +1156,13 @@ if __name__ == "__main__":
             flush=True
         )
     elif model_name == 'autophasenn':
-        model = Network(args).to(args.device)
+        model = AutoPhaseNNNetwork(args).to(args.device)
+        print("Using AutoPhaseNN_model.py", flush=True)
+    elif model_name == 'autophasenn_relu':
+        model = AutoPhaseNNReluNetwork(args).to(args.device)
+        print("Using AutoPhaseNN_model_relu.py", flush=True)
+    else:
+        raise ValueError(f"Unsupported model_name: {model_name}")
 
     checkpoint_path = args.checkpoint
     device = torch.device("cuda" if args.device == 'cuda' else "cpu")
