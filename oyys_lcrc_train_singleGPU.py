@@ -28,6 +28,81 @@ def str2bool(value):
         return False
     raise argparse.ArgumentTypeError(f"Expected a boolean value, got: {value}")
 
+
+def clean_state_dict_keys(state_dict):
+    cleaned_state_dict = {}
+    for key, value in state_dict.items():
+        for prefix in ("module.", "model.", "net."):
+            if key.startswith(prefix):
+                key = key[len(prefix):]
+                break
+        cleaned_state_dict[key] = value
+    return cleaned_state_dict
+
+
+def load_matching_model_weights(model, state_dict, max_report_keys=12):
+    model_state = model.state_dict()
+    matched_state = {}
+    skipped_shape = []
+    unexpected_keys = []
+    non_tensor_keys = []
+
+    for key, value in clean_state_dict_keys(state_dict).items():
+        if key not in model_state:
+            unexpected_keys.append(key)
+            continue
+        if not torch.is_tensor(value):
+            non_tensor_keys.append(key)
+            continue
+        if tuple(value.shape) != tuple(model_state[key].shape):
+            skipped_shape.append((key, tuple(value.shape), tuple(model_state[key].shape)))
+            continue
+        matched_state[key] = value
+
+    missing_keys = [key for key in model_state.keys() if key not in matched_state]
+    incompatible = model.load_state_dict(matched_state, strict=False)
+    can_resume_state = (
+        len(matched_state) == len(model_state)
+        and not missing_keys
+        and not skipped_shape
+        and not unexpected_keys
+        and not non_tensor_keys
+    )
+
+    print(
+        "Checkpoint weight load summary: "
+        f"loaded={len(matched_state)}/{len(model_state)} | "
+        f"missing={len(missing_keys)} | unexpected={len(unexpected_keys)} | "
+        f"shape_mismatch={len(skipped_shape)} | non_tensor={len(non_tensor_keys)}",
+        flush=True
+    )
+    if missing_keys:
+        print(f"  missing sample: {missing_keys[:max_report_keys]}", flush=True)
+    if unexpected_keys:
+        print(f"  unexpected sample: {unexpected_keys[:max_report_keys]}", flush=True)
+    if skipped_shape:
+        print(f"  shape mismatch sample: {skipped_shape[:max_report_keys]}", flush=True)
+    if non_tensor_keys:
+        print(f"  non-tensor sample: {non_tensor_keys[:max_report_keys]}", flush=True)
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        print(
+            "  load_state_dict report: "
+            f"missing={len(incompatible.missing_keys)} | "
+            f"unexpected={len(incompatible.unexpected_keys)}",
+            flush=True
+        )
+
+    return {
+        "loaded": len(matched_state),
+        "total": len(model_state),
+        "missing_keys": missing_keys,
+        "unexpected_keys": unexpected_keys,
+        "skipped_shape": skipped_shape,
+        "non_tensor_keys": non_tensor_keys,
+        "can_resume_state": can_resume_state,
+    }
+
+
 def safe_path_name(value):
     safe = ''.join(ch if ch.isalnum() or ch in ('-', '_', '.') else '_' for ch in str(value))
     return safe.strip('._') or 'experiment'
@@ -1167,6 +1242,7 @@ if __name__ == "__main__":
     checkpoint_path = args.checkpoint
     device = torch.device("cuda" if args.device == 'cuda' else "cpu")
     load_success = False  # 加载状态标志
+    resume_state_success = False
     checkpoint = None
 
     # 【核心容错】捕获所有加载异常：文件不存在、文件损坏、解析失败等
@@ -1184,19 +1260,26 @@ if __name__ == "__main__":
             state_dict = checkpoint  # 兼容直接保存模型权重
 
         # 3. 清洗权重key前缀（model. / net.）
-        cleaned_state_dict = {}
-        for k, v in state_dict.items():
-            if k.startswith("model."):
-                cleaned_state_dict[k.replace("model.", "")] = v
-            elif k.startswith("net."):
-                cleaned_state_dict[k.replace("net.", "")] = v
-            else:
-                cleaned_state_dict[k] = v
+        weight_report = load_matching_model_weights(model, state_dict)
+        load_success = weight_report["loaded"] > 0
+        resume_state_success = (
+            load_success
+            and isinstance(checkpoint, dict)
+            and weight_report["can_resume_state"]
+            and any(key in checkpoint for key in ("epoch", "optimizer_state_dict", "scheduler", "training_losses"))
+        )
 
         # 4. 加载权重到模型
-        missing_keys, unexpected_keys = model.load_state_dict(cleaned_state_dict, strict=False)
-        print(f"✅ 模型权重加载完成！缺失层: {len(missing_keys)}, 多余层: {len(unexpected_keys)}")
-        load_success = True
+        if load_success and resume_state_success:
+            print("Checkpoint is fully compatible; training state can be resumed.", flush=True)
+        elif load_success:
+            print(
+                "Checkpoint was partially loaded as pretrained weights; "
+                "epoch/optimizer/scheduler state will start fresh.",
+                flush=True
+            )
+        else:
+            print("No compatible model weights were found in checkpoint; training from scratch.", flush=True)
 
     # 捕获所有异常，失败则从零开始训练
     except Exception as e:
@@ -1209,8 +1292,10 @@ if __name__ == "__main__":
         model.cuda()
 
         # 可选：打印最终状态
-    if load_success:
+    if resume_state_success:
         print("🔍 训练模式：断点续训")
+    elif load_success:
+        print("🔍 训练模式：加载预训练权重（重新开始优化器/调度器）")
     else:
         print("🔍 训练模式：从头训练")
 
@@ -1297,7 +1382,7 @@ if __name__ == "__main__":
     best_val_loss = float('inf')
     global_step = 0
 
-    if load_success and isinstance(checkpoint, dict):
+    if resume_state_success and isinstance(checkpoint, dict):
         training_losses = checkpoint.get("training_losses", training_losses)
         validation_losses = checkpoint.get("validation_losses", validation_losses)
         best_val_loss = checkpoint.get("best_val_loss", best_val_loss)
@@ -1342,7 +1427,7 @@ if __name__ == "__main__":
     save_checkpoints = not debug_limited_run
     if debug_limited_run:
         print("[DEBUG] Limited debug run detected: checkpoint saving is disabled.", flush=True)
-    if load_success and isinstance(checkpoint, dict):
+    if resume_state_success and isinstance(checkpoint, dict):
         if args.reset_optimizer:
             print("Reset optimizer/scheduler/scaler; checkpoint weights and resume position were kept.")
         else:
