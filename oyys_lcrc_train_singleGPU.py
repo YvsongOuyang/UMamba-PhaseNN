@@ -472,6 +472,14 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
             y, pred_obj, pred_amps, pred_phs, support = model(ft_images)
             loss = criterion(y, ft_images)
 
+        track_output_delta = args.debug_output_delta and i < args.debug_output_delta_batches
+        if track_output_delta:
+            pre_loss = loss.detach().float()
+            pre_y = y.detach().float()
+            pre_raw_amp = torch.abs(pred_obj.detach()).float()
+            pre_phs = pred_phs.detach().float()
+            pre_support = support.detach().float()
+
         if args.debug_diagnostics and i < args.debug_diagnostic_batches:
             debug_step = global_step if global_step > 0 else (epoch - 1) * len(trainloader) + i + 1
             log_debug_diagnostics(
@@ -513,6 +521,27 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
             optimizer.step()
             optimizer_stepped = True
         after = next(model.parameters()).data.flatten()[0].item()
+
+        if track_output_delta:
+            with torch.no_grad():
+                y_after, pred_obj_after, _, pred_phs_after, support_after = model(ft_images)
+                post_loss = criterion(y_after, ft_images).detach().float()
+                post_y = y_after.detach().float()
+                post_raw_amp = torch.abs(pred_obj_after.detach()).float()
+                post_phs = pred_phs_after.detach().float()
+                post_support = support_after.detach().float()
+            print(
+                f"[OUTPUT_DELTA] Epoch[{epoch}] Batch[{i + 1}] | "
+                f"LossBefore={pre_loss.item():.4e} | LossAfter={post_loss.item():.4e} | "
+                f"DeltaLoss={(post_loss - pre_loss).item():+.4e} | "
+                f"MeanAbsDeltaY={(post_y - pre_y).abs().mean().item():.4e} | "
+                f"MeanAbsDeltaAmp={(post_raw_amp - pre_raw_amp).abs().mean().item():.4e} | "
+                f"MeanAbsDeltaPh={(post_phs - pre_phs).abs().mean().item():.4e} | "
+                f"MeanAbsDeltaSupport={(post_support - pre_support).abs().mean().item():.4e} | "
+                f"PostAmpMean={post_raw_amp.mean().item():.4e} | "
+                f"PostSupportMean={post_support.mean().item():.4e}",
+                flush=True,
+            )
 
         # --- 记录与输出 ---
         if optimizer_stepped:
@@ -890,6 +919,10 @@ if __name__ == "__main__":
                         help='print encoder/decoder gradient norms for early train batches')
     parser.add_argument('--debug_grad_norm_batches', type=int, default=1,
                         help='number of early train batches per epoch for gradient norm logging')
+    parser.add_argument('--debug_output_delta', action='store_true',
+                        help='print same-batch output changes immediately after optimizer.step()')
+    parser.add_argument('--debug_output_delta_batches', type=int, default=1,
+                        help='number of early train batches per epoch for output delta logging')
     parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
     parser.add_argument('--notes', type=str, default='test')
 

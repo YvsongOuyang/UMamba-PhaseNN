@@ -65,6 +65,8 @@ debug_direct_opt_exit=${debug_direct_opt_exit:-false}
 head_lr_mult=${head_lr_mult:-1.0}
 debug_grad_norm=${debug_grad_norm:-false}
 debug_grad_norm_batches=${debug_grad_norm_batches:-1}
+debug_output_delta=${debug_output_delta:-false}
+debug_output_delta_batches=${debug_output_delta_batches:-1}
 
 save_model=${save_model:-10}
 n_workers=${n_workers:-8}  # 单机推荐 8-32 之间
@@ -78,7 +80,7 @@ model_name='umamba' # autophasenn or umamba
 
 echo "Saving path $result_path"
 echo "TensorBoard dir $tensorboard_dir"
-echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor direct_opt_steps=$debug_direct_opt_steps head_lr_mult=$head_lr_mult grad_norm=$debug_grad_norm"
+echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor direct_opt_steps=$debug_direct_opt_steps head_lr_mult=$head_lr_mult grad_norm=$debug_grad_norm output_delta=$debug_output_delta"
 mkdir -p "$result_path"
 
 extra_args=()
@@ -124,6 +126,10 @@ fi
 if [[ "$debug_grad_norm" == true ]]; then
     extra_args+=(--debug_grad_norm)
     extra_args+=(--debug_grad_norm_batches "$debug_grad_norm_batches")
+fi
+if [[ "$debug_output_delta" == true ]]; then
+    extra_args+=(--debug_output_delta)
+    extra_args+=(--debug_output_delta_batches "$debug_output_delta_batches")
 fi
 
 # 直接使用 python 运行即可
