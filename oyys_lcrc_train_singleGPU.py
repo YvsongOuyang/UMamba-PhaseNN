@@ -387,11 +387,13 @@ def loss_comb_log(Y_true, Y_pred):
     a1, a2, a3 = 50.0, 50.0, 1.0
     return (a1*l1 + a2*l2 + a3*l3) / (a1 + a2 + a3)
 
-def grad_norm_for_module(module):
+def grad_norm_for_module(module, exclude_prefixes=()):
     sq_sum = 0.0
     max_abs = 0.0
     tensors = 0
-    for param in module.parameters():
+    for name, param in module.named_parameters():
+        if any(name.startswith(prefix) for prefix in exclude_prefixes):
+            continue
         if param.grad is None:
             continue
         grad = param.grad.detach().float()
@@ -403,11 +405,16 @@ def grad_norm_for_module(module):
 def debug_grad_norm_message(model):
     parts = []
     total_sq = 0.0
-    for name in ('encoder', 'decoder1', 'decoder2'):
+    module_specs = (
+        ('encoder', ()),
+        ('decoder1', ('encoder.',)),
+        ('decoder2', ('encoder.',)),
+    )
+    for name, exclude_prefixes in module_specs:
         module = getattr(model, name, None)
         if module is None:
             continue
-        norm, max_abs, tensors = grad_norm_for_module(module)
+        norm, max_abs, tensors = grad_norm_for_module(module, exclude_prefixes=exclude_prefixes)
         total_sq += norm * norm
         parts.append(f"{name}:norm={norm:.3e},max={max_abs:.3e},n={tensors}")
     return f"total={total_sq ** 0.5:.3e} | " + " | ".join(parts)
@@ -422,7 +429,9 @@ def build_optimizer_param_groups(model, lr, head_lr_mult):
         module = getattr(model, name, None)
         if module is None:
             continue
-        for param in module.parameters():
+        for param_name, param in module.named_parameters():
+            if param_name.startswith('encoder.'):
+                continue
             if param.requires_grad:
                 head_params.append(param)
                 head_ids.add(id(param))
@@ -537,6 +546,7 @@ def train(args, model, criterion, trainloader, optimizer, scheduler, epoch, scal
                 f"MeanAbsDeltaY={(post_y - pre_y).abs().mean().item():.4e} | "
                 f"MeanAbsDeltaAmp={(post_raw_amp - pre_raw_amp).abs().mean().item():.4e} | "
                 f"MeanAbsDeltaPh={(post_phs - pre_phs).abs().mean().item():.4e} | "
+                f"MaxAbsDeltaPh={(post_phs - pre_phs).abs().max().item():.4e} | "
                 f"MeanAbsDeltaSupport={(post_support - pre_support).abs().mean().item():.4e} | "
                 f"PostAmpMean={post_raw_amp.mean().item():.4e} | "
                 f"PostSupportMean={post_support.mean().item():.4e}",
