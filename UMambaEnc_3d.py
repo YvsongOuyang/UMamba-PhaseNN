@@ -437,12 +437,14 @@ class UMambaEnc(nn.Module):
                  nonlin_kwargs: dict = None,
                  deep_supervision: bool = False,
                  stem_channels: int = None,
-                 phase_activation: str = 'tanh'
+                 phase_activation: str = 'tanh',
+                 phase_logit_scale: float = 1.0
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
             raise ValueError(f"Unsupported phase_activation: {phase_activation}")
         self.phase_activation = phase_activation
+        self.phase_logit_scale = phase_logit_scale
         n_blocks_per_stage = n_conv_per_stage
         if isinstance(n_blocks_per_stage, int):
             n_blocks_per_stage = [n_blocks_per_stage] * n_stages
@@ -492,6 +494,7 @@ class UMambaEnc(nn.Module):
         self.farfield_layer = FarfieldDiffLayer()   # Index 93
 
     def phase_from_logits(self, logits):
+        logits = logits * self.phase_logit_scale
         if self.phase_activation == 'atan':
             return 2.0 * torch.atan(logits)
         return self.phi_layer(torch.tanh(logits))
@@ -537,7 +540,8 @@ def get_umamba_enc_3d_from_plans(
         configuration_manager: ConfigurationManager,
         num_input_channels: int,
         deep_supervision: bool = False,
-        phase_activation: str = 'tanh'
+        phase_activation: str = 'tanh',
+        phase_logit_scale: float = 1.0
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -581,6 +585,7 @@ def get_umamba_enc_3d_from_plans(
         num_classes=label_manager.num_segmentation_heads,
         deep_supervision=deep_supervision,
         phase_activation=phase_activation,
+        phase_logit_scale=phase_logit_scale,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )

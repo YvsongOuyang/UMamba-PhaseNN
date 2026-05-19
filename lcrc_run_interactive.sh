@@ -50,6 +50,7 @@ lr_type='cosine' #'cosine', 'clr', 'step', 'plateau'
 optim_type='adam' #'adam', 'adamw'
 loss_type='l1'  # Training intentionally uses fixed L1Loss in oyys_lcrc_train_singleGPU.py.
 phase_activation=${phase_activation:-tanh}
+phase_logit_scale=${phase_logit_scale:-1.0}
 tensorboard_dir=${tensorboard_dir:-runs}
 debug_diagnostics=${debug_diagnostics:-false}
 debug_diagnostic_batches=${debug_diagnostic_batches:-1}
@@ -84,7 +85,7 @@ model_name='umamba' # autophasenn or umamba
 
 echo "Saving path $result_path"
 echo "TensorBoard dir $tensorboard_dir"
-echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor direct_opt_steps=$debug_direct_opt_steps head_lr_mult=$head_lr_mult grad_norm=$debug_grad_norm output_delta=$debug_output_delta phase_probe=$debug_phase_probe phase_activation=$phase_activation"
+echo "Debug diagnostics=$debug_diagnostics max_train_batches=$debug_max_train_batches max_val_batches=$debug_max_val_batches overfit_samples=$debug_overfit_samples skip_scheduler=$debug_skip_scheduler eval_noise_floor=$eval_noise_floor direct_opt_steps=$debug_direct_opt_steps head_lr_mult=$head_lr_mult grad_norm=$debug_grad_norm output_delta=$debug_output_delta phase_probe=$debug_phase_probe phase_activation=$phase_activation phase_logit_scale=$phase_logit_scale"
 mkdir -p "$result_path"
 
 extra_args=()
@@ -148,6 +149,7 @@ python "$SCRIPT" \
     --checkpoint "$checkpoint" \
     --model_name "$model_name" \
     --phase_activation "$phase_activation" \
+    --phase_logit_scale "$phase_logit_scale" \
     --device cuda \
     --loss_type "$loss_type" \
     --OutputFolder "$result_path" \

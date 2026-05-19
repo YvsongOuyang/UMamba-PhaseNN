@@ -919,6 +919,8 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default='autophasenn', help='model name: autophasenn or umamba')
     parser.add_argument('--phase_activation', choices=('tanh', 'atan'), default='tanh',
                         help='phase output mapping for umamba; atan avoids hard tanh saturation at +/-pi')
+    parser.add_argument('--phase_logit_scale', type=float, default=1.0,
+                        help='multiplier applied to umamba phase logits before phase activation')
     parser.add_argument('--checkpoint', type=str, default='')
     #parser.add_argument('--unsupervise', action='store_true', default=False)
     parser.add_argument('--DataFolder', type=str, default='/data_hdd/oyys/autophaseNN/CDI_simulation_upsamp_noise/')
@@ -1143,9 +1145,14 @@ if __name__ == "__main__":
             configuration_manager=config_manager,
             num_input_channels=1,  # 单模态输入（如CT）
             deep_supervision=False,
-            phase_activation=args.phase_activation
+            phase_activation=args.phase_activation,
+            phase_logit_scale=args.phase_logit_scale
         )
-        print(f"UMamba phase_activation: {args.phase_activation}", flush=True)
+        print(
+            f"UMamba phase_activation: {args.phase_activation} | "
+            f"phase_logit_scale: {args.phase_logit_scale:.4e}",
+            flush=True
+        )
     elif model_name == 'autophasenn':
         model = Network(args).to(args.device)
 
