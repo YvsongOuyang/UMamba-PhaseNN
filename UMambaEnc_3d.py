@@ -436,9 +436,13 @@ class UMambaEnc(nn.Module):
                  nonlin: Union[None, Type[torch.nn.Module]] = None,
                  nonlin_kwargs: dict = None,
                  deep_supervision: bool = False,
-                 stem_channels: int = None
+                 stem_channels: int = None,
+                 phase_activation: str = 'tanh'
                  ):
         super().__init__()
+        if phase_activation not in ('tanh', 'atan'):
+            raise ValueError(f"Unsupported phase_activation: {phase_activation}")
+        self.phase_activation = phase_activation
         n_blocks_per_stage = n_conv_per_stage
         if isinstance(n_blocks_per_stage, int):
             n_blocks_per_stage = [n_blocks_per_stage] * n_stages
@@ -487,12 +491,15 @@ class UMambaEnc(nn.Module):
         self.masked_obj_layer = MaskedObjLayer()    # Index 92
         self.farfield_layer = FarfieldDiffLayer()   # Index 93
 
+    def phase_from_logits(self, logits):
+        if self.phase_activation == 'atan':
+            return 2.0 * torch.atan(logits)
+        return self.phi_layer(torch.tanh(logits))
+
     def forward(self, x):
         skips = self.encoder(x)
         amp = nn.Sigmoid()(self.decoder1(skips))
-        ph_raw = nn.Tanh()(self.decoder2(skips))
-
-        ph = self.phi_layer(ph_raw)
+        ph = self.phase_from_logits(self.decoder2(skips))
 
         # --- Index 91: support ---
         # 对应 TF: Lambda(lambda x: get_mask(x))
@@ -529,7 +536,8 @@ def get_umamba_enc_3d_from_plans(
         dataset_json: dict,
         configuration_manager: ConfigurationManager,
         num_input_channels: int,
-        deep_supervision: bool = False
+        deep_supervision: bool = False,
+        phase_activation: str = 'tanh'
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -572,6 +580,7 @@ def get_umamba_enc_3d_from_plans(
         strides=configuration_manager.pool_op_kernel_sizes,
         num_classes=label_manager.num_segmentation_heads,
         deep_supervision=deep_supervision,
+        phase_activation=phase_activation,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )
