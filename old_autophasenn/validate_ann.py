@@ -188,6 +188,24 @@ def print_sample_losses(sample_index, batch_index, batch_sample_index, losses):
     print("-" * 60 + "\n")
 
 
+def summarize_values(values):
+    ordered = sorted(values)
+    if not ordered:
+        return {}
+
+    def percentile(p):
+        index = min(len(ordered) - 1, max(0, round((len(ordered) - 1) * p)))
+        return ordered[index]
+
+    return {
+        "min": ordered[0],
+        "p50": percentile(0.50),
+        "p90": percentile(0.90),
+        "p99": percentile(0.99),
+        "max": ordered[-1],
+    }
+
+
 def clean_state_dict_keys(state_dict):
     cleaned = {}
     for key, value in state_dict.items():
@@ -311,8 +329,12 @@ def evaluate_ann(
         "comb2": 0.0,
         "comb_log": 0.0,
     }
+    loss_series = {key: [] for key in loss_totals}
+    legacy_first_sample_totals = {key: 0.0 for key in loss_totals}
+    legacy_first_sample_count = 0
     evaluated_batches = 0
     evaluated_samples = 0
+    good_sample_count = 0
 
     for module in model.modules():
         class_name = module.__class__.__name__
@@ -341,7 +363,14 @@ def evaluate_ann(
                 losses = compute_loss_values(y_true_raw, y_pred_raw_scaled)
 
                 for key, value in losses.items():
-                    loss_totals[key] += value.item()
+                    loss_value = value.item()
+                    loss_totals[key] += loss_value
+                    loss_series[key].append(loss_value)
+                    if batch_sample_idx == 0:
+                        legacy_first_sample_totals[key] += loss_value
+
+                if batch_sample_idx == 0:
+                    legacy_first_sample_count += 1
 
                 evaluated_samples += 1
                 metric_logger.update(loss=losses["comb"].item())
@@ -349,23 +378,35 @@ def evaluate_ann(
                 pcc_loss = losses["pcc"].item()
                 real_pcc = 1.0 - pcc_loss
                 if (
-                    print_good_samples
-                    and pcc_loss < good_pcc_loss_threshold
+                    pcc_loss < good_pcc_loss_threshold
                     and real_pcc > good_real_pcc_threshold
                 ):
-                    print_sample_losses(
-                        evaluated_samples,
-                        i + 1,
-                        batch_sample_idx + 1,
-                        losses,
-                    )
+                    good_sample_count += 1
+                    if print_good_samples:
+                        print_sample_losses(
+                            evaluated_samples,
+                            i + 1,
+                            batch_sample_idx + 1,
+                            losses,
+                        )
 
     metric_logger.synchronize_between_processes()
     if evaluated_samples == 0:
         raise RuntimeError("No validation samples were evaluated.")
     avg_losses = {key: value / evaluated_samples for key, value in loss_totals.items()}
+    if legacy_first_sample_count > 0:
+        avg_losses["_legacy_first_sample_avgs"] = {
+            key: value / legacy_first_sample_count
+            for key, value in legacy_first_sample_totals.items()
+        }
+        avg_losses["_legacy_first_sample_count"] = legacy_first_sample_count
+    avg_losses["_loss_stats"] = {
+        key: summarize_values(values)
+        for key, values in loss_series.items()
+    }
     avg_losses["_num_batches"] = evaluated_batches
     avg_losses["_num_samples"] = evaluated_samples
+    avg_losses["_good_sample_count"] = good_sample_count
     return avg_losses
 
 
@@ -491,6 +532,7 @@ def main():
     print("=" * 60)
     print(f"Evaluated batches: {avg_losses['_num_batches']}")
     print(f"Evaluated samples: {avg_losses['_num_samples']}")
+    print(f"Good samples meeting PCC targets: {avg_losses['_good_sample_count']}")
     print(f"Average Loss Paper: {avg_losses['paper']:.6f}")
     print(f"Average Loss Log:   {avg_losses['log']:.6f}")
     print(f"Average Loss sq:   {avg_losses['sq']:.6f}")
@@ -500,6 +542,27 @@ def main():
     print(f"Average Loss Comb:  {avg_losses['comb']:.6f} (Target: Small Number)")
     print(f"Average Loss Comb2: {avg_losses['comb2']:.6f}")
     print(f"Average Loss CombLog: {avg_losses['comb_log']:.6f}")
+    if "_legacy_first_sample_avgs" in avg_losses:
+        legacy = avg_losses["_legacy_first_sample_avgs"]
+        print("\nLegacy first-sample-per-batch averages")
+        print(f"Legacy samples: {avg_losses['_legacy_first_sample_count']}")
+        print(f"Legacy Loss Paper: {legacy['paper']:.6f}")
+        print(f"Legacy Loss Log:   {legacy['log']:.6f}")
+        print(f"Legacy Loss sq:   {legacy['sq']:.6f}")
+        print(f"Legacy Loss mae:   {legacy['mae']:.6f}")
+        print(f"Legacy Loss PCC:   {legacy['pcc']:.6f}")
+        print(f"Legacy Real PCC:   {1.0 - legacy['pcc']:.6f}")
+        print(f"Legacy Loss Comb:  {legacy['comb']:.6f}")
+        print(f"Legacy Loss Comb2: {legacy['comb2']:.6f}")
+        print(f"Legacy Loss CombLog: {legacy['comb_log']:.6f}")
+
+    print("\nLoss distribution summary")
+    for key in ("paper", "sq", "mae", "pcc", "comb"):
+        stats = avg_losses["_loss_stats"][key]
+        print(
+            f"{key}: min={stats['min']:.6f} | p50={stats['p50']:.6f} | "
+            f"p90={stats['p90']:.6f} | p99={stats['p99']:.6f} | max={stats['max']:.6f}"
+        )
     print("=" * 60)
 
 
