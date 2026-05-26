@@ -273,17 +273,6 @@ def evaluate_ann(model, data_loader, device, max_batches=0):
             loss_totals["comb_log"] += l_comb_log.item()
             evaluated_batches += 1
 
-            print(f"ANN Validation Batch [{i + 1}/{len(data_loader)}]")
-            print(f"  Loss Paper: {l_paper.item():.6f}")
-            print(f"  Loss Log:   {l_log.item():.6f}")
-            print(f"  Loss sq:   {l_sq.item():.6f}")
-            print(f"  Loss mae:   {l_mae.item():.6f}")
-            print(f"  Loss PCC:   {l_pcc.item():.6f} (Target: < 0.2)")
-            print(f"  Real PCC:   {1.0 - l_pcc.item():.6f} (Target: > 0.8)")
-            print(f"  Loss Comb:  {l_comb.item():.6f} (Target: Small Number)")
-            print(f"  Loss Comb2: {l_comb2.item():.6f}")
-            print(f"  Loss CombLog: {l_comb_log.item():.6f}")
-            print("-" * 30)
             metric_logger.update(loss=l_comb.item())
 
     metric_logger.synchronize_between_processes()
