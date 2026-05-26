@@ -373,6 +373,8 @@ def main():
     device = torch.device(args.device if args.device == "cuda" and torch.cuda.is_available() else "cpu")
     print(f"use device: {device}")
     print(f"ANN validation dataset: {args.dataset}")
+    print("************************")
+    print(f"Checkpoint: {args.checkpoint if args.checkpoint else '<none>'}")
     print(f"Model module: {THIS_DIR / 'AutoPhaseNN_model.py'}")
     print(f"DataLoader module: {THIS_DIR / 'data_loader.py'}")
 
@@ -382,7 +384,10 @@ def main():
             raise FileNotFoundError(args.checkpoint)
         load_matching_model_weights(model, args.checkpoint, device, strict=args.strict_load)
     else:
-        print("\nPretrained checkpoint loading: skipped (--checkpoint/--pretrained_path not provided)\n")
+        print(
+            "\nPretrained checkpoint loading: skipped "
+            "(pass --checkpoint/--pretrained_path /path/to/model.pt to load weights)\n"
+        )
 
     data_root = Path(args.DataFolder)
     if args.dataset == "train":
