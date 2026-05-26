@@ -8,7 +8,7 @@ D:/code/PYTHON/AutoPhaseNN-main/PyTorch/train.py:
   3. run a single forward pass
   4. compare y[0:1] with ft_images[0:1]
   5. align predicted diffraction energy by sum(target) / sum(pred)
-  6. report LossComb averaged over validation batches
+  6. report the same loss group printed by the source evaluator
 
 Example:
   python old_autophasenn/validate_ann.py \
@@ -23,7 +23,6 @@ import sys
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -31,7 +30,7 @@ if str(THIS_DIR) not in sys.path:
     sys.path.insert(0, str(THIS_DIR))
 
 from AutoPhaseNN_model import Network  # noqa: E402
-from data_loader import Dataset  # noqa: E402
+import data_loader as old_data_loader  # noqa: E402
 
 
 class AverageMeter:
@@ -60,33 +59,87 @@ class MetricLogger:
         return
 
 
-class LossComb(nn.Module):
-    """LossComb copied from the PyTorch AutoPhaseNN validation logic."""
+def loss_log(Y_true, Y_pred):
+    pred = torch.log10(Y_pred + 1.0)
+    true = torch.log10(Y_true + 1.0)
 
-    def __init__(self):
-        super().__init__()
-        self.epsilon = 1e-8
+    top = torch.sum(torch.pow(pred - true, 2))
+    bottom = torch.sum(torch.pow(true, 2))
 
-    def loss_sq(self, y_true, y_pred):
-        dims = tuple(range(1, y_true.ndim))
-        top = torch.sum(torch.pow(y_pred - y_true, 2), dim=dims, keepdim=True)
-        bottom = torch.sum(torch.pow(y_true, 2), dim=dims, keepdim=True) + self.epsilon
-        return torch.sum(top / bottom)
+    loss_value = top / (bottom + 1e-8)
+    return loss_value
 
-    def loss_pcc(self, y_true, y_pred):
-        dims = tuple(range(1, y_true.ndim))
-        pred_mean = torch.mean(y_pred, dim=dims, keepdim=True)
-        true_mean = torch.mean(y_true, dim=dims, keepdim=True)
-        pred_centered = y_pred - pred_mean
-        true_centered = y_true - true_mean
-        top = torch.sum(pred_centered * true_centered, dim=dims, keepdim=True)
-        pred_var_sum = torch.sum(torch.pow(pred_centered, 2), dim=dims, keepdim=True)
-        true_var_sum = torch.sum(torch.pow(true_centered, 2), dim=dims, keepdim=True)
-        bottom = torch.sqrt(pred_var_sum * true_var_sum + self.epsilon)
-        return torch.sum(1.0 - (top / bottom))
 
-    def forward(self, y_true, y_pred):
-        return (self.loss_sq(y_true, y_pred) + self.loss_pcc(y_true, y_pred)) / 2.0
+def loss_sq(Y_true, Y_pred):
+    dims = tuple(range(1, Y_true.ndim))
+
+    top = torch.sum(torch.pow(Y_pred - Y_true, 2), dim=dims, keepdim=True)
+    bottom = torch.sum(torch.pow(Y_true, 2), dim=dims, keepdim=True)
+
+    loss_value = torch.sum(top / (bottom + 1e-8))
+    return loss_value
+
+
+def loss_mae(Y_true, Y_pred):
+    dims = tuple(range(1, Y_true.ndim))
+
+    top = torch.sum(torch.abs(Y_pred - Y_true), dim=dims, keepdim=True)
+    bottom = torch.sum(torch.abs(Y_true), dim=dims, keepdim=True)
+
+    loss_value = torch.sum(top / (bottom + 1e-8))
+    return loss_value
+
+
+def loss_paper(Y_true, Y_pred):
+    sqrt_true = torch.sqrt(torch.clamp(Y_true, min=0.0))
+    sqrt_pred = torch.sqrt(torch.clamp(Y_pred, min=0.0))
+
+    abs_error = torch.abs(sqrt_pred - sqrt_true)
+    total_error = torch.sum(abs_error)
+
+    loss_value = total_error / 262144.0
+    return loss_value
+
+
+def loss_pcc(Y_true, Y_pred):
+    dims = tuple(range(1, Y_true.ndim))
+
+    pred_mean = torch.mean(Y_pred, dim=dims, keepdim=True)
+    true_mean = torch.mean(Y_true, dim=dims, keepdim=True)
+
+    pred_centered = Y_pred - pred_mean
+    true_centered = Y_true - true_mean
+
+    top = torch.sum(pred_centered * true_centered, dim=dims, keepdim=True)
+
+    pred_var_sum = torch.sum(torch.pow(pred_centered, 2), dim=dims, keepdim=True)
+    true_var_sum = torch.sum(torch.pow(true_centered, 2), dim=dims, keepdim=True)
+
+    bottom = torch.sqrt(pred_var_sum * true_var_sum + 1e-8)
+
+    loss_value = torch.sum(1.0 - (top / bottom))
+    return loss_value
+
+
+def loss_comb(Y_true, Y_pred):
+    l1 = loss_sq(Y_true, Y_pred)
+    l2 = loss_pcc(Y_true, Y_pred)
+    return (l1 + l2) / 2.0
+
+
+def loss_comb2(Y_true, Y_pred):
+    l1 = torch.sqrt(loss_sq(Y_true, Y_pred) + 1e-8)
+    l2 = loss_pcc(Y_true, Y_pred)
+    return (l1 + l2) / 2.0
+
+
+def loss_comb_log(Y_true, Y_pred):
+    l1 = loss_sq(Y_true, Y_pred)
+    l2 = loss_pcc(Y_true, Y_pred)
+    l3 = loss_log(Y_true, Y_pred)
+
+    a1, a2, a3 = 50.0, 50.0, 1.0
+    return (a1 * l1 + a2 * l2 + a3 * l3) / (a1 + a2 + a3)
 
 
 def clean_state_dict_keys(state_dict):
@@ -144,7 +197,7 @@ def load_matching_model_weights(model, checkpoint_path, device, strict=False):
         print(f"Unexpected keys: {len(incompatible.unexpected_keys)}")
 
 
-def evaluate_ann(model, criterion, data_loader, device, max_batches=0):
+def evaluate_ann(model, data_loader, device, max_batches=0):
     """
     ANN validation logic copied from AutoPhaseNN-main/PyTorch/train.py.
 
@@ -154,6 +207,17 @@ def evaluate_ann(model, criterion, data_loader, device, max_batches=0):
     model.eval()
 
     metric_logger = MetricLogger()
+    loss_totals = {
+        "paper": 0.0,
+        "log": 0.0,
+        "sq": 0.0,
+        "mae": 0.0,
+        "pcc": 0.0,
+        "comb": 0.0,
+        "comb2": 0.0,
+        "comb_log": 0.0,
+    }
+    evaluated_batches = 0
 
     for module in model.modules():
         class_name = module.__class__.__name__
@@ -176,38 +240,42 @@ def evaluate_ann(model, criterion, data_loader, device, max_batches=0):
 
             scale_raw = torch.sum(y_true_raw) / (torch.sum(y_pred_raw) + 1e-10)
             y_pred_raw_scaled = y_pred_raw * scale_raw
-            l_comb = criterion(y_true_raw, y_pred_raw_scaled)
+            l_paper = loss_paper(y_true_raw, y_pred_raw_scaled)
+            l_log = loss_log(y_true_raw, y_pred_raw_scaled)
+            l_sq = loss_sq(y_true_raw, y_pred_raw_scaled)
+            l_mae = loss_mae(y_true_raw, y_pred_raw_scaled)
+            l_pcc = loss_pcc(y_true_raw, y_pred_raw_scaled)
+            l_comb = loss_comb(y_true_raw, y_pred_raw_scaled)
+            l_comb2 = loss_comb2(y_true_raw, y_pred_raw_scaled)
+            l_comb_log = loss_comb_log(y_true_raw, y_pred_raw_scaled)
 
-            print(
-                f"ANN Validation Batch [{i + 1}/{len(data_loader)}] | "
-                f"LossComb: {l_comb.item():.6f}"
-            )
+            loss_totals["paper"] += l_paper.item()
+            loss_totals["log"] += l_log.item()
+            loss_totals["sq"] += l_sq.item()
+            loss_totals["mae"] += l_mae.item()
+            loss_totals["pcc"] += l_pcc.item()
+            loss_totals["comb"] += l_comb.item()
+            loss_totals["comb2"] += l_comb2.item()
+            loss_totals["comb_log"] += l_comb_log.item()
+            evaluated_batches += 1
+
+            print(f"ANN Validation Batch [{i + 1}/{len(data_loader)}]")
+            print(f"  Loss Paper: {l_paper.item():.6f}")
+            print(f"  Loss Log:   {l_log.item():.6f}")
+            print(f"  Loss sq:   {l_sq.item():.6f}")
+            print(f"  Loss mae:   {l_mae.item():.6f}")
+            print(f"  Loss PCC:   {l_pcc.item():.6f} (Target: < 0.2)")
+            print(f"  Real PCC:   {1.0 - l_pcc.item():.6f} (Target: > 0.8)")
+            print(f"  Loss Comb:  {l_comb.item():.6f} (Target: Small Number)")
+            print(f"  Loss Comb2: {l_comb2.item():.6f}")
+            print(f"  Loss CombLog: {l_comb_log.item():.6f}")
+            print("-" * 30)
             metric_logger.update(loss=l_comb.item())
 
     metric_logger.synchronize_between_processes()
-    return metric_logger.loss.global_avg
-
-
-def build_dataset(args):
-    data_root = Path(args.DataFolder)
-    if args.dataset == "train":
-        diff_path = data_root / args.data_train_diff
-        real_path = data_root / args.data_train_real
-        num_samples = args.num_samples_train
-    else:
-        diff_path = data_root / args.data_val_diff
-        real_path = data_root / args.data_val_real
-        num_samples = args.num_samples_val
-
-    return Dataset(
-        str(diff_path),
-        str(real_path),
-        num_samples,
-        dtype_diff=args.dtype_diff,
-        dtype_real=args.dtype_real,
-        scale_I=args.scale_I,
-        shuffle=args.shuffle_dataset,
-    )
+    if evaluated_batches == 0:
+        raise RuntimeError("No validation batches were evaluated.")
+    return {key: value / evaluated_batches for key, value in loss_totals.items()}
 
 
 def parse_args():
@@ -261,7 +329,25 @@ def main():
             raise FileNotFoundError(args.checkpoint)
         load_matching_model_weights(model, args.checkpoint, device, strict=args.strict_load)
 
-    dataset = build_dataset(args)
+    data_root = Path(args.DataFolder)
+    if args.dataset == "train":
+        diff_path = data_root / args.data_train_diff
+        real_path = data_root / args.data_train_real
+        num_samples = args.num_samples_train
+    else:
+        diff_path = data_root / args.data_val_diff
+        real_path = data_root / args.data_val_real
+        num_samples = args.num_samples_val
+
+    dataset = old_data_loader.Dataset(
+        str(diff_path),
+        str(real_path),
+        num_samples,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_I=args.scale_I,
+        shuffle=args.shuffle_dataset,
+    )
     data_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -270,11 +356,20 @@ def main():
         pin_memory=args.pin_memory,
     )
 
-    criterion = LossComb().to(device)
-    avg_loss = evaluate_ann(model, criterion, data_loader, device, max_batches=args.max_batches)
+    avg_losses = evaluate_ann(model, data_loader, device, max_batches=args.max_batches)
 
     print("\n" + "=" * 60)
-    print(f"ANN validation average LossComb: {avg_loss:.6f}")
+    print("ANN validation average losses")
+    print("=" * 60)
+    print(f"Average Loss Paper: {avg_losses['paper']:.6f}")
+    print(f"Average Loss Log:   {avg_losses['log']:.6f}")
+    print(f"Average Loss sq:   {avg_losses['sq']:.6f}")
+    print(f"Average Loss mae:   {avg_losses['mae']:.6f}")
+    print(f"Average Loss PCC:   {avg_losses['pcc']:.6f} (Target: < 0.2)")
+    print(f"Average Real PCC:   {1.0 - avg_losses['pcc']:.6f} (Target: > 0.8)")
+    print(f"Average Loss Comb:  {avg_losses['comb']:.6f} (Target: Small Number)")
+    print(f"Average Loss Comb2: {avg_losses['comb2']:.6f}")
+    print(f"Average Loss CombLog: {avg_losses['comb_log']:.6f}")
     print("=" * 60)
 
 
