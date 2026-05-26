@@ -18,6 +18,7 @@ Example:
 """
 
 import argparse
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -29,8 +30,21 @@ THIS_DIR = Path(__file__).resolve().parent
 if str(THIS_DIR) not in sys.path:
     sys.path.insert(0, str(THIS_DIR))
 
-from AutoPhaseNN_model import Network  # noqa: E402
-import data_loader as old_data_loader  # noqa: E402
+
+def import_local_module(module_name, file_name):
+    module_path = THIS_DIR / file_name
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot import {module_name} from {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+old_model_module = import_local_module("old_autophasenn_model", "AutoPhaseNN_model.py")
+old_data_loader = import_local_module("old_autophasenn_data_loader", "data_loader.py")
+Network = old_model_module.Network
 
 
 class AverageMeter:
@@ -285,7 +299,15 @@ def parse_args():
     )
 
     parser.add_argument("--device", type=str, default="cuda")
-    parser.add_argument("--checkpoint", type=str, default="")
+    parser.add_argument(
+        "--checkpoint",
+        "--pretrained_path",
+        "--pretrain_path",
+        dest="checkpoint",
+        type=str,
+        default="",
+        help="pretrained/checkpoint file to load before ANN validation",
+    )
     parser.add_argument("--strict_load", action="store_true")
 
     parser.add_argument("--DataFolder", type=str, default="/data_ssd/oyys/autophasenn")
@@ -322,6 +344,8 @@ def main():
     device = torch.device(args.device if args.device == "cuda" and torch.cuda.is_available() else "cpu")
     print(f"use device: {device}")
     print(f"ANN validation dataset: {args.dataset}")
+    print(f"Model module: {THIS_DIR / 'AutoPhaseNN_model.py'}")
+    print(f"DataLoader module: {THIS_DIR / 'data_loader.py'}")
 
     model = Network(args).to(device)
     if args.checkpoint:
