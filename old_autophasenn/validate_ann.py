@@ -6,7 +6,7 @@ D:/code/PYTHON/AutoPhaseNN-main/PyTorch/train.py:
   1. model.eval()
   2. force spiking layers, if any, to mode="ann"
   3. run a single forward pass
-  4. compare y[0:1] with ft_images[0:1]
+  4. compare every sample in y with the matching ft_images sample
   5. align predicted diffraction energy by sum(target) / sum(pred)
   6. report the same loss group printed by the source evaluator
 
@@ -156,6 +156,38 @@ def loss_comb_log(Y_true, Y_pred):
     return (a1 * l1 + a2 * l2 + a3 * l3) / (a1 + a2 + a3)
 
 
+def compute_loss_values(y_true_raw, y_pred_raw_scaled):
+    return {
+        "paper": loss_paper(y_true_raw, y_pred_raw_scaled),
+        "log": loss_log(y_true_raw, y_pred_raw_scaled),
+        "sq": loss_sq(y_true_raw, y_pred_raw_scaled),
+        "mae": loss_mae(y_true_raw, y_pred_raw_scaled),
+        "pcc": loss_pcc(y_true_raw, y_pred_raw_scaled),
+        "comb": loss_comb(y_true_raw, y_pred_raw_scaled),
+        "comb2": loss_comb2(y_true_raw, y_pred_raw_scaled),
+        "comb_log": loss_comb_log(y_true_raw, y_pred_raw_scaled),
+    }
+
+
+def print_sample_losses(sample_index, batch_index, batch_sample_index, losses):
+    pcc_loss = losses["pcc"].item()
+    print("\n" + "-" * 60)
+    print(
+        "Good ANN validation sample "
+        f"| sample={sample_index} | batch={batch_index} | batch_sample={batch_sample_index}"
+    )
+    print(f"  Loss Paper: {losses['paper'].item():.6f}")
+    print(f"  Loss Log:   {losses['log'].item():.6f}")
+    print(f"  Loss sq:   {losses['sq'].item():.6f}")
+    print(f"  Loss mae:   {losses['mae'].item():.6f}")
+    print(f"  Loss PCC:   {pcc_loss:.6f} (Target: < 0.2)")
+    print(f"  Real PCC:   {1.0 - pcc_loss:.6f} (Target: > 0.8)")
+    print(f"  Loss Comb:  {losses['comb'].item():.6f} (Target: Small Number)")
+    print(f"  Loss Comb2: {losses['comb2'].item():.6f}")
+    print(f"  Loss CombLog: {losses['comb_log'].item():.6f}")
+    print("-" * 60 + "\n")
+
+
 def clean_state_dict_keys(state_dict):
     cleaned = {}
     for key, value in state_dict.items():
@@ -251,12 +283,20 @@ def load_matching_model_weights(model, checkpoint_path, device, strict=False):
     print("=" * 60 + "\n")
 
 
-def evaluate_ann(model, data_loader, device, max_batches=0):
+def evaluate_ann(
+    model,
+    data_loader,
+    device,
+    max_batches=0,
+    good_pcc_loss_threshold=0.2,
+    good_real_pcc_threshold=0.8,
+    print_good_samples=True,
+):
     """
     ANN validation logic copied from AutoPhaseNN-main/PyTorch/train.py.
 
-    Keep the source behavior of taking y[0:1] and ft_images[0:1]. The original
-    DataLoader uses batch_size=1 during this validation path.
+    Evaluate every sample in every batch. This preserves the source behavior
+    when batch_size=1, while avoiding silent sample drops for larger batches.
     """
     model.eval()
 
@@ -272,6 +312,7 @@ def evaluate_ann(model, data_loader, device, max_batches=0):
         "comb_log": 0.0,
     }
     evaluated_batches = 0
+    evaluated_samples = 0
 
     for module in model.modules():
         class_name = module.__class__.__name__
@@ -289,36 +330,43 @@ def evaluate_ann(model, data_loader, device, max_batches=0):
 
             y, _, pred_amps, pred_phs, support = model(ft_images)
 
-            y_pred_raw = y[0:1].float()
-            y_true_raw = ft_images[0:1].float()
-
-            scale_raw = torch.sum(y_true_raw) / (torch.sum(y_pred_raw) + 1e-10)
-            y_pred_raw_scaled = y_pred_raw * scale_raw
-            l_paper = loss_paper(y_true_raw, y_pred_raw_scaled)
-            l_log = loss_log(y_true_raw, y_pred_raw_scaled)
-            l_sq = loss_sq(y_true_raw, y_pred_raw_scaled)
-            l_mae = loss_mae(y_true_raw, y_pred_raw_scaled)
-            l_pcc = loss_pcc(y_true_raw, y_pred_raw_scaled)
-            l_comb = loss_comb(y_true_raw, y_pred_raw_scaled)
-            l_comb2 = loss_comb2(y_true_raw, y_pred_raw_scaled)
-            l_comb_log = loss_comb_log(y_true_raw, y_pred_raw_scaled)
-
-            loss_totals["paper"] += l_paper.item()
-            loss_totals["log"] += l_log.item()
-            loss_totals["sq"] += l_sq.item()
-            loss_totals["mae"] += l_mae.item()
-            loss_totals["pcc"] += l_pcc.item()
-            loss_totals["comb"] += l_comb.item()
-            loss_totals["comb2"] += l_comb2.item()
-            loss_totals["comb_log"] += l_comb_log.item()
             evaluated_batches += 1
 
-            metric_logger.update(loss=l_comb.item())
+            for batch_sample_idx in range(ft_images.shape[0]):
+                y_pred_raw = y[batch_sample_idx:batch_sample_idx + 1].float()
+                y_true_raw = ft_images[batch_sample_idx:batch_sample_idx + 1].float()
+
+                scale_raw = torch.sum(y_true_raw) / (torch.sum(y_pred_raw) + 1e-10)
+                y_pred_raw_scaled = y_pred_raw * scale_raw
+                losses = compute_loss_values(y_true_raw, y_pred_raw_scaled)
+
+                for key, value in losses.items():
+                    loss_totals[key] += value.item()
+
+                evaluated_samples += 1
+                metric_logger.update(loss=losses["comb"].item())
+
+                pcc_loss = losses["pcc"].item()
+                real_pcc = 1.0 - pcc_loss
+                if (
+                    print_good_samples
+                    and pcc_loss < good_pcc_loss_threshold
+                    and real_pcc > good_real_pcc_threshold
+                ):
+                    print_sample_losses(
+                        evaluated_samples,
+                        i + 1,
+                        batch_sample_idx + 1,
+                        losses,
+                    )
 
     metric_logger.synchronize_between_processes()
-    if evaluated_batches == 0:
-        raise RuntimeError("No validation batches were evaluated.")
-    return {key: value / evaluated_batches for key, value in loss_totals.items()}
+    if evaluated_samples == 0:
+        raise RuntimeError("No validation samples were evaluated.")
+    avg_losses = {key: value / evaluated_samples for key, value in loss_totals.items()}
+    avg_losses["_num_batches"] = evaluated_batches
+    avg_losses["_num_samples"] = evaluated_samples
+    return avg_losses
 
 
 def parse_args():
@@ -356,6 +404,23 @@ def parse_args():
     parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument("--pin_memory", action="store_true")
     parser.add_argument("--max_batches", type=int, default=0)
+    parser.add_argument(
+        "--good_pcc_loss_threshold",
+        type=float,
+        default=0.2,
+        help="print a sample when its Loss PCC is lower than this value",
+    )
+    parser.add_argument(
+        "--good_real_pcc_threshold",
+        type=float,
+        default=0.8,
+        help="print a sample when its Real PCC is higher than this value",
+    )
+    parser.add_argument(
+        "--disable_good_sample_print",
+        action="store_true",
+        help="disable per-sample loss printing for samples that satisfy the PCC targets",
+    )
 
     parser.add_argument("--shape", type=int, default=64)
     parser.add_argument("--T", type=float, default=0.1)
@@ -411,11 +476,21 @@ def main():
         pin_memory=args.pin_memory,
     )
 
-    avg_losses = evaluate_ann(model, data_loader, device, max_batches=args.max_batches)
+    avg_losses = evaluate_ann(
+        model,
+        data_loader,
+        device,
+        max_batches=args.max_batches,
+        good_pcc_loss_threshold=args.good_pcc_loss_threshold,
+        good_real_pcc_threshold=args.good_real_pcc_threshold,
+        print_good_samples=not args.disable_good_sample_print,
+    )
 
     print("\n" + "=" * 60)
     print("ANN validation average losses")
     print("=" * 60)
+    print(f"Evaluated batches: {avg_losses['_num_batches']}")
+    print(f"Evaluated samples: {avg_losses['_num_samples']}")
     print(f"Average Loss Paper: {avg_losses['paper']:.6f}")
     print(f"Average Loss Log:   {avg_losses['log']:.6f}")
     print(f"Average Loss sq:   {avg_losses['sq']:.6f}")
