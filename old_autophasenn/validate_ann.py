@@ -177,13 +177,42 @@ def extract_state_dict(checkpoint):
     return checkpoint
 
 
+def print_key_examples(title, values, formatter=str, max_items=8):
+    if not values:
+        return
+    print(f"  {title}: {len(values)}")
+    for value in values[:max_items]:
+        print(f"    - {formatter(value)}")
+    if len(values) > max_items:
+        print(f"    ... {len(values) - max_items} more")
+
+
 def load_matching_model_weights(model, checkpoint_path, device, strict=False):
+    print("\n" + "=" * 60)
+    print("Pretrained checkpoint loading")
+    print("=" * 60)
+    print(f"Path: {checkpoint_path}")
+    print(f"Strict load: {strict}")
+
     checkpoint = torch.load(checkpoint_path, map_location=device)
+    if isinstance(checkpoint, dict):
+        checkpoint_keys = list(checkpoint.keys())
+        print(f"Checkpoint type: dict | top-level keys: {checkpoint_keys}")
+        for meta_key in ("epoch", "global_step", "best_val_loss"):
+            if meta_key in checkpoint:
+                print(f"{meta_key}: {checkpoint[meta_key]}")
+    else:
+        print(f"Checkpoint type: {type(checkpoint).__name__}")
+
     state_dict = clean_state_dict_keys(extract_state_dict(checkpoint))
+    print(f"State dict keys in file: {len(state_dict)}")
 
     if strict:
-        model.load_state_dict(state_dict, strict=True)
-        print(f"Checkpoint loaded strictly: {checkpoint_path}")
+        incompatible = model.load_state_dict(state_dict, strict=True)
+        print("Checkpoint loaded strictly.")
+        print(f"Missing keys: {len(incompatible.missing_keys)}")
+        print(f"Unexpected keys: {len(incompatible.unexpected_keys)}")
+        print("=" * 60 + "\n")
         return
 
     model_state = model.state_dict()
@@ -200,15 +229,26 @@ def load_matching_model_weights(model, checkpoint_path, device, strict=False):
         matched[key] = value
 
     incompatible = model.load_state_dict(matched, strict=False)
+    model_unloaded = [key for key in model_state if key not in matched]
     print(
-        "Checkpoint loaded with matching keys: "
-        f"{len(matched)}/{len(model_state)} | "
-        f"missing_in_model={len(skipped_missing)} | shape_mismatch={len(skipped_shape)}"
+        "Matched keys loaded: "
+        f"{len(matched)}/{len(model_state)} "
+        f"({len(matched) / max(1, len(model_state)):.1%})"
     )
-    if incompatible.missing_keys:
-        print(f"Model keys left at init: {len(incompatible.missing_keys)}")
-    if incompatible.unexpected_keys:
-        print(f"Unexpected keys: {len(incompatible.unexpected_keys)}")
+    print(f"Checkpoint keys not found in model: {len(skipped_missing)}")
+    print(f"Checkpoint keys skipped by shape mismatch: {len(skipped_shape)}")
+    print(f"Model keys left at initialization: {len(model_unloaded)}")
+    print(f"load_state_dict missing_keys report: {len(incompatible.missing_keys)}")
+    print(f"load_state_dict unexpected_keys report: {len(incompatible.unexpected_keys)}")
+
+    print_key_examples("checkpoint keys not found in model", skipped_missing)
+    print_key_examples(
+        "shape mismatches",
+        skipped_shape,
+        formatter=lambda item: f"{item[0]}: checkpoint{item[1]} != model{item[2]}",
+    )
+    print_key_examples("model keys left at init", model_unloaded)
+    print("=" * 60 + "\n")
 
 
 def evaluate_ann(model, data_loader, device, max_batches=0):
@@ -341,6 +381,8 @@ def main():
         if not os.path.exists(args.checkpoint):
             raise FileNotFoundError(args.checkpoint)
         load_matching_model_weights(model, args.checkpoint, device, strict=args.strict_load)
+    else:
+        print("\nPretrained checkpoint loading: skipped (--checkpoint/--pretrained_path not provided)\n")
 
     data_root = Path(args.DataFolder)
     if args.dataset == "train":
