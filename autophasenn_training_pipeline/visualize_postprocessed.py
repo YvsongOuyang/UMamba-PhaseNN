@@ -8,7 +8,7 @@ from scipy.ndimage import center_of_mass, shift
 from skimage.restoration import unwrap_phase
 from torch.utils.data import DataLoader
 
-from dataset import AutoPhaseDataset, read_file_list
+from dataset import AutoPhaseDataset
 from losses import metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -21,6 +21,12 @@ def choose_device(name):
         print("CUDA requested but unavailable; falling back to CPU.")
         return torch.device("cpu")
     return torch.device(name)
+
+
+def optional_data_path(data_dir, filename):
+    if filename is None or filename.lower() in {"", "none", "null"}:
+        return None
+    return data_dir / filename
 
 
 def shift_com(amp, phi):
@@ -102,7 +108,11 @@ def main():
     parser = argparse.ArgumentParser(description="TF test-style PyTorch visualization.")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--data-dir", required=True)
-    parser.add_argument("--data-list", default="3D_upsamp.txt")
+    parser.add_argument("--data-diff", default="val_diff.npy")
+    parser.add_argument("--data-real", default="val_real.npy")
+    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--dtype-diff", default="float32")
+    parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-png", required=True)
     parser.add_argument("--num-samples", type=int, default=3)
     parser.add_argument("--slice-index", type=int, default=32)
@@ -113,8 +123,19 @@ def main():
     args = parser.parse_args()
 
     device = choose_device(args.device)
-    files = read_file_list(args.data_dir, args.data_list, args.num_samples)
-    dataset = AutoPhaseDataset(files, scale_i=args.scale_i)
+    data_dir = Path(args.data_dir)
+    shape = (args.shape, args.shape, args.shape)
+    dataset = AutoPhaseDataset(
+        data_dir / args.data_diff,
+        optional_data_path(data_dir, args.data_real),
+        args.num_samples,
+        shape_diff=shape,
+        shape_real=shape,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_i=args.scale_i,
+        shuffle=False,
+    )
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
     model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)

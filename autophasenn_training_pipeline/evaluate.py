@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import AutoPhaseDataset, read_file_list
+from dataset import AutoPhaseDataset
 from losses import metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -23,13 +23,24 @@ def add_metrics(total, metrics):
         total[key] = total.get(key, 0.0) + float(value)
 
 
+def optional_data_path(data_dir, filename):
+    if filename is None or filename.lower() in {"", "none", "null"}:
+        return None
+    return data_dir / filename
+
+
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="Evaluate an AutoPhaseNN PyTorch checkpoint.")
-    parser.add_argument("--checkpoint", required=True, default="/data_ssd/oyys/autophasenn/autophasenn.pth")
-    parser.add_argument("--data-dir", required=True, default="/data_ssd/oyys/autophasenn/")
-    parser.add_argument("--data-list", default="3D_upsamp.txt")
-    parser.add_argument("--output-json", required=True, default="./output/evaluation_results.json")
+    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
+    parser.add_argument("--data-diff", default="val_diff.npy")
+    parser.add_argument("--data-real", default="val_real.npy")
+    parser.add_argument("--num-samples", type=int, default=5000)
+    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--dtype-diff", default="float32")
+    parser.add_argument("--dtype-real", default="complex64")
+    parser.add_argument("--output-json", default="./output/evaluation_results.json")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -40,8 +51,22 @@ def main():
     args = parser.parse_args()
 
     device = choose_device(args.device)
-    files = read_file_list(args.data_dir, args.data_list, args.limit)
-    dataset = AutoPhaseDataset(files, scale_i=args.scale_i)
+    data_dir = Path(args.data_dir)
+    shape = (args.shape, args.shape, args.shape)
+    num_samples = args.num_samples
+    if args.limit and args.limit > 0:
+        num_samples = min(num_samples, args.limit)
+    dataset = AutoPhaseDataset(
+        data_dir / args.data_diff,
+        optional_data_path(data_dir, args.data_real),
+        num_samples,
+        shape_diff=shape,
+        shape_real=shape,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_i=args.scale_i,
+        shuffle=False,
+    )
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,

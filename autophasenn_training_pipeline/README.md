@@ -10,7 +10,7 @@ PyTorch/cohere-trained_model_tf_compatible.pth
 ## Files
 
 ```text
-dataset.py                  Data list parsing and .npz/.npy loading
+dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
 train.py                    Full train / fine-tune entry point
@@ -20,16 +20,17 @@ visualize_postprocessed.py  TF test_network_unsup-style visualization
 
 ## Data Format
 
-Preferred sample format is `.npz`:
+The dataset now uses the same memmap file layout as the root `data_loader.py`:
 
 ```text
-arr_0: diffraction amplitude, shape (64, 64, 64)
-arr_1: complex real-space object, shape (64, 64, 64)
+train_diff.npy / val_diff.npy: float32 diffraction modulus, shape (N, 64, 64, 64)
+train_real.npy / val_real.npy: complex64 real-space object, shape (N, 64, 64, 64)
 ```
 
-The loader also supports `.npy` or `.npz` files that contain one complex
-diffraction array. In that case it uses `abs(diffraction)` as input and
-computes the real-space target with `ifftn(ifftshift(...))`.
+After loading, `dataset.py` keeps this pipeline's preprocessing contract:
+diffraction, amplitude, and phase are returned as float32 channel-first tensors;
+optional `--scale-i` normalization is applied to diffraction; missing real-space
+data produces zero amplitude/phase tensors.
 
 ## Standard Loss And Metrics
 
@@ -98,13 +99,17 @@ From the repository root on Windows PowerShell:
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "pytorch_training_pipeline\train.py" `
-  --data-dir "data\aicdi_sample\prepared" `
-  --data-list "3D_upsamp.txt" `
+  --data-dir "data\aicdi_sample\memmap" `
+  --data-train-diff "train_diff.npy" `
+  --data-train-real "train_real.npy" `
+  --data-val-diff "val_diff.npy" `
+  --data-val-real "val_real.npy" `
+  --num-samples-train 3 `
+  --num-samples-val 3 `
   --output-dir "outputs\pt_pipeline_dryrun" `
   --pretrained "PyTorch\cohere-trained_model_tf_compatible.pth" `
   --device cpu `
   --batch-size 1 `
-  --train-size 3 `
   --loss-type paper_mae `
   --unsupervised `
   --dry-run
@@ -115,8 +120,13 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "pytorch_training_pipeline\train.py" `
-  --data-dir "data\aicdi_sample\prepared" `
-  --data-list "3D_upsamp.txt" `
+  --data-dir "data\aicdi_sample\memmap" `
+  --data-train-diff "train_diff.npy" `
+  --data-train-real "train_real.npy" `
+  --data-val-diff "val_diff.npy" `
+  --data-val-real "val_real.npy" `
+  --num-samples-train 25000 `
+  --num-samples-val 5000 `
   --output-dir "outputs\pt_finetune" `
   --pretrained "PyTorch\cohere-trained_model_tf_compatible.pth" `
   --device cuda `
@@ -140,8 +150,10 @@ very slow, so CPU is mostly useful for dry runs or small checks.
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "pytorch_training_pipeline\evaluate.py" `
   --checkpoint "PyTorch\cohere-trained_model_tf_compatible.pth" `
-  --data-dir "data\aicdi_sample\prepared" `
-  --data-list "3D_upsamp.txt" `
+  --data-dir "data\aicdi_sample\memmap" `
+  --data-diff "val_diff.npy" `
+  --data-real "val_real.npy" `
+  --num-samples 5000 `
   --output-json "outputs\pt_pipeline_eval.json" `
   --device cpu `
   --limit 3
@@ -155,8 +167,9 @@ Add `--scale-align-loss` if you want the scale-aligned metric report.
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "pytorch_training_pipeline\visualize_postprocessed.py" `
   --checkpoint "PyTorch\cohere-trained_model_tf_compatible.pth" `
-  --data-dir "data\aicdi_sample\prepared" `
-  --data-list "3D_upsamp.txt" `
+  --data-dir "data\aicdi_sample\memmap" `
+  --data-diff "val_diff.npy" `
+  --data-real "val_real.npy" `
   --output-png "outputs\pt_pipeline_visualization.png" `
   --device cpu `
   --num-samples 3

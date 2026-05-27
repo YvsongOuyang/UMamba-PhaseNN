@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import AutoPhaseDataset, read_file_list, split_files
+from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -23,6 +23,12 @@ def choose_device(name):
 def save_json(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def optional_data_path(data_dir, filename):
+    if filename is None or filename.lower() in {"", "none", "null"}:
+        return None
+    return data_dir / filename
 
 
 def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, args):
@@ -138,10 +144,17 @@ def one_batch_metrics(args, model, loader, device):
 def main():
     parser = argparse.ArgumentParser(description="Standalone AutoPhaseNN PyTorch training.")
     parser.add_argument("--data-dir", required=True)
-    parser.add_argument("--data-list", default="3D_upsamp.txt")
+    parser.add_argument("--data-train-diff", default="train_diff.npy")
+    parser.add_argument("--data-train-real", default="train_real.npy")
+    parser.add_argument("--data-val-diff", default="val_diff.npy")
+    parser.add_argument("--data-val-real", default="val_real.npy")
+    parser.add_argument("--num-samples-train", type=int, default=25000)
+    parser.add_argument("--num-samples-val", type=int, default=5000)
+    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--dtype-diff", default="float32")
+    parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--train-size", type=int, default=0)
-    parser.add_argument("--train-ratio", type=float, default=0.9)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -184,12 +197,35 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     save_json(output_dir / "config.json", vars(args))
 
-    files = read_file_list(args.data_dir, args.data_list, args.train_size)
-    train_files, val_files = split_files(files, train_ratio=args.train_ratio, seed=args.seed)
-    print(f"Resolved files: train={len(train_files)}, val={len(val_files)}")
+    data_dir = Path(args.data_dir)
+    shape = (args.shape, args.shape, args.shape)
+    train_samples = args.num_samples_train
+    if args.train_size and args.train_size > 0:
+        train_samples = min(train_samples, args.train_size)
+    print(f"Resolved memmap samples: train={train_samples}, val={args.num_samples_val}")
 
-    train_dataset = AutoPhaseDataset(train_files, scale_i=args.scale_i)
-    val_dataset = AutoPhaseDataset(val_files, scale_i=args.scale_i)
+    train_dataset = AutoPhaseDataset(
+        data_dir / args.data_train_diff,
+        optional_data_path(data_dir, args.data_train_real),
+        train_samples,
+        shape_diff=shape,
+        shape_real=shape,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_i=args.scale_i,
+        shuffle=False,
+    )
+    val_dataset = AutoPhaseDataset(
+        data_dir / args.data_val_diff,
+        optional_data_path(data_dir, args.data_val_real),
+        args.num_samples_val,
+        shape_diff=shape,
+        shape_real=shape,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_i=args.scale_i,
+        shuffle=False,
+    )
     pin_memory = device.type == "cuda"
     train_loader = DataLoader(
         train_dataset,
