@@ -155,7 +155,7 @@ def main():
         diff = batch["diff"].to(device).float()
         true_amp = batch["amp"].numpy()[0, 0]
         true_phi = batch["phi"].numpy()[0, 0]
-        pred_diff, _obj, pred_amp, pred_phi, support = model(diff)
+        pred_diff, _obj, pred_amp, pred_phi, support = model(diff)[:5]
         pred_for_metric = scale_align_sum(diff, pred_diff) if args.scale_align_loss else pred_diff
         metrics.append({"name": batch["name"][0], **metric_dict(diff, pred_for_metric)})
 

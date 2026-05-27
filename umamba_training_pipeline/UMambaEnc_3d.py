@@ -561,7 +561,7 @@ class UMambaEnc(nn.Module):
         psi = self.farfield_layer(masked_obj)
         
 
-        return psi, masked_obj, preds_amp, ph, support
+        return psi, masked_obj, preds_amp, ph, support, amp
 
 
     def compute_conv_feature_map_size(self, input_size):

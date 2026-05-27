@@ -180,7 +180,7 @@ class TFCompatibleAutoPhaseNN(nn.Module):
         farfield = torch.abs(farfield).to(torch.float32)
 
         masked_amp = torch.abs(masked_obj).to(torch.float32)
-        return farfield, masked_obj, masked_amp, phi, support
+        return farfield, masked_obj, masked_amp, phi, support, amp
 
 
 def load_weights(model, checkpoint_path, strict=True, map_location="cpu"):

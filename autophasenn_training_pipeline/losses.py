@@ -110,6 +110,82 @@ def voxel_rmse(y_true, y_pred, reduction="mean"):
     return reduce_per_sample(per_sample, reduction)
 
 
+def global_ssim(y_true, y_pred, data_range=1.0, reduction="mean"):
+    """Single-window SSIM over each full 3D volume.
+
+    The paper reports amplitude SSIM. This global variant is lightweight and
+    dependency-free; it is intended as a stable validation signal rather than a
+    pixel-perfect replacement for windowed skimage SSIM.
+    """
+
+    true = flatten_sample(y_true.float())
+    pred = flatten_sample(y_pred.float())
+    mu_true = torch.mean(true, dim=1)
+    mu_pred = torch.mean(pred, dim=1)
+    var_true = torch.mean((true - mu_true[:, None]) ** 2, dim=1)
+    var_pred = torch.mean((pred - mu_pred[:, None]) ** 2, dim=1)
+    cov = torch.mean((true - mu_true[:, None]) * (pred - mu_pred[:, None]), dim=1)
+    c1 = (0.01 * data_range) ** 2
+    c2 = (0.03 * data_range) ** 2
+    score = ((2 * mu_true * mu_pred + c1) * (2 * cov + c2)) / (
+        (mu_true**2 + mu_pred**2 + c1) * (var_true + var_pred + c2) + EPS
+    )
+    return reduce_per_sample(score, reduction)
+
+
+def wrapped_phase_abs_error(y_true, y_pred):
+    return torch.atan2(torch.sin(y_pred - y_true), torch.cos(y_pred - y_true)).abs()
+
+
+def masked_reduce(values, mask, reduction="mean"):
+    values = flatten_sample(values)
+    mask = flatten_sample(mask.float())
+    numer = torch.sum(values * mask, dim=1)
+    denom = torch.sum(mask, dim=1).clamp_min(1.0)
+    per_sample = numer / denom
+    return reduce_per_sample(per_sample, reduction)
+
+
+@torch.no_grad()
+def realspace_metric_dict(true_amp, true_phi, pred_amp, pred_phi, pred_support=None, threshold=0.1):
+    """Metrics for the reconstructed real-space object."""
+
+    true_support = (true_amp >= threshold).float()
+    if pred_support is None:
+        pred_support = (pred_amp >= threshold).float()
+    else:
+        pred_support = (pred_support >= 0.5).float()
+
+    intersection = true_support * pred_support
+    union = torch.clamp(true_support + pred_support, max=1.0)
+    true_flat = flatten_sample(true_support)
+    pred_flat = flatten_sample(pred_support)
+    inter_flat = flatten_sample(intersection)
+    union_flat = flatten_sample(union)
+    inter = torch.sum(inter_flat, dim=1)
+    true_count = torch.sum(true_flat, dim=1)
+    pred_count = torch.sum(pred_flat, dim=1)
+    union_count = torch.sum(union_flat, dim=1)
+
+    phase_err = wrapped_phase_abs_error(true_phi, pred_phi)
+    phase_sq = phase_err**2
+
+    return {
+        "real_amp_l1": float(F.l1_loss(pred_amp, true_amp).detach().cpu()),
+        "real_amp_mse": float(F.mse_loss(pred_amp, true_amp).detach().cpu()),
+        "real_amp_rmse": float(torch.sqrt(F.mse_loss(pred_amp, true_amp) + EPS).detach().cpu()),
+        "real_amp_global_ssim": float(global_ssim(true_amp, pred_amp).detach().cpu()),
+        "real_support_iou": float(torch.mean(inter / (union_count + EPS)).detach().cpu()),
+        "real_support_dice": float(torch.mean((2 * inter) / (true_count + pred_count + EPS)).detach().cpu()),
+        "real_support_true_fraction": float(torch.mean(true_count / true_flat.shape[1]).detach().cpu()),
+        "real_support_pred_fraction": float(torch.mean(pred_count / pred_flat.shape[1]).detach().cpu()),
+        "real_support_volume_ratio": float(torch.mean(pred_count / (true_count + EPS)).detach().cpu()),
+        "real_phase_mae_true_support": float(masked_reduce(phase_err, true_support).detach().cpu()),
+        "real_phase_mae_intersection": float(masked_reduce(phase_err, intersection).detach().cpu()),
+        "real_phase_rmse_true_support": float(torch.sqrt(masked_reduce(phase_sq, true_support) + EPS).detach().cpu()),
+    }
+
+
 def chi2_pcc_loss(y_true, y_pred):
     return 0.5 * (chi2_modulus(y_true, y_pred) + pearson_loss(y_true, y_pred))
 

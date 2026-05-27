@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from dataset import AutoPhaseDataset
-from losses import metric_dict, scale_align_sum
+from losses import metric_dict, realspace_metric_dict, scale_align_sum
 from train import (
     build_model,
     choose_device,
@@ -103,14 +103,29 @@ def main():
 
     total = {}
     per_sample = []
+    has_realspace = getattr(dataset, "mmap_real", None) is not None
     for batch in tqdm(loader, desc="eval"):
         diff = batch["diff"].to(device, non_blocking=True).float()
-        pred = model(diff)[0]
+        amp = batch["amp"].to(device, non_blocking=True).float()
+        phi = batch["phi"].to(device, non_blocking=True).float()
+        outputs = model(diff)
+        pred, _obj, pred_amp, pred_phi, support = outputs[:5]
         if args.scale_align_loss:
             pred = scale_align_sum(diff, pred)
 
         for i, name in enumerate(batch["name"]):
             metrics = metric_dict(diff[i : i + 1], pred[i : i + 1])
+            if has_realspace:
+                metrics.update(
+                    realspace_metric_dict(
+                        amp[i : i + 1],
+                        phi[i : i + 1],
+                        pred_amp[i : i + 1],
+                        pred_phi[i : i + 1],
+                        support[i : i + 1],
+                        threshold=args.T,
+                    )
+                )
             per_sample.append({"name": name, **metrics})
             add_metrics(total, metrics)
 
@@ -121,6 +136,13 @@ def main():
         "epoch": epoch,
         "num_samples": len(per_sample),
         "scale_align_loss": args.scale_align_loss,
+        "realspace_metrics": has_realspace,
+        "metric_notes": {
+            "paper_modulus_mae": "Paper Eq. (1): MAE of diffraction modulus because stored tensors are abs(FFT).",
+            "chi2_modulus": "Paper Eq. (2): reciprocal-space chi2 of diffraction modulus.",
+            "real_amp_global_ssim": "Single-window 3D SSIM-like amplitude score, not local-window skimage SSIM.",
+            "real_phase_mae_*": "Wrapped phase error in radians.",
+        },
         "sum": total,
         "mean": {key: value / n for key, value in total.items()},
         "per_sample": per_sample,

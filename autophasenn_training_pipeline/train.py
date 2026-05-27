@@ -60,6 +60,55 @@ def make_scheduler(args, optimizer):
     raise ValueError(f"Unknown scheduler {args.lr_scheduler}")
 
 
+def unpack_outputs(outputs):
+    if not isinstance(outputs, (tuple, list)) or len(outputs) < 5:
+        raise RuntimeError(
+            "Model must return (pred_diff, pred_obj, pred_amp, pred_phi, support)."
+        )
+    return outputs[:5]
+
+
+def raw_amp_from_outputs(outputs, pred_amp):
+    if isinstance(outputs, (tuple, list)) and len(outputs) >= 6:
+        return outputs[5]
+    return pred_amp
+
+
+def balanced_support_bce(raw_amp, target_support):
+    bce = F.binary_cross_entropy(
+        raw_amp.clamp(1e-6, 1.0 - 1e-6),
+        target_support,
+        reduction="none",
+    )
+    target_support = target_support.float()
+    pos = target_support
+    neg = 1.0 - target_support
+    pos_loss = (bce * pos).sum() / pos.sum().clamp_min(1.0)
+    neg_loss = (bce * neg).sum() / neg.sum().clamp_min(1.0)
+    return 0.5 * (pos_loss + neg_loss)
+
+
+def compute_loss_bundle(args, loss_fn, diff, amp, phi, outputs):
+    pred_diff, _obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
+    raw_amp = raw_amp_from_outputs(outputs, pred_amp)
+    pred_for_loss = scale_align_sum(diff, pred_diff) if args.scale_align_loss else pred_diff
+    loss_ft = loss_fn(diff, pred_for_loss)
+    loss_amp = F.l1_loss(pred_amp, amp)
+    loss_phase = F.l1_loss(pred_phi * support, phi * support)
+    target_support = (amp >= args.threshold).float()
+    loss_support = balanced_support_bce(raw_amp, target_support)
+    if args.unsupervised or args.loss_scope == "diff":
+        loss = loss_ft
+    else:
+        loss = (
+            args.ft_weight * loss_ft
+            + args.amp_weight * loss_amp
+            + args.phase_weight * loss_phase
+        )
+    loss = loss + args.support_weight * loss_support
+    return loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss
+
+
 def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None, train=True):
     model.train(train)
     use_amp = args.fp16 and device.type == "cuda"
@@ -68,6 +117,7 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
         "loss_ft": 0.0,
         "loss_amp": 0.0,
         "loss_phase": 0.0,
+        "loss_support": 0.0,
         "samples": 0,
         "batches": 0,
     }
@@ -84,21 +134,10 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
                 optimizer.zero_grad(set_to_none=True)
 
             with torch.cuda.amp.autocast(enabled=use_amp):
-                pred_diff, _obj, pred_amp, pred_phi, support = model(diff)
-                pred_for_loss = (
-                    scale_align_sum(diff, pred_diff) if args.scale_align_loss else pred_diff
+                outputs = model(diff)
+                loss, loss_ft, loss_amp, loss_phase, loss_support, _pred_for_loss = compute_loss_bundle(
+                    args, loss_fn, diff, amp, phi, outputs
                 )
-                loss_ft = loss_fn(diff, pred_for_loss)
-                loss_amp = F.l1_loss(pred_amp, amp)
-                loss_phase = F.l1_loss(pred_phi * support, phi * support)
-                if args.unsupervised or args.loss_scope == "diff":
-                    loss = loss_ft
-                else:
-                    loss = (
-                        args.ft_weight * loss_ft
-                        + args.amp_weight * loss_amp
-                        + args.phase_weight * loss_phase
-                    )
             if train:
                 if use_amp:
                     scaler.scale(loss).backward()
@@ -113,6 +152,7 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
             total["loss_ft"] += float(loss_ft.detach().cpu()) * batch_size
             total["loss_amp"] += float(loss_amp.detach().cpu()) * batch_size
             total["loss_phase"] += float(loss_phase.detach().cpu()) * batch_size
+            total["loss_support"] += float(loss_support.detach().cpu()) * batch_size
             total["samples"] += batch_size
             total["batches"] += 1
 
@@ -126,6 +166,7 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
         "loss_ft": total["loss_ft"] / denom,
         "loss_amp": total["loss_amp"] / denom,
         "loss_phase": total["loss_phase"] / denom,
+        "loss_support": total["loss_support"] / denom,
         "samples": total["samples"],
         "batches": total["batches"],
     }
@@ -190,9 +231,15 @@ def main():
     parser.add_argument("--ft-weight", type=float, default=1.0)
     parser.add_argument("--amp-weight", type=float, default=1.0)
     parser.add_argument("--phase-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--support-weight",
+        type=float,
+        default=0.0,
+        help="Optional BCE(raw_amp, amp>=threshold) support-shape loss. Default keeps paper-style diff-only training.",
+    )
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--optimizer", choices=["adam", "adamw"], default="adam")
-    parser.add_argument("--lr-scheduler", choices=["none", "step", "plateau"], default="none")
+    parser.add_argument("--lr-scheduler", choices=["none", "step", "plateau"], default="plateau")
     parser.add_argument("--step-size", type=int, default=10)
     parser.add_argument("--gamma", type=float, default=0.5)
     parser.add_argument("--patience", type=int, default=5)

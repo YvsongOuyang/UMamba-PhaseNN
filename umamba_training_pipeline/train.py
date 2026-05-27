@@ -456,12 +456,39 @@ def unpack_outputs(outputs):
     return outputs[:5]
 
 
+def raw_amp_from_outputs(outputs, pred_amp):
+    if isinstance(outputs, (tuple, list)) and len(outputs) >= 6:
+        return outputs[5]
+    return pred_amp
+
+
+def balanced_support_bce(raw_amp, target_support):
+    bce = F.binary_cross_entropy(
+        raw_amp.clamp(1e-6, 1.0 - 1e-6),
+        target_support,
+        reduction="none",
+    )
+    target_support = target_support.float()
+    pos = target_support
+    neg = 1.0 - target_support
+    pos_loss = (bce * pos).sum() / pos.sum().clamp_min(1.0)
+    neg_loss = (bce * neg).sum() / neg.sum().clamp_min(1.0)
+    return 0.5 * (pos_loss + neg_loss)
+
+
+def support_threshold(args):
+    return float(getattr(args, "T", getattr(args, "threshold", 0.1)))
+
+
 def compute_loss_bundle(args, loss_fn, diff, amp, phi, outputs):
     pred_diff, _pred_obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
+    raw_amp = raw_amp_from_outputs(outputs, pred_amp)
     pred_for_loss = scale_align_sum(diff, pred_diff) if args.scale_align_loss else pred_diff
     loss_ft = loss_fn(diff, pred_for_loss)
     loss_amp = F.l1_loss(pred_amp, amp)
     loss_phase = F.l1_loss(pred_phi * support, phi * support)
+    target_support = (amp >= support_threshold(args)).float()
+    loss_support = balanced_support_bce(raw_amp, target_support)
     if args.unsupervised or args.loss_scope == "diff":
         loss = loss_ft
     else:
@@ -470,7 +497,8 @@ def compute_loss_bundle(args, loss_fn, diff, amp, phi, outputs):
             + args.amp_weight * loss_amp
             + args.phase_weight * loss_phase
         )
-    return loss, loss_ft, loss_amp, loss_phase, pred_for_loss
+    loss = loss + args.support_weight * loss_support
+    return loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss
 
 
 def debug_grad_norm_message(model):
@@ -536,7 +564,7 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
 
         with torch.cuda.amp.autocast(enabled=use_amp):
             outputs = model(diff)
-            loss, loss_ft, loss_amp, loss_phase, pred_for_loss = compute_loss_bundle(
+            loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss = compute_loss_bundle(
                 args, loss_fn, diff, amp, phi, outputs
             )
             pred_diff, pred_obj, _pred_amp, pred_phi, support = unpack_outputs(outputs)
@@ -583,7 +611,7 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
         if track_output_delta:
             with torch.no_grad():
                 after_outputs = model(diff)
-                after_loss, _after_ft, _after_amp, _after_phase, after_pred = compute_loss_bundle(
+                after_loss, _after_ft, _after_amp, _after_phase, _after_support, after_pred = compute_loss_bundle(
                     args, loss_fn, diff, amp, phi, after_outputs
                 )
                 _after_diff, pred_obj_after, _amp_after, pred_phs_after, support_after = unpack_outputs(after_outputs)
@@ -616,6 +644,7 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
             writer.add_scalar("loss/train_loss_ft", loss_ft.item(), global_step)
             writer.add_scalar("loss/train_loss_amp", loss_amp.item(), global_step)
             writer.add_scalar("loss/train_loss_phase", loss_phase.item(), global_step)
+            writer.add_scalar("loss/train_loss_support", loss_support.item(), global_step)
 
         loss_total += loss.detach().item()
         current_iter = i + 1
@@ -653,6 +682,7 @@ def validate(args, model, loss_fn, validloader, epoch, device):
         "loss_ft": 0.0,
         "loss_amp": 0.0,
         "loss_phase": 0.0,
+        "loss_support": 0.0,
         "loss_l1": 0.0,
         "loss_mae": 0.0,
         "loss_mse": 0.0,
@@ -672,7 +702,7 @@ def validate(args, model, loss_fn, validloader, epoch, device):
             diff, amp, phi = unpack_batch(batch, device)
             with torch.cuda.amp.autocast(enabled=use_amp):
                 outputs = model(diff)
-                loss, loss_ft, loss_amp, loss_phase, pred_for_loss = compute_loss_bundle(
+                loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss = compute_loss_bundle(
                     args, loss_fn, diff, amp, phi, outputs
                 )
                 details = {
@@ -680,6 +710,7 @@ def validate(args, model, loss_fn, validloader, epoch, device):
                     "loss_ft": loss_ft,
                     "loss_amp": loss_amp,
                     "loss_phase": loss_phase,
+                    "loss_support": loss_support,
                     "loss_l1": F.l1_loss(pred_for_loss, diff),
                     "loss_mae": relative_l1_modulus(diff, pred_for_loss),
                     "loss_mse": chi2_modulus(diff, pred_for_loss),
@@ -714,7 +745,8 @@ def validate(args, model, loss_fn, validloader, epoch, device):
     print("Average losses:")
     print(
         f"   TrainLoss: {details_total['loss']:.4e} | LossFT: {details_total['loss_ft']:.4e} | "
-        f"Amp: {details_total['loss_amp']:.4e} | Phase: {details_total['loss_phase']:.4e}"
+        f"Amp: {details_total['loss_amp']:.4e} | Phase: {details_total['loss_phase']:.4e} | "
+        f"Support: {details_total['loss_support']:.4e}"
     )
     print(
         f"   L1:    {details_total['loss_l1']:.4e} | RelL1: {details_total['loss_mae']:.4e} | "
@@ -775,9 +807,15 @@ def parse_args():
     parser.add_argument("--ft-weight", type=float, default=1.0)
     parser.add_argument("--amp-weight", type=float, default=1.0)
     parser.add_argument("--phase-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--support-weight",
+        type=float,
+        default=0.0,
+        help="Optional balanced BCE(raw_amp, amp>=T) support-shape loss. Default keeps paper-style diff-only training.",
+    )
     parser.add_argument("--lr", "--Initlr", dest="lr", type=float, default=1e-3)
     parser.add_argument("--optimizer", "--optim_type", dest="optimizer", choices=["adam", "adamw"], default="adam")
-    parser.add_argument("--lr-type", "--lr_scheduler", "--lr-scheduler", dest="lr_type", choices=["none", "clr", "cosine", "step", "plateau"], default="none")
+    parser.add_argument("--lr-type", "--lr_scheduler", "--lr-scheduler", dest="lr_type", choices=["none", "clr", "cosine", "step", "plateau"], default="plateau")
     parser.add_argument("--min-lr", type=float, default=1e-6)
     parser.add_argument("--clr-step-epochs", type=float, default=6.0)
     parser.add_argument("--step-size", type=int, default=10)
