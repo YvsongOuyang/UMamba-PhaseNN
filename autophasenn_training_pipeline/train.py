@@ -143,7 +143,7 @@ def one_batch_metrics(args, model, loader, device):
 
 def main():
     parser = argparse.ArgumentParser(description="Standalone AutoPhaseNN PyTorch training.")
-    parser.add_argument("--data-dir", required=True)
+    parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-train-diff", default="train_diff.npy")
     parser.add_argument("--data-train-real", default="train_real.npy")
     parser.add_argument("--data-val-diff", default="val_diff.npy")
@@ -153,12 +153,12 @@ def main():
     parser.add_argument("--shape", type=int, default=64)
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
-    parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
     parser.add_argument("--train-size", type=int, default=0)
     parser.add_argument(
         "--overfit-samples",
         type=int,
-        default=0,
+        default=100,
         help="Train and validate on the same first N training samples for fit debugging.",
     )
     parser.add_argument(
@@ -168,7 +168,7 @@ def main():
     )
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=8)
-    parser.add_argument("--num-workers", type=int, default=0)
+    parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--threshold", type=float, default=0.1)
@@ -190,7 +190,7 @@ def main():
     parser.add_argument("--ft-weight", type=float, default=1.0)
     parser.add_argument("--amp-weight", type=float, default=1.0)
     parser.add_argument("--phase-weight", type=float, default=1.0)
-    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--optimizer", choices=["adam", "adamw"], default="adam")
     parser.add_argument("--lr-scheduler", choices=["none", "step", "plateau"], default="none")
     parser.add_argument("--step-size", type=int, default=10)
@@ -198,7 +198,7 @@ def main():
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--min-lr", type=float, default=1e-6)
     parser.add_argument("--pretrained", default="")
-    parser.add_argument("--resume", default="")
+    parser.add_argument("--resume", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
     parser.add_argument(
         "--from-scratch",
         action="store_true",
