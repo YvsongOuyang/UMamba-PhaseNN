@@ -26,10 +26,10 @@ def add_metrics(total, metrics):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="Evaluate an AutoPhaseNN PyTorch checkpoint.")
-    parser.add_argument("--checkpoint", required=True)
-    parser.add_argument("--data-dir", required=True)
+    parser.add_argument("--checkpoint", required=True, default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--data-dir", required=True, default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-list", default="3D_upsamp.txt")
-    parser.add_argument("--output-json", required=True)
+    parser.add_argument("--output-json", required=True, default="./output/evaluation_results.json")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--num-workers", type=int, default=0)
