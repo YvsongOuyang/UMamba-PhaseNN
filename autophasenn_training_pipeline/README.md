@@ -31,23 +31,53 @@ The loader also supports `.npy` or `.npz` files that contain one complex
 diffraction array. In that case it uses `abs(diffraction)` as input and
 computes the real-space target with `ifftn(ifftshift(...))`.
 
-## Important Loss Options
+## Standard Loss And Metrics
 
-`losses.py` contains the same PyTorch-style functions discussed during testing:
-
-```text
-l1, log, sq, mae, paper, pcc, comb, comb2, comb_log
-```
-
-By default the custom project losses sum over the batch, matching the original
-TF-style definitions. If you want the training loss divided by batch size for
-backprop, pass:
+The paper uses a reciprocal-space amplitude/modulus loss:
 
 ```text
---batch-average-loss
+Loss = sum(|sqrt(Ie) - sqrt(Im)|) / N^3
 ```
 
-To reproduce the "scale alignment" evaluation you used:
+In this codebase the diffraction tensors are already `abs(FFT)`, i.e.
+`sqrt(intensity)`, so the standard training loss is simply per-voxel MAE between
+predicted and measured diffraction modulus:
+
+```text
+--loss-type paper_mae
+```
+
+This is the default and is implemented with the PyTorch standard wrapper:
+
+```python
+torch.nn.L1Loss(reduction="mean")
+```
+
+For modulus tensors this is mathematically identical to the paper loss. Using
+the standard wrapper also avoids tiny differences from custom reduction order.
+
+Recommended metrics reported by `evaluate.py`:
+
+```text
+paper_modulus_mae    Paper Eq. (1), training loss for modulus tensors
+chi2_modulus         Paper Eq. (2), reciprocal-space chi2 metric
+relative_l1_modulus  Sum |pred-true| / sum |true|
+pearson_corr         Shape correlation in reciprocal space
+```
+
+Legacy names are still accepted for old command lines, but are no longer the
+recommended defaults:
+
+```text
+l1, paper -> paper_mae, implemented by torch.nn.L1Loss
+mse       -> implemented by torch.nn.MSELoss
+sq        -> chi2_modulus
+mae       -> relative_l1_modulus
+pcc       -> pearson loss
+comb      -> 0.5 * (chi2_modulus + pearson_loss)
+```
+
+To reproduce the scale-aligned evaluation you used:
 
 ```text
 --scale-align-loss
@@ -75,7 +105,7 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --device cpu `
   --batch-size 1 `
   --train-size 3 `
-  --loss-type comb `
+  --loss-type paper_mae `
   --unsupervised `
   --dry-run
 ```
@@ -92,11 +122,14 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --device cuda `
   --batch-size 1 `
   --epochs 20 `
-  --loss-type comb `
+  --loss-type paper_mae `
   --unsupervised `
-  --lr 1e-5 `
-  --scale-align-loss
+  --lr 1e-5
 ```
+
+`--scale-align-loss` is available, but use it intentionally: it rescales the
+predicted diffraction before loss calculation and therefore changes the training
+objective from the paper's direct MAE.
 
 Use `--device cpu` if no CUDA GPU is available. Full 64^3 3D backprop on CPU is
 very slow, so CPU is mostly useful for dry runs or small checks.
@@ -133,4 +166,3 @@ The visualization intentionally mirrors `TF2/test_network_unsup.py`: phase
 unwrap, support masking, subtracting mean phase inside support, center-of-mass
 shifting, and center-slice plotting. These display operations are not part of
 training backprop.
-

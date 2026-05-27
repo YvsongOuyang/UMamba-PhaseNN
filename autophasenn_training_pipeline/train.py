@@ -93,9 +93,6 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
                         + args.amp_weight * loss_amp
                         + args.phase_weight * loss_phase
                     )
-                if args.batch_average_loss:
-                    loss = loss / diff.shape[0]
-
             if train:
                 if use_amp:
                     scaler.scale(loss).backward()
@@ -153,8 +150,12 @@ def main():
     parser.add_argument("--threshold", type=float, default=0.1)
     parser.add_argument("--scale-i", type=float, default=0.0)
     parser.add_argument("--scale-align-loss", action="store_true")
-    parser.add_argument("--loss-type", default="l1")
-    parser.add_argument("--batch-average-loss", action="store_true")
+    parser.add_argument("--loss-type", default="paper_mae")
+    parser.add_argument(
+        "--batch-average-loss",
+        action="store_true",
+        help="Deprecated; losses in losses.py already use batch-mean reduction.",
+    )
     parser.add_argument("--unsupervised", action="store_true")
     parser.add_argument("--ft-weight", type=float, default=1.0)
     parser.add_argument("--amp-weight", type=float, default=1.0)
@@ -173,6 +174,9 @@ def main():
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+
+    if args.batch_average_loss:
+        print("--batch-average-loss is deprecated and ignored; losses are batch-mean by default.")
 
     torch.manual_seed(args.seed)
     device = choose_device(args.device)
@@ -300,4 +304,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
