@@ -103,7 +103,7 @@ def parse_args():
     parser.add_argument("--model-name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
     parser.add_argument("--phase-activation", choices=["tanh", "atan"], default="tanh")
     parser.add_argument("--phase-logit-scale", type=float, default=1.0)
-    parser.add_argument("--checkpoint", default="")
+    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_l1_batch10_cosine_Init1e-3_adam_scale1/best_model.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
@@ -126,6 +126,7 @@ def parse_args():
     parser.add_argument("--unsupervise", type=str2bool, default=False)
     parser.add_argument("--scale-i", "--scale-I", dest="scale_i", type=float, default=0.0)
     parser.add_argument("--scale-align-loss", action="store_true")
+    parser.add_argument("--batch-size", type=int, default=1)
     return parser.parse_args()
 
 

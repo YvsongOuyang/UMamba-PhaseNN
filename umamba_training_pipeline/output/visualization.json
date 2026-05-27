@@ -1,0 +1,69 @@
+{
+  "seed": 42,
+  "dataset_size": 5000,
+  "num_samples": 5,
+  "sample_names": [
+    "val_diff_001383",
+    "val_diff_001881",
+    "val_diff_004901",
+    "val_diff_001524",
+    "val_diff_004654"
+  ],
+  "per_sample": [
+    {
+      "name": "val_diff_001383",
+      "paper_modulus_mae": 7.974837303161621,
+      "chi2_modulus": 0.606472373008728,
+      "relative_l1_modulus": 0.6599311828613281,
+      "relative_log_mse": 0.17518635094165802,
+      "pearson_corr": 0.6140267252922058,
+      "pearson_loss": 0.3859732747077942,
+      "voxel_mse": 2829.05908203125,
+      "voxel_rmse": 53.188899993896484
+    },
+    {
+      "name": "val_diff_001881",
+      "paper_modulus_mae": 6.844620704650879,
+      "chi2_modulus": 0.3345080018043518,
+      "relative_l1_modulus": 0.558291494846344,
+      "relative_log_mse": 0.21163280308246613,
+      "pearson_corr": 0.8644778728485107,
+      "pearson_loss": 0.13552212715148926,
+      "voxel_mse": 2255.12548828125,
+      "voxel_rmse": 47.488162994384766
+    },
+    {
+      "name": "val_diff_004901",
+      "paper_modulus_mae": 5.542915344238281,
+      "chi2_modulus": 0.34096604585647583,
+      "relative_l1_modulus": 0.6840052604675293,
+      "relative_log_mse": 0.23617064952850342,
+      "pearson_corr": 0.8167453408241272,
+      "pearson_loss": 0.1832546591758728,
+      "voxel_mse": 248.77008056640625,
+      "voxel_rmse": 15.772446632385254
+    },
+    {
+      "name": "val_diff_001524",
+      "paper_modulus_mae": 7.072449207305908,
+      "chi2_modulus": 0.42821934819221497,
+      "relative_l1_modulus": 0.6511132717132568,
+      "relative_log_mse": 0.2021894007921219,
+      "pearson_corr": 0.7468211650848389,
+      "pearson_loss": 0.25317883491516113,
+      "voxel_mse": 1383.4715576171875,
+      "voxel_rmse": 37.19504928588867
+    },
+    {
+      "name": "val_diff_004654",
+      "paper_modulus_mae": 7.8697896003723145,
+      "chi2_modulus": 0.4078373908996582,
+      "relative_l1_modulus": 0.6244546175003052,
+      "relative_log_mse": 0.18494541943073273,
+      "pearson_corr": 0.759575366973877,
+      "pearson_loss": 0.24042463302612305,
+      "voxel_mse": 1732.478271484375,
+      "voxel_rmse": 41.623050689697266
+    }
+  ]
+}
