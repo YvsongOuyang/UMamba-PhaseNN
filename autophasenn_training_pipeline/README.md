@@ -192,9 +192,11 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --data-dir "data\aicdi_sample\memmap" `
   --data-diff "val_diff.npy" `
   --data-real "val_real.npy" `
+  --dataset-size 5000 `
   --output-png "outputs\pt_pipeline_visualization.png" `
   --device cpu `
-  --num-samples 3
+  --num-samples 5 `
+  --seed 42
 ```
 
 The visualization intentionally mirrors `TF2/test_network_unsup.py`: phase

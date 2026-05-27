@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from scipy.ndimage import center_of_mass, shift
 from skimage.restoration import unwrap_phase
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 from dataset import AutoPhaseDataset
 from losses import metric_dict, scale_align_sum
@@ -114,7 +114,9 @@ def main():
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-png", default="./autophasenn_training_pipeline/output/visualization.png")
-    parser.add_argument("--num-samples", type=int, default=3)
+    parser.add_argument("--dataset-size", type=int, default=5000)
+    parser.add_argument("--num-samples", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--slice-index", type=int, default=32)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--threshold", type=float, default=0.1)
@@ -128,14 +130,17 @@ def main():
     dataset = AutoPhaseDataset(
         data_dir / args.data_diff,
         optional_data_path(data_dir, args.data_real),
-        args.num_samples,
+        args.dataset_size,
         shape_diff=shape,
         shape_real=shape,
         dtype_diff=args.dtype_diff,
         dtype_real=args.dtype_real,
         scale_i=args.scale_i,
-        shuffle=False,
+        shuffle=True,
+        seed=args.seed,
     )
+    sample_count = min(args.num_samples, len(dataset))
+    dataset = Subset(dataset, range(sample_count))
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
     model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
@@ -185,8 +190,21 @@ def main():
     output_png = Path(args.output_png)
     plot_rows(rows, names, output_png)
     output_json = output_png.with_suffix(".json")
-    output_json.write_text(json.dumps({"per_sample": metrics}, indent=2), encoding="utf-8")
+    output_json.write_text(
+        json.dumps(
+            {
+                "seed": args.seed,
+                "dataset_size": args.dataset_size,
+                "num_samples": sample_count,
+                "sample_names": names,
+                "per_sample": metrics,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     print(f"Saved {output_png}")
+    print("Selected samples: {}".format(", ".join(names)))
 
 
 if __name__ == "__main__":
