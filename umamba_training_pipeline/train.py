@@ -184,18 +184,16 @@ def build_umamba_plans(args):
                 "use_mask_for_norm": [False],
                 "UNet_class_name": "PlainConvUNet",
                 "UNet_base_num_features": 32,
-                "n_conv_per_stage_encoder": [2, 2, 2, 2, 2],
-                "n_conv_per_stage_decoder": [2, 2, 2, 2],
-                "num_pool_per_axis": [4, 4, 4, 4],
+                "n_conv_per_stage_encoder": [2, 2, 2, 2],
+                "n_conv_per_stage_decoder": [2, 2, 2],
+                "num_pool_per_axis": [4, 4, 4],
                 "pool_op_kernel_sizes": [
                     [1, 1, 1],
                     [2, 2, 2],
                     [2, 2, 2],
                     [2, 2, 2],
-                    [2, 2, 2],
                 ],
                 "conv_kernel_sizes": [
-                    [3, 3, 3],
                     [3, 3, 3],
                     [3, 3, 3],
                     [3, 3, 3],
@@ -756,7 +754,7 @@ def parse_args():
     parser.add_argument("--overfit-samples", type=int, default=0)
     parser.add_argument("--debug-overfit-samples", type=int, default=0)
     parser.add_argument("--cache-data", action="store_true")
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
@@ -785,13 +783,13 @@ def parse_args():
     parser.add_argument("--step-size", type=int, default=10)
     parser.add_argument("--gamma", type=float, default=0.5)
     parser.add_argument("--patience", type=int, default=5)
-    parser.add_argument("--checkpoint", "--resume", dest="checkpoint", default="")
+    parser.add_argument("--checkpoint", "--resume", dest="checkpoint", default="/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_l1_batch10_cosine_Init1e-3_adam_scale1/best_model.pt")
     parser.add_argument("--from-scratch", action="store_true")
     parser.add_argument("--reset-optimizer", action="store_true")
     parser.add_argument("--head-lr-mult", type=float, default=1.0)
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--save-every", type=int, default=10)
-    parser.add_argument("--save-model", type=int, default=1)
+    parser.add_argument("--save-model", type=int, default=20)
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--print-freq", type=int, default=100)
     parser.add_argument("--debug-max-train-batches", type=int, default=0)
