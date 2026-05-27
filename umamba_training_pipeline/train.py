@@ -263,6 +263,7 @@ def build_model(args, device):
             deep_supervision=False,
             phase_activation=args.phase_activation,
             phase_logit_scale=args.phase_logit_scale,
+            threshold=args.T,
         )
         print(
             f"Using UMamba | phase_activation={args.phase_activation} | "

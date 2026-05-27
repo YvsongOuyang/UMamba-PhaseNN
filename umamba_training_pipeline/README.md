@@ -7,6 +7,7 @@ This folder is a hybrid training entrypoint for the current debugging work:
 - Checkpoint loading follows `oyys_lcrc_train_singleGPU.py`: it accepts partial model matches, skips incompatible keys, and resumes optimizer/scheduler state only when the checkpoint is fully compatible.
 - Scheduler options follow `oyys_lcrc_train_singleGPU.py`, but the default is `none`, matching the pipeline default.
 - Loss functions follow `autophasenn_training_pipeline/losses.py`.
+- The local `UMambaEnc_3d.py` uses the same postprocessing contract as the AutoPhaseNN pipeline: hard support threshold, masked object as the second output, and `torch.abs(FFT)` far-field modulus.
 
 ## Quick 100-Sample Overfit Probe
 
