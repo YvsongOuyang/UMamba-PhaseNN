@@ -250,7 +250,7 @@ def build_model(args, device):
     model_name = args.model_name.lower()
     if model_name == "umamba":
         from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
-        from UMambaEnc_3d import get_umamba_enc_3d_from_plans
+        from umamba_training_pipeline.UMambaEnc_3d import get_umamba_enc_3d_from_plans
 
         plans_manager = PlansManager(build_umamba_plans(args))
         config_manager = plans_manager.get_configuration("3d_fullres")
