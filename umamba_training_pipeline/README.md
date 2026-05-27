@@ -41,6 +41,23 @@ Resume or load pretrained weights with:
 
 Use `--reset-optimizer` if you want checkpoint weights but fresh optimizer and scheduler state.
 
+## Evaluation And Visualization
+
+```bash
+python umamba_training_pipeline/evaluate.py \
+  --model-name umamba \
+  --checkpoint /path/to/checkpoint.pt \
+  --batch-size 4
+```
+
+```bash
+python umamba_training_pipeline/visualize_postprocessed.py \
+  --model-name umamba \
+  --checkpoint /path/to/checkpoint.pt \
+  --num-samples 5 \
+  --seed 42
+```
+
 ## Loss Difference Summary
 
 `oyys_lcrc_train_singleGPU.py` defines many metric-like losses, but training currently uses only:

@@ -1,3 +1,4 @@
+import argparse
 import math
 
 import torch
@@ -187,4 +188,43 @@ def load_weights(model, checkpoint_path, strict=True, map_location="cpu"):
     state_dict = checkpoint.get("model_state_dict", checkpoint)
     model.load_state_dict(state_dict, strict=strict)
     return checkpoint
+
+
+def count_parameters(model):
+    return sum(param.numel() for param in model.parameters())
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Print TF-compatible AutoPhaseNN model structure.")
+    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--batch-size", type=int, default=2)
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
+    parser.add_argument("--depth", type=int, default=6)
+    args = parser.parse_args()
+
+    device = torch.device(args.device if args.device == "cuda" and torch.cuda.is_available() else "cpu")
+    model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
+    print(model)
+    print(f"model parameters: {count_parameters(model)}")
+
+    try:
+        from torchinfo import summary
+
+        print("===================== TFCompatibleAutoPhaseNN structure =====================")
+        summary(
+            model,
+            input_size=(args.batch_size, 1, args.shape, args.shape, args.shape),
+            device=str(device),
+            col_width=20,
+            col_names=["input_size", "output_size", "num_params", "trainable"],
+            depth=args.depth,
+            row_settings=["var_names", "depth"],
+        )
+    except Exception as exc:
+        print(f"torchinfo summary skipped: {exc}")
+
+
+if __name__ == "__main__":
+    main()
 
