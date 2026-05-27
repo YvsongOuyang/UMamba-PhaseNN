@@ -95,20 +95,95 @@ class AutoPhaseDataset(Dataset):
     """Loads AutoPhaseNN samples as channel-first tensors.
 
     Supported sample formats:
+    - memmap diffraction/real-space arrays using the same loading style as
+      the root data_loader.py.
     - .npz with arr_0 diffraction amplitude and arr_1 complex real-space object.
     - .npz/.npy containing a complex diffraction array; real space is computed by ifft.
     """
 
-    def __init__(self, files, scale_i=0.0):
-        self.files = [Path(f) for f in files]
+    def __init__(
+        self,
+        files=None,
+        real_path=None,
+        num_samples=None,
+        shape_diff=(64, 64, 64),
+        shape_real=(64, 64, 64),
+        dtype_diff="float32",
+        dtype_real="complex64",
+        scale_i=0.0,
+        shuffle=None,
+        seed=4,
+        diff_path=None,
+        scale_I=None,
+    ):
+        if scale_I is not None:
+            scale_i = scale_I
+
         self.scale_i = float(scale_i)
+        self.files = None
+        self.mmap_diff = None
+        self.mmap_real = None
+        self.indices = None
+
+        if diff_path is None and files is not None and (real_path is not None or num_samples is not None):
+            diff_path = files
+            files = None
+
+        if diff_path is not None:
+            if num_samples is None:
+                raise ValueError("num_samples is required when loading memmap data.")
+            self.mode = "memmap"
+            self.diff_path = Path(diff_path)
+            self.real_path = Path(real_path) if real_path is not None else None
+            self.num_samples = int(num_samples)
+            self.mmap_diff = np.memmap(
+                self.diff_path,
+                dtype=dtype_diff,
+                mode="r",
+                shape=(self.num_samples,) + tuple(shape_diff),
+            )
+            if self.real_path is not None:
+                self.mmap_real = np.memmap(
+                    self.real_path,
+                    dtype=dtype_real,
+                    mode="r",
+                    shape=(self.num_samples,) + tuple(shape_real),
+                )
+            self.indices = list(range(self.num_samples))
+            if shuffle is None:
+                shuffle = True
+            if shuffle:
+                random.Random(seed).shuffle(self.indices)
+            return
+
+        if files is None:
+            raise ValueError("Either files or diff_path must be provided.")
+        self.mode = "files"
+        self.files = [Path(f) for f in files]
+        if shuffle:
+            random.Random(seed).shuffle(self.files)
 
     def __len__(self):
+        if self.mode == "memmap":
+            return self.num_samples
         return len(self.files)
 
     def __getitem__(self, index):
+        if self.mode == "memmap":
+            actual_idx = self.indices[index]
+            diff = np.array(self.mmap_diff[actual_idx])
+            if self.mmap_real is None:
+                realspace = None
+            else:
+                realspace = np.array(self.mmap_real[actual_idx])
+            name = f"{self.diff_path.stem}_{actual_idx:06d}"
+            return self._format_sample(diff, realspace, name)
+
         path = self.files[index]
         diff, realspace = _load_np_data(path)
+        return self._format_sample(diff, realspace, path.name)
+
+    def _format_sample(self, diff, realspace, name):
         diff = np.asarray(diff, dtype=np.float32)
 
         if self.scale_i > 0:
@@ -125,6 +200,6 @@ class AutoPhaseDataset(Dataset):
             "diff": torch.from_numpy(diff[None]),
             "amp": torch.from_numpy(amp[None]),
             "phi": torch.from_numpy(phi[None]),
-            "name": path.name,
+            "name": name,
         }
 
