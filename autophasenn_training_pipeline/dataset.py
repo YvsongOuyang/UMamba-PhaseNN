@@ -22,6 +22,7 @@ class AutoPhaseDataset(Dataset):
         shuffle=True,
         seed=4,
         scale_I=None,
+        cache_data=False,
     ):
         if scale_I is not None:
             scale_i = scale_I
@@ -50,15 +51,27 @@ class AutoPhaseDataset(Dataset):
         self.indices = list(range(self.num_samples))
         if shuffle:
             random.Random(seed).shuffle(self.indices)
+        self.cache_data = bool(cache_data)
+        self.cached_diff = None
+        self.cached_real = None
+        if self.cache_data:
+            self.cached_diff = np.asarray(self.mmap_diff[self.indices]).copy()
+            if self.mmap_real is not None:
+                self.cached_real = np.asarray(self.mmap_real[self.indices]).copy()
 
     def __len__(self):
         return self.num_samples
 
     def __getitem__(self, index):
         actual_idx = self.indices[index]
-        diff = np.array(self.mmap_diff[actual_idx])
+        if self.cache_data:
+            diff = self.cached_diff[index]
+        else:
+            diff = np.array(self.mmap_diff[actual_idx])
         if self.mmap_real is None:
             realspace = None
+        elif self.cache_data:
+            realspace = self.cached_real[index]
         else:
             realspace = np.array(self.mmap_real[actual_idx])
         name = f"{self.diff_path.stem}_{actual_idx:06d}"

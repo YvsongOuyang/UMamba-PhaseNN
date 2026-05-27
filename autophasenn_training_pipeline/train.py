@@ -91,7 +91,7 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
                 loss_ft = loss_fn(diff, pred_for_loss)
                 loss_amp = F.l1_loss(pred_amp, amp)
                 loss_phase = F.l1_loss(pred_phi * support, phi * support)
-                if args.unsupervised:
+                if args.unsupervised or args.loss_scope == "diff":
                     loss = loss_ft
                 else:
                     loss = (
@@ -155,6 +155,17 @@ def main():
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--train-size", type=int, default=0)
+    parser.add_argument(
+        "--overfit-samples",
+        type=int,
+        default=0,
+        help="Train and validate on the same first N training samples for fit debugging.",
+    )
+    parser.add_argument(
+        "--cache-data",
+        action="store_true",
+        help="Load the selected memmap samples into RAM at dataset construction time.",
+    )
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--num-workers", type=int, default=0)
@@ -163,7 +174,13 @@ def main():
     parser.add_argument("--threshold", type=float, default=0.1)
     parser.add_argument("--scale-i", type=float, default=0.0)
     parser.add_argument("--scale-align-loss", action="store_true")
-    parser.add_argument("--loss-type", default="paper_mae")
+    parser.add_argument("--loss-type", default="l1")
+    parser.add_argument(
+        "--loss-scope",
+        choices=["diff", "supervised"],
+        default="diff",
+        help="diff uses only reciprocal-space --loss-type; supervised also adds amp/phase losses.",
+    )
     parser.add_argument(
         "--batch-average-loss",
         action="store_true",
@@ -182,6 +199,11 @@ def main():
     parser.add_argument("--min-lr", type=float, default=1e-6)
     parser.add_argument("--pretrained", default="")
     parser.add_argument("--resume", default="")
+    parser.add_argument(
+        "--from-scratch",
+        action="store_true",
+        help="Require training from random initialization; incompatible with --pretrained or --resume.",
+    )
     parser.add_argument("--save-every", type=int, default=10)
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
@@ -190,6 +212,10 @@ def main():
 
     if args.batch_average_loss:
         print("--batch-average-loss is deprecated and ignored; losses are batch-mean by default.")
+    if args.unsupervised:
+        args.loss_scope = "diff"
+    if args.from_scratch and (args.pretrained or args.resume):
+        raise ValueError("--from-scratch cannot be combined with --pretrained or --resume.")
 
     torch.manual_seed(args.seed)
     device = choose_device(args.device)
@@ -202,7 +228,23 @@ def main():
     train_samples = args.num_samples_train
     if args.train_size and args.train_size > 0:
         train_samples = min(train_samples, args.train_size)
-    print(f"Resolved memmap samples: train={train_samples}, val={args.num_samples_val}")
+    overfit_samples = max(args.overfit_samples, 0)
+    overfit_mode = overfit_samples > 0
+    if overfit_mode:
+        train_samples = min(train_samples, overfit_samples)
+    cache_data = args.cache_data or overfit_mode
+    print(
+        f"Resolved memmap samples: train={train_samples}, "
+        f"val={train_samples if overfit_mode else args.num_samples_val}"
+    )
+    print(
+        "Training setup: {} | loss_scope={} | loss_type={} | cache_data={}".format(
+            "from_scratch" if not args.pretrained and not args.resume else "checkpointed",
+            args.loss_scope,
+            args.loss_type,
+            cache_data,
+        )
+    )
 
     train_dataset = AutoPhaseDataset(
         data_dir / args.data_train_diff,
@@ -214,18 +256,24 @@ def main():
         dtype_real=args.dtype_real,
         scale_i=args.scale_i,
         shuffle=False,
+        cache_data=cache_data,
     )
-    val_dataset = AutoPhaseDataset(
-        data_dir / args.data_val_diff,
-        optional_data_path(data_dir, args.data_val_real),
-        args.num_samples_val,
-        shape_diff=shape,
-        shape_real=shape,
-        dtype_diff=args.dtype_diff,
-        dtype_real=args.dtype_real,
-        scale_i=args.scale_i,
-        shuffle=False,
-    )
+    if overfit_mode:
+        val_dataset = train_dataset
+        print(f"Overfit mode enabled: validating on the same {train_samples} training samples.")
+    else:
+        val_dataset = AutoPhaseDataset(
+            data_dir / args.data_val_diff,
+            optional_data_path(data_dir, args.data_val_real),
+            args.num_samples_val,
+            shape_diff=shape,
+            shape_real=shape,
+            dtype_diff=args.dtype_diff,
+            dtype_real=args.dtype_real,
+            scale_i=args.scale_i,
+            shuffle=False,
+            cache_data=cache_data,
+        )
     pin_memory = device.type == "cuda"
     train_loader = DataLoader(
         train_dataset,

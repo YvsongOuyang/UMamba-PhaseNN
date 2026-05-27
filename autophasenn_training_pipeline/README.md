@@ -98,7 +98,7 @@ From the repository root on Windows PowerShell:
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
-& $PY "pytorch_training_pipeline\train.py" `
+& $PY "autophasenn_training_pipeline\train.py" `
   --data-dir "data\aicdi_sample\memmap" `
   --data-train-diff "train_diff.npy" `
   --data-train-real "train_real.npy" `
@@ -115,11 +115,33 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --dry-run
 ```
 
+## 100-Sample Fit Check
+
+This runs from random initialization, uses reciprocal-space L1 only, trains and
+validates on the same first 100 training samples, and caches those samples in
+RAM:
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --data-dir /data_ssd/oyys/autophasenn \
+  --data-train-diff train_diff.npy \
+  --data-train-real train_real.npy \
+  --output-dir ./output/autophasenn_overfit100_l1 \
+  --from-scratch \
+  --loss-type l1 \
+  --loss-scope diff \
+  --overfit-samples 100 \
+  --batch-size 8 \
+  --epochs 200 \
+  --lr 1e-3 \
+  --num-workers 0
+```
+
 ## Fine-Tune Example
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
-& $PY "pytorch_training_pipeline\train.py" `
+& $PY "autophasenn_training_pipeline\train.py" `
   --data-dir "data\aicdi_sample\memmap" `
   --data-train-diff "train_diff.npy" `
   --data-train-real "train_real.npy" `
@@ -148,7 +170,7 @@ very slow, so CPU is mostly useful for dry runs or small checks.
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
-& $PY "pytorch_training_pipeline\evaluate.py" `
+& $PY "autophasenn_training_pipeline\evaluate.py" `
   --checkpoint "PyTorch\cohere-trained_model_tf_compatible.pth" `
   --data-dir "data\aicdi_sample\memmap" `
   --data-diff "val_diff.npy" `
@@ -165,7 +187,7 @@ Add `--scale-align-loss` if you want the scale-aligned metric report.
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
-& $PY "pytorch_training_pipeline\visualize_postprocessed.py" `
+& $PY "autophasenn_training_pipeline\visualize_postprocessed.py" `
   --checkpoint "PyTorch\cohere-trained_model_tf_compatible.pth" `
   --data-dir "data\aicdi_sample\memmap" `
   --data-diff "val_diff.npy" `
