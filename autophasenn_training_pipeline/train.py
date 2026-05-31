@@ -156,12 +156,18 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
             total["samples"] += batch_size
             total["batches"] += 1
 
-            iterator.set_postfix(loss=total["loss"] / max(total["samples"], 1))
+            iterator.set_postfix(
+                loss=total["loss"] / max(total["samples"], 1),
+                ft=total["loss_ft"] / max(total["samples"], 1),
+                amp=total["loss_amp"] / max(total["samples"], 1),
+                phase=total["loss_phase"] / max(total["samples"], 1),
+                support=total["loss_support"] / max(total["samples"], 1),
+            )
             if args.max_batches_per_epoch and batch_index >= args.max_batches_per_epoch:
                 break
 
     denom = max(total["samples"], 1)
-    return {
+    stats = {
         "loss": total["loss"] / denom,
         "loss_ft": total["loss_ft"] / denom,
         "loss_amp": total["loss_amp"] / denom,
@@ -170,6 +176,14 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
         "samples": total["samples"],
         "batches": total["batches"],
     }
+    mode = "train" if train else "val"
+    print(
+        f"{mode} epoch losses | Total: {stats['loss']:.4e} | FT: {stats['loss_ft']:.4e} | "
+        f"Amp: {stats['loss_amp']:.4e} | Phase: {stats['loss_phase']:.4e} | "
+        f"Support: {stats['loss_support']:.4e} | "
+        f"SupportW: {(args.support_weight * stats['loss_support']):.4e}"
+    )
+    return stats
 
 
 @torch.no_grad()
@@ -391,9 +405,13 @@ def main():
         save_json(output_dir / "history.json", history)
 
         print(
-            "epoch {}/{} train_loss={:.6g} val_loss={:.6g} val_ft={:.6g}".format(
-                epoch, args.epochs, train_stats["loss"], val_stats["loss"], val_stats["loss_ft"]
-            )
+            f"epoch {epoch}/{args.epochs} "
+            f"train_total={train_stats['loss']:.6g} train_ft={train_stats['loss_ft']:.6g} "
+            f"train_amp={train_stats['loss_amp']:.6g} train_phase={train_stats['loss_phase']:.6g} "
+            f"train_support={train_stats['loss_support']:.6g} "
+            f"val_total={val_stats['loss']:.6g} val_ft={val_stats['loss_ft']:.6g} "
+            f"val_amp={val_stats['loss_amp']:.6g} val_phase={val_stats['loss_phase']:.6g} "
+            f"val_support={val_stats['loss_support']:.6g}"
         )
 
         save_checkpoint(

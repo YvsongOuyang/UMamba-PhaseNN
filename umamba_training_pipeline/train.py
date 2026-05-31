@@ -555,6 +555,10 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
     use_amp = args.fp16 and device.type == "cuda"
     epoch_start_time = time.time()
     loss_total = 0.0
+    loss_ft_total = 0.0
+    loss_amp_total = 0.0
+    loss_phase_total = 0.0
+    loss_support_total = 0.0
 
     for i, batch in enumerate(trainloader):
         if i >= num_batches:
@@ -647,6 +651,10 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
             writer.add_scalar("loss/train_loss_support", loss_support.item(), global_step)
 
         loss_total += loss.detach().item()
+        loss_ft_total += loss_ft.detach().item()
+        loss_amp_total += loss_amp.detach().item()
+        loss_phase_total += loss_phase.detach().item()
+        loss_support_total += loss_support.detach().item()
         current_iter = i + 1
         elapsed_seconds = time.time() - epoch_start_time
         avg_time_per_iter = elapsed_seconds / current_iter
@@ -657,16 +665,30 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
         if i % args.print_freq == 0 or current_iter == num_batches:
             print(
                 f"Epoch[{epoch}] Batch[{current_iter}/{num_batches}] | "
-                f"Loss: {loss.item():.4e} | BatchLR: {current_batch_lr:.3e} | "
+                f"Loss: {loss.item():.4e} | FT: {loss_ft.item():.4e} | "
+                f"Amp: {loss_amp.item():.4e} | Phase: {loss_phase.item():.4e} | "
+                f"Support: {loss_support.item():.4e} | "
+                f"SupportW: {(args.support_weight * loss_support.item()):.4e} | "
+                f"BatchLR: {current_batch_lr:.3e} | "
                 f"Grad: {str(has_grad):5s} | Update: {str(before != after):5s} | "
                 f"Elapsed: {elapsed_str} | ETA: {eta_str}",
                 flush=True,
             )
 
     loss_total /= max(num_batches, 1)
+    loss_ft_total /= max(num_batches, 1)
+    loss_amp_total /= max(num_batches, 1)
+    loss_phase_total /= max(num_batches, 1)
+    loss_support_total /= max(num_batches, 1)
     time_cost = time.time() - start_time
     print("\n" + "=" * 80)
     print(f"Epoch {epoch} complete | total time: {time_cost:.2f}s | average Loss: {loss_total:.4e}")
+    print(
+        f"Average train components | FT: {loss_ft_total:.4e} | "
+        f"Amp: {loss_amp_total:.4e} | Phase: {loss_phase_total:.4e} | "
+        f"Support: {loss_support_total:.4e} | "
+        f"SupportW: {(args.support_weight * loss_support_total):.4e}"
+    )
     print("=" * 80 + "\n")
     return loss_total, global_step
 
@@ -730,6 +752,9 @@ def validate(args, model, loss_fn, validloader, epoch, device):
             if (i + 1) % args.print_freq == 0 or (i + 1) == num_batches:
                 print(
                     f"Validation Epoch [{epoch}] | Batch [{i + 1}/{num_batches}] | "
+                    f"Loss: {details['loss']:.4e} | FT: {details['loss_ft']:.4e} | "
+                    f"Amp: {details['loss_amp']:.4e} | Phase: {details['loss_phase']:.4e} | "
+                    f"Support: {details['loss_support']:.4e} | "
                     f"L1: {details['loss_l1']:.4e} | "
                     f"MAE: {details['loss_mae']:.4e} | "
                     f"MSE: {details['loss_mse']:.4e} | "
@@ -746,7 +771,8 @@ def validate(args, model, loss_fn, validloader, epoch, device):
     print(
         f"   TrainLoss: {details_total['loss']:.4e} | LossFT: {details_total['loss_ft']:.4e} | "
         f"Amp: {details_total['loss_amp']:.4e} | Phase: {details_total['loss_phase']:.4e} | "
-        f"Support: {details_total['loss_support']:.4e}"
+        f"Support: {details_total['loss_support']:.4e} | "
+        f"SupportW: {(args.support_weight * details_total['loss_support']):.4e}"
     )
     print(
         f"   L1:    {details_total['loss_l1']:.4e} | RelL1: {details_total['loss_mae']:.4e} | "
