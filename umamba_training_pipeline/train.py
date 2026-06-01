@@ -665,10 +665,11 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
         if i % args.print_freq == 0 or current_iter == num_batches:
             print(
                 f"Epoch[{epoch}] Batch[{current_iter}/{num_batches}] | "
-                f"Loss: {loss.item():.4e} | FT: {loss_ft.item():.4e} | "
-                f"Amp: {loss_amp.item():.4e} | Phase: {loss_phase.item():.4e} | "
-                f"Support: {loss_support.item():.4e} | "
-                f"SupportW: {(args.support_weight * loss_support.item()):.4e} | "
+                f"OptTotal: {loss.item():.4e} | FTLoss: {loss_ft.item():.4e} | "
+                f"AmpL1Full: {loss_amp.item():.4e} | "
+                f"PhaseL1PredSup: {loss_phase.item():.4e} | "
+                f"SupportBCE: {loss_support.item():.4e} | "
+                f"SupportWeighted: {(args.support_weight * loss_support.item()):.4e} | "
                 f"BatchLR: {current_batch_lr:.3e} | "
                 f"Grad: {str(has_grad):5s} | Update: {str(before != after):5s} | "
                 f"Elapsed: {elapsed_str} | ETA: {eta_str}",
@@ -682,12 +683,15 @@ def train_one_epoch(args, model, loss_fn, trainloader, optimizer, scheduler, epo
     loss_support_total /= max(num_batches, 1)
     time_cost = time.time() - start_time
     print("\n" + "=" * 80)
-    print(f"Epoch {epoch} complete | total time: {time_cost:.2f}s | average Loss: {loss_total:.4e}")
+    print(f"Epoch {epoch} complete | total time: {time_cost:.2f}s | average OptTotal: {loss_total:.4e}")
     print(
-        f"Average train components | FT: {loss_ft_total:.4e} | "
-        f"Amp: {loss_amp_total:.4e} | Phase: {loss_phase_total:.4e} | "
-        f"Support: {loss_support_total:.4e} | "
-        f"SupportW: {(args.support_weight * loss_support_total):.4e}"
+        f"Average train optimization terms | FTLoss: {loss_ft_total:.4e} | "
+        f"SupportWeighted: {(args.support_weight * loss_support_total):.4e}"
+    )
+    print(
+        f"Average train real-space monitors | AmpL1Full: {loss_amp_total:.4e} | "
+        f"PhaseL1PredSup: {loss_phase_total:.4e} | "
+        f"SupportBCE: {loss_support_total:.4e}"
     )
     print("=" * 80 + "\n")
     return loss_total, global_step
@@ -750,15 +754,17 @@ def validate(args, model, loss_fn, validloader, epoch, device):
                 details_total[key] += float(details[key].detach().float().cpu().item())
 
             if (i + 1) % args.print_freq == 0 or (i + 1) == num_batches:
+                pcc_corr = 1.0 - details["loss_pcc"].detach().float().item()
                 print(
                     f"Validation Epoch [{epoch}] | Batch [{i + 1}/{num_batches}] | "
-                    f"Loss: {details['loss']:.4e} | FT: {details['loss_ft']:.4e} | "
-                    f"Amp: {details['loss_amp']:.4e} | Phase: {details['loss_phase']:.4e} | "
-                    f"Support: {details['loss_support']:.4e} | "
-                    f"L1: {details['loss_l1']:.4e} | "
-                    f"MAE: {details['loss_mae']:.4e} | "
-                    f"MSE: {details['loss_mse']:.4e} | "
-                    f"PCC: {details['loss_pcc']:.4e}",
+                    f"OptTotal: {details['loss']:.4e} | FTLoss: {details['loss_ft']:.4e} | "
+                    f"AmpL1Full: {details['loss_amp']:.4e} | "
+                    f"PhaseL1PredSup: {details['loss_phase']:.4e} | "
+                    f"SupportBCE: {details['loss_support']:.4e} | "
+                    f"FT_L1: {details['loss_l1']:.4e} | "
+                    f"FT_RelL1: {details['loss_mae']:.4e} | "
+                    f"FT_Chi2: {details['loss_mse']:.4e} | "
+                    f"FT_PearsonCorr: {pcc_corr:.4e}",
                     flush=True,
                 )
 
@@ -767,24 +773,33 @@ def validate(args, model, loss_fn, validloader, epoch, device):
 
     print("\n" + "=" * 80)
     print(f"Epoch {epoch} validation complete")
-    print("Average losses:")
+    print("Average validation metrics:")
     print(
-        f"   TrainLoss: {details_total['loss']:.4e} | LossFT: {details_total['loss_ft']:.4e} | "
-        f"Amp: {details_total['loss_amp']:.4e} | Phase: {details_total['loss_phase']:.4e} | "
-        f"Support: {details_total['loss_support']:.4e} | "
-        f"SupportW: {(args.support_weight * details_total['loss_support']):.4e}"
+        f"   Optimization: OptTotal={details_total['loss']:.4e} | "
+        f"FTLoss={details_total['loss_ft']:.4e} | "
+        f"SupportWeighted={(args.support_weight * details_total['loss_support']):.4e}"
     )
     print(
-        f"   L1:    {details_total['loss_l1']:.4e} | RelL1: {details_total['loss_mae']:.4e} | "
-        f"Chi2: {details_total['loss_mse']:.4e}"
+        f"   Real-space monitors: AmpL1Full={details_total['loss_amp']:.4e} | "
+        f"PhaseL1PredSup={details_total['loss_phase']:.4e} | "
+        f"SupportBCE={details_total['loss_support']:.4e}"
     )
     print(
-        f"   Huber: {details_total['loss_huber']:.4e} | PCC:   {details_total['loss_pcc']:.4e} | "
-        f"Log: {details_total['metric_log']:.4e}"
+        f"   Reciprocal primary: FT_L1={details_total['loss_l1']:.4e} | "
+        f"FT_RelL1={details_total['loss_mae']:.4e} | "
+        f"FT_Chi2={details_total['loss_mse']:.4e} | "
+        f"FT_PearsonCorr={(1.0 - details_total['loss_pcc']):.4e}"
     )
     print(
-        f"   Comb:  {details_total['loss_comb']:.4e} | Comb2: {details_total['loss_comb2']:.4e} | "
-        f"VoxelMSE: {details_total['voxel_mse']:.4e}"
+        f"   Reciprocal diagnostics: FT_Huber={details_total['loss_huber']:.4e} | "
+        f"FT_PearsonLoss={details_total['loss_pcc']:.4e} | "
+        f"FT_LogRelMSE={details_total['metric_log']:.4e} | "
+        f"FT_Comb={details_total['loss_comb']:.4e} | "
+        f"FT_Comb2={details_total['loss_comb2']:.4e}"
+    )
+    print(
+        f"   Raw-scale diagnostics: FT_VoxelMSE={details_total['voxel_mse']:.4e} | "
+        f"FT_VoxelRMSE={details_total['voxel_rmse']:.4e}"
     )
     print("=" * 80 + "\n")
     return details_total

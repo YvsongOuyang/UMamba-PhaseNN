@@ -68,6 +68,7 @@ python autophasenn_training_pipeline/visualize_postprocessed.py \
   --data-diff train_diff.npy \
   --data-real train_real.npy \
   --dataset-size "${SAMPLES}" \
+  --overfit-samples "${SAMPLES}" \
   --num-samples 5 \
   --seed "${SEED}" \
   --device "${DEVICE}" \

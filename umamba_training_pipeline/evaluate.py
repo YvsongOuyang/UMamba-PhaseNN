@@ -7,7 +7,14 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from dataset import AutoPhaseDataset
-from losses import metric_dict, realspace_metric_dict, scale_align_sum
+from losses import (
+    METRIC_DESCRIPTIONS,
+    format_metric_groups,
+    group_metrics,
+    metric_dict,
+    realspace_metric_dict,
+    scale_align_sum,
+)
 from train import (
     build_model,
     choose_device,
@@ -130,6 +137,7 @@ def main():
             add_metrics(total, metrics)
 
     n = max(len(per_sample), 1)
+    mean_metrics = {key: value / n for key, value in total.items()}
     report = {
         "checkpoint": str(args.checkpoint),
         "model_name": args.model_name,
@@ -137,6 +145,8 @@ def main():
         "num_samples": len(per_sample),
         "scale_align_loss": args.scale_align_loss,
         "realspace_metrics": has_realspace,
+        "metric_groups": group_metrics(mean_metrics),
+        "metric_descriptions": METRIC_DESCRIPTIONS,
         "metric_notes": {
             "paper_modulus_mae": "Paper Eq. (1): MAE of diffraction modulus because stored tensors are abs(FFT).",
             "chi2_modulus": "Paper Eq. (2): reciprocal-space chi2 of diffraction modulus.",
@@ -144,13 +154,13 @@ def main():
             "real_phase_mae_*": "Wrapped phase error in radians.",
         },
         "sum": total,
-        "mean": {key: value / n for key, value in total.items()},
+        "mean": mean_metrics,
         "per_sample": per_sample,
     }
     output_json = Path(args.output_json)
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(json.dumps(report["mean"], indent=2), flush=True)
+    print(format_metric_groups(report["mean"], title="Evaluation mean metrics"), flush=True)
 
 
 if __name__ == "__main__":

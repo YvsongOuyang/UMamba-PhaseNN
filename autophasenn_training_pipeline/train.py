@@ -178,10 +178,14 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
     }
     mode = "train" if train else "val"
     print(
-        f"{mode} epoch losses | Total: {stats['loss']:.4e} | FT: {stats['loss_ft']:.4e} | "
-        f"Amp: {stats['loss_amp']:.4e} | Phase: {stats['loss_phase']:.4e} | "
-        f"Support: {stats['loss_support']:.4e} | "
-        f"SupportW: {(args.support_weight * stats['loss_support']):.4e}"
+        f"{mode} epoch optimization terms | OptTotal: {stats['loss']:.4e} | "
+        f"FTLoss: {stats['loss_ft']:.4e} | "
+        f"SupportWeighted: {(args.support_weight * stats['loss_support']):.4e}"
+    )
+    print(
+        f"{mode} epoch real-space monitors | AmpL1Full: {stats['loss_amp']:.4e} | "
+        f"PhaseL1PredSup: {stats['loss_phase']:.4e} | "
+        f"SupportBCE: {stats['loss_support']:.4e}"
     )
     return stats
 
@@ -406,12 +410,16 @@ def main():
 
         print(
             f"epoch {epoch}/{args.epochs} "
-            f"train_total={train_stats['loss']:.6g} train_ft={train_stats['loss_ft']:.6g} "
-            f"train_amp={train_stats['loss_amp']:.6g} train_phase={train_stats['loss_phase']:.6g} "
-            f"train_support={train_stats['loss_support']:.6g} "
-            f"val_total={val_stats['loss']:.6g} val_ft={val_stats['loss_ft']:.6g} "
-            f"val_amp={val_stats['loss_amp']:.6g} val_phase={val_stats['loss_phase']:.6g} "
-            f"val_support={val_stats['loss_support']:.6g}"
+            f"train_opt_total={train_stats['loss']:.6g} train_ft_loss={train_stats['loss_ft']:.6g} "
+            f"train_support_weighted={(args.support_weight * train_stats['loss_support']):.6g} "
+            f"train_amp_l1_full={train_stats['loss_amp']:.6g} "
+            f"train_phase_l1_predsup={train_stats['loss_phase']:.6g} "
+            f"train_support_bce={train_stats['loss_support']:.6g} "
+            f"val_opt_total={val_stats['loss']:.6g} val_ft_loss={val_stats['loss_ft']:.6g} "
+            f"val_support_weighted={(args.support_weight * val_stats['loss_support']):.6g} "
+            f"val_amp_l1_full={val_stats['loss_amp']:.6g} "
+            f"val_phase_l1_predsup={val_stats['loss_phase']:.6g} "
+            f"val_support_bce={val_stats['loss_support']:.6g}"
         )
 
         save_checkpoint(
