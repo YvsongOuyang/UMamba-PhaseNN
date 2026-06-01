@@ -113,8 +113,20 @@ def parse_args():
     parser.add_argument("--allow-missing-real", action="store_true")
     parser.add_argument("--output-png", default="./umamba_training_pipeline/output/visualization.png")
     parser.add_argument("--dataset-size", type=int, default=5000)
+    parser.add_argument(
+        "--overfit-samples",
+        type=int,
+        default=0,
+        help="Restrict the visualization pool to the same first N samples used by train.py --overfit-samples.",
+    )
     parser.add_argument("--num-samples", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--sample-mode",
+        choices=["seeded", "first"],
+        default="seeded",
+        help="seeded selects deterministic random samples from the pool; first selects indices 0..num_samples-1.",
+    )
     parser.add_argument("--slice-index", type=int, default=32)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--T", type=float, default=0.1)
@@ -136,16 +148,20 @@ def main():
     device = choose_device(args.device)
     data_dir = Path(args.data_dir)
     shape = (args.shape, args.shape, args.shape)
+    sample_pool_size = args.dataset_size
+    if args.overfit_samples > 0:
+        sample_pool_size = min(sample_pool_size, args.overfit_samples)
+    shuffle_samples = args.sample_mode == "seeded"
     dataset = AutoPhaseDataset(
         optional_data_path(data_dir, args.data_diff),
         optional_data_path(data_dir, args.data_real),
-        num_samples=args.dataset_size,
+        num_samples=sample_pool_size,
         shape_diff=shape,
         shape_real=shape,
         dtype_diff=args.dtype_diff,
         dtype_real=args.dtype_real,
         scale_i=args.scale_i,
-        shuffle=True,
+        shuffle=shuffle_samples,
         seed=args.seed,
         allow_missing_real=args.allow_missing_real,
     )
@@ -205,6 +221,9 @@ def main():
             {
                 "seed": args.seed,
                 "dataset_size": args.dataset_size,
+                "sample_pool_size": sample_pool_size,
+                "overfit_samples": args.overfit_samples,
+                "sample_mode": args.sample_mode,
                 "num_samples": sample_count,
                 "sample_names": names,
                 "per_sample": metrics,
@@ -214,6 +233,12 @@ def main():
         encoding="utf-8",
     )
     print(f"Saved {output_png}", flush=True)
+    print(
+        "Visualization pool: data_diff={} | data_real={} | pool_size={} | sample_mode={}".format(
+            args.data_diff, args.data_real, sample_pool_size, args.sample_mode
+        ),
+        flush=True,
+    )
     print("Selected samples: {}".format(", ".join(names)), flush=True)
 
 
