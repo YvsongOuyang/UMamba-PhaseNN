@@ -6,7 +6,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${REPO_ROOT}"
 
 DATA_DIR="${DATA_DIR:-/data_ssd/oyys/autophasenn}"
-SAMPLES="${SAMPLES:-100}"
+SAMPLES="${SAMPLES:-1000}"
 EPOCHS="${EPOCHS:-200}"
 BATCH_SIZE="${BATCH_SIZE:-8}"
 NUM_WORKERS="${NUM_WORKERS:-4}"
