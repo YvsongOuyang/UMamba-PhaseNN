@@ -207,6 +207,97 @@ loss_comb2 = sqrt_chi2_pcc_loss
 loss_comb_log = chi2_pcc_log_loss
 
 
+METRIC_GROUPS = {
+    "reciprocal_primary": [
+        "paper_modulus_mae",
+        "relative_l1_modulus",
+        "chi2_modulus",
+        "pearson_corr",
+    ],
+    "realspace_primary": [
+        "real_amp_l1",
+        "real_amp_global_ssim",
+        "real_support_iou",
+        "real_support_dice",
+        "real_support_pred_fraction",
+        "real_support_volume_ratio",
+        "real_phase_mae_true_support",
+    ],
+    "reciprocal_diagnostic": [
+        "relative_log_mse",
+        "pearson_loss",
+        "voxel_mse",
+        "voxel_rmse",
+    ],
+    "realspace_diagnostic": [
+        "real_amp_mse",
+        "real_amp_rmse",
+        "real_support_true_fraction",
+        "real_phase_mae_intersection",
+        "real_phase_rmse_true_support",
+    ],
+}
+
+
+METRIC_DESCRIPTIONS = {
+    "paper_modulus_mae": "Primary paper-style far-field modulus L1. Lower is better.",
+    "relative_l1_modulus": "Scale-normalized far-field L1. Lower is better.",
+    "chi2_modulus": "Paper chi-square style far-field error. Lower is better.",
+    "pearson_corr": "Far-field Pearson correlation. Higher is better.",
+    "relative_log_mse": "Log-domain far-field diagnostic. Lower is better.",
+    "pearson_loss": "1 - pearson_corr. Lower is better.",
+    "voxel_mse": "Raw far-field MSE on the current data scale. Lower is better.",
+    "voxel_rmse": "Raw far-field RMSE on the current data scale. Lower is better.",
+    "real_amp_l1": "Real-space full-volume amplitude L1. Lower is better, but can be small for sparse objects.",
+    "real_amp_mse": "Real-space full-volume amplitude MSE. Lower is better.",
+    "real_amp_rmse": "Real-space full-volume amplitude RMSE. Lower is better.",
+    "real_amp_global_ssim": "Global 3D amplitude SSIM-like score. Higher is better.",
+    "real_support_iou": "Intersection-over-union between predicted and true support. Higher is better.",
+    "real_support_dice": "Dice score between predicted and true support. Higher is better.",
+    "real_support_true_fraction": "True support fraction in the 64^3 volume.",
+    "real_support_pred_fraction": "Predicted support fraction in the 64^3 volume; should be close to true fraction.",
+    "real_support_volume_ratio": "pred_support_fraction / true_support_fraction; ideal is near 1.",
+    "real_phase_mae_true_support": "Wrapped phase MAE on the true support. Lower is better.",
+    "real_phase_mae_intersection": "Wrapped phase MAE on support intersection. Lower is better.",
+    "real_phase_rmse_true_support": "Wrapped phase RMSE on the true support. Lower is better.",
+}
+
+
+def group_metrics(metrics):
+    grouped = {}
+    used = set()
+    for group_name, keys in METRIC_GROUPS.items():
+        group = {key: metrics[key] for key in keys if key in metrics}
+        if group:
+            grouped[group_name] = group
+            used.update(group)
+    extra = {key: value for key, value in metrics.items() if key not in used}
+    if extra:
+        grouped["other"] = extra
+    return grouped
+
+
+def format_metric_groups(metrics, title=None):
+    labels = {
+        "reciprocal_primary": "Reciprocal-space primary metrics",
+        "realspace_primary": "Real-space primary metrics",
+        "reciprocal_diagnostic": "Reciprocal-space diagnostics",
+        "realspace_diagnostic": "Real-space diagnostics",
+        "other": "Other metrics",
+    }
+    lines = []
+    if title:
+        lines.append(title)
+    for group_name, group in group_metrics(metrics).items():
+        lines.append(labels.get(group_name, group_name))
+        for key, value in group.items():
+            if isinstance(value, (int, float)):
+                lines.append(f"  {key}: {value:.6g}")
+            else:
+                lines.append(f"  {key}: {value}")
+    return "\n".join(lines)
+
+
 LOSS_REGISTRY = {
     "paper_mae": STANDARD_L1_LOSS,
     "modulus_mae": STANDARD_L1_LOSS,
