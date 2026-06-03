@@ -378,7 +378,7 @@ def build_datasets(args):
         dtype_diff=args.dtype_diff,
         dtype_real=args.dtype_real,
         scale_i=args.scale_i,
-        shuffle=not overfit_mode,
+        shuffle=False,
         seed=args.seed,
         cache_data=cache_data,
         allow_missing_real=args.allow_missing_real,
@@ -428,7 +428,7 @@ def build_loaders(args):
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
-        shuffle=not overfit_mode,
+        shuffle=True,
         generator=train_generator,
         **kwargs,
     )
@@ -995,12 +995,10 @@ def main():
             scaler.load_state_dict(scaler_state)
             print("GradScaler state restored.", flush=True)
 
-    limited_debug_run = (
-        overfit_mode or args.debug_max_train_batches > 0 or args.debug_max_val_batches > 0
-    )
-    save_checkpoints = bool(args.save_model) and not limited_debug_run
-    if limited_debug_run:
-        print("[DEBUG] Limited debug run detected: checkpoint saving is disabled.", flush=True)
+    limited_batch_debug_run = args.debug_max_train_batches > 0 or args.debug_max_val_batches > 0
+    save_checkpoints = bool(args.save_model) and not limited_batch_debug_run
+    if limited_batch_debug_run:
+        print("[DEBUG] Limited batch debug run detected: checkpoint saving is disabled.", flush=True)
 
     t_start = time.time()
     for epoch in range(start_epoch, args.epochs + 1):
@@ -1010,6 +1008,7 @@ def main():
         history["train"].append(train_loss)
         val_details = validate(args, model, loss_fn, val_loader, epoch, device)
         history["val"].append(val_details)
+        validation_objective = val_details["loss"]
 
         if args.debug_skip_scheduler:
             pass
@@ -1018,7 +1017,7 @@ def main():
         elif scheduler is not None and args.lr_type == "cosine":
             scheduler.step()
         elif scheduler is not None and args.lr_type == "plateau":
-            scheduler.step(val_details["loss_l1"])
+            scheduler.step(validation_objective)
 
         current_lr = optimizer.param_groups[0]["lr"]
         print(f"Epoch {epoch} scheduler lr: {current_lr:.3e}", flush=True)
@@ -1028,8 +1027,8 @@ def main():
         writer.add_scalar("loss-coarse-val/loss_pcc", val_details["loss_pcc"], epoch)
 
         if save_checkpoints:
-            if val_details["loss_l1"] < best_val_loss:
-                best_val_loss = val_details["loss_l1"]
+            if validation_objective < best_val_loss:
+                best_val_loss = validation_objective
                 save_checkpoint(
                     output_dir / "best_model.pt",
                     args,

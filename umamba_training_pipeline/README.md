@@ -5,27 +5,20 @@ This folder is a hybrid training entrypoint for the current debugging work:
 - Model construction follows `oyys_lcrc_train_singleGPU.py`.
 - Data loading follows `autophasenn_training_pipeline`, with memmap loading, optional RAM caching, optional `scale_i`, and overfit mode.
 - Checkpoint loading follows `oyys_lcrc_train_singleGPU.py`: it accepts partial model matches, skips incompatible keys, and resumes optimizer/scheduler state only when the checkpoint is fully compatible.
-- Scheduler options follow `oyys_lcrc_train_singleGPU.py`, but the default is `none`, matching the pipeline default.
+- Scheduler options follow `oyys_lcrc_train_singleGPU.py`, but the default is `plateau`, matching the AutoPhaseNN overfit probe.
 - Loss functions follow `autophasenn_training_pipeline/losses.py`.
 - The local `UMambaEnc_3d.py` uses the same postprocessing contract as the AutoPhaseNN pipeline: hard support threshold, masked object as the second output, and `torch.abs(FFT)` far-field modulus.
 
-## Quick 100-Sample Overfit Probe
+## Quick Overfit Probe
 
 ```bash
-python umamba_training_pipeline/train.py \
-  --model-name umamba \
-  --from-scratch \
-  --loss-type l1 \
-  --loss-scope diff \
-  --overfit-samples 100 \
-  --cache-data \
-  --epochs 50 \
-  --batch-size 8 \
-  --lr 1e-3 \
-  --lr-type none \
-  --debug-output-delta \
-  --debug-grad-norm
+bash umamba_training_pipeline/test_overfit_small.sh
 ```
+
+The script mirrors `autophasenn_training_pipeline/test_overfit_small.sh`: it trains
+from scratch on the first `SAMPLES` training samples, validates on the same sample
+pool, evaluates `best_model.pt` on that train subset, and visualizes only samples
+from that same overfit pool.
 
 Switch models with:
 
