@@ -106,7 +106,7 @@ def plot_rows(rows, names, output_png):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="TF test-style PyTorch visualization.")
-    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--checkpoint", default="./autophasenn_training_pipeline/output/autophasenn_overfit1000_l1_20260601_200600/checkpoint_best.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
@@ -118,7 +118,7 @@ def main():
     parser.add_argument(
         "--overfit-samples",
         type=int,
-        default=0,
+        default=1000,
         help="Restrict the visualization pool to the same first N samples used by train.py --overfit-samples.",
     )
     parser.add_argument("--num-samples", type=int, default=5)
