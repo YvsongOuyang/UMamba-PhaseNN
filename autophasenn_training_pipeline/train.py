@@ -1,12 +1,12 @@
 import argparse
 import json
 import time
+from datetime import timedelta
 from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
@@ -109,9 +109,15 @@ def compute_loss_bundle(args, loss_fn, diff, amp, phi, outputs):
     return loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss
 
 
-def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None, train=True):
+def run_epoch(args, model, loader, loss_fn, device, epoch=0, optimizer=None, scaler=None, train=True):
     model.train(train)
     use_amp = args.fp16 and device.type == "cuda"
+    mode = "train" if train else "val"
+    num_batches = len(loader)
+    if args.max_batches_per_epoch and args.max_batches_per_epoch > 0:
+        num_batches = min(num_batches, args.max_batches_per_epoch)
+    print_freq = max(int(args.print_freq), 1)
+    epoch_start_time = time.time()
     total = {
         "loss": 0.0,
         "loss_ft": 0.0,
@@ -122,10 +128,11 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
         "batches": 0,
     }
 
-    iterator = tqdm(loader, leave=False, desc="train" if train else "val")
     grad_context = torch.enable_grad() if train else torch.no_grad()
     with grad_context:
-        for batch_index, batch in enumerate(iterator, start=1):
+        for batch_index, batch in enumerate(loader, start=1):
+            if batch_index > num_batches:
+                break
             diff = batch["diff"].to(device, non_blocking=True).float()
             amp = batch["amp"].to(device, non_blocking=True).float()
             phi = batch["phi"].to(device, non_blocking=True).float()
@@ -138,14 +145,30 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
                 loss, loss_ft, loss_amp, loss_phase, loss_support, _pred_for_loss = compute_loss_bundle(
                     args, loss_fn, diff, amp, phi, outputs
                 )
+            has_grad = False
+            updated = False
             if train:
                 if use_amp:
                     scaler.scale(loss).backward()
+                    scaler.unscale_(optimizer)
+                    has_grad = any(
+                        p.grad is not None and bool((p.grad.detach().abs().max() > 0).item())
+                        for p in model.parameters()
+                    )
+                    before = next(model.parameters()).detach().flatten()[0].item()
                     scaler.step(optimizer)
                     scaler.update()
+                    after = next(model.parameters()).detach().flatten()[0].item()
                 else:
                     loss.backward()
+                    has_grad = any(
+                        p.grad is not None and bool((p.grad.detach().abs().max() > 0).item())
+                        for p in model.parameters()
+                    )
+                    before = next(model.parameters()).detach().flatten()[0].item()
                     optimizer.step()
+                    after = next(model.parameters()).detach().flatten()[0].item()
+                updated = before != after
 
             batch_size = diff.shape[0]
             total["loss"] += float(loss.detach().cpu()) * batch_size
@@ -156,15 +179,35 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
             total["samples"] += batch_size
             total["batches"] += 1
 
-            iterator.set_postfix(
-                loss=total["loss"] / max(total["samples"], 1),
-                ft=total["loss_ft"] / max(total["samples"], 1),
-                amp=total["loss_amp"] / max(total["samples"], 1),
-                phase=total["loss_phase"] / max(total["samples"], 1),
-                support=total["loss_support"] / max(total["samples"], 1),
-            )
-            if args.max_batches_per_epoch and batch_index >= args.max_batches_per_epoch:
-                break
+            if batch_index % print_freq == 0 or batch_index == num_batches:
+                elapsed_seconds = time.time() - epoch_start_time
+                avg_time_per_iter = elapsed_seconds / max(batch_index, 1)
+                eta_seconds = (num_batches - batch_index) * avg_time_per_iter
+                elapsed_str = str(timedelta(seconds=int(elapsed_seconds)))
+                eta_str = str(timedelta(seconds=int(eta_seconds)))
+                current_lr = optimizer.param_groups[0]["lr"] if optimizer is not None else 0.0
+                if train:
+                    print(
+                        f"Epoch[{epoch}] Batch[{batch_index}/{num_batches}] | "
+                        f"OptTotal: {loss.item():.4e} | FTLoss: {loss_ft.item():.4e} | "
+                        f"AmpL1Full: {loss_amp.item():.4e} | "
+                        f"PhaseL1PredSup: {loss_phase.item():.4e} | "
+                        f"SupportBCE: {loss_support.item():.4e} | "
+                        f"SupportWeighted: {(args.support_weight * loss_support.item()):.4e} | "
+                        f"BatchLR: {current_lr:.3e} | "
+                        f"Grad: {str(has_grad):5s} | Update: {str(updated):5s} | "
+                        f"Elapsed: {elapsed_str} | ETA: {eta_str}",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"Validation Epoch [{epoch}] | Batch [{batch_index}/{num_batches}] | "
+                        f"OptTotal: {loss.item():.4e} | FTLoss: {loss_ft.item():.4e} | "
+                        f"AmpL1Full: {loss_amp.item():.4e} | "
+                        f"PhaseL1PredSup: {loss_phase.item():.4e} | "
+                        f"SupportBCE: {loss_support.item():.4e}",
+                        flush=True,
+                    )
 
     denom = max(total["samples"], 1)
     stats = {
@@ -176,17 +219,29 @@ def run_epoch(args, model, loader, loss_fn, device, optimizer=None, scaler=None,
         "samples": total["samples"],
         "batches": total["batches"],
     }
-    mode = "train" if train else "val"
+    elapsed_total = time.time() - epoch_start_time
+    print("\n" + "=" * 80, flush=True)
+    if train:
+        print(
+            f"Epoch {epoch} complete | total time: {elapsed_total:.2f}s | "
+            f"average OptTotal: {stats['loss']:.4e}",
+            flush=True,
+        )
+    else:
+        print(f"Epoch {epoch} validation complete", flush=True)
     print(
         f"{mode} epoch optimization terms | OptTotal: {stats['loss']:.4e} | "
         f"FTLoss: {stats['loss_ft']:.4e} | "
-        f"SupportWeighted: {(args.support_weight * stats['loss_support']):.4e}"
+        f"SupportWeighted: {(args.support_weight * stats['loss_support']):.4e}",
+        flush=True,
     )
     print(
         f"{mode} epoch real-space monitors | AmpL1Full: {stats['loss_amp']:.4e} | "
         f"PhaseL1PredSup: {stats['loss_phase']:.4e} | "
-        f"SupportBCE: {stats['loss_support']:.4e}"
+        f"SupportBCE: {stats['loss_support']:.4e}",
+        flush=True,
     )
+    print("=" * 80 + "\n", flush=True)
     return stats
 
 
@@ -271,6 +326,7 @@ def main():
     )
     parser.add_argument("--save-every", type=int, default=10)
     parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--print-freq", type=int, default=100)
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -394,9 +450,9 @@ def main():
     t0 = time.time()
     for epoch in range(start_epoch, args.epochs + 1):
         train_stats = run_epoch(
-            args, model, train_loader, loss_fn, device, optimizer=optimizer, scaler=scaler, train=True
+            args, model, train_loader, loss_fn, device, epoch=epoch, optimizer=optimizer, scaler=scaler, train=True
         )
-        val_stats = run_epoch(args, model, val_loader, loss_fn, device, train=False)
+        val_stats = run_epoch(args, model, val_loader, loss_fn, device, epoch=epoch, train=False)
 
         if scheduler:
             if args.lr_scheduler == "plateau":
