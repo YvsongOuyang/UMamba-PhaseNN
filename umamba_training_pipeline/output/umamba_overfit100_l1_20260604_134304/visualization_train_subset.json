@@ -1,0 +1,72 @@
+{
+  "seed": 42,
+  "dataset_size": 100,
+  "sample_pool_size": 100,
+  "overfit_samples": 100,
+  "sample_mode": "seeded",
+  "num_samples": 5,
+  "sample_names": [
+    "train_diff_000042",
+    "train_diff_000041",
+    "train_diff_000091",
+    "train_diff_000009",
+    "train_diff_000065"
+  ],
+  "per_sample": [
+    {
+      "name": "train_diff_000042",
+      "paper_modulus_mae": 4.89806604385376,
+      "chi2_modulus": 0.3393341302871704,
+      "relative_l1_modulus": 0.5600961446762085,
+      "relative_log_mse": 0.14960147440433502,
+      "pearson_corr": 0.8254022002220154,
+      "pearson_loss": 0.17459779977798462,
+      "voxel_mse": 398.53436279296875,
+      "voxel_rmse": 19.96332550048828
+    },
+    {
+      "name": "train_diff_000041",
+      "paper_modulus_mae": 7.014552116394043,
+      "chi2_modulus": 0.4585304260253906,
+      "relative_l1_modulus": 0.550754189491272,
+      "relative_log_mse": 0.12829113006591797,
+      "pearson_corr": 0.772618293762207,
+      "pearson_loss": 0.22738170623779297,
+      "voxel_mse": 2674.22509765625,
+      "voxel_rmse": 51.71290969848633
+    },
+    {
+      "name": "train_diff_000091",
+      "paper_modulus_mae": 4.848397254943848,
+      "chi2_modulus": 0.0806371346116066,
+      "relative_l1_modulus": 0.3779195547103882,
+      "relative_log_mse": 0.11263445764780045,
+      "pearson_corr": 0.9580996036529541,
+      "pearson_loss": 0.0419003963470459,
+      "voxel_mse": 400.368408203125,
+      "voxel_rmse": 20.00920867919922
+    },
+    {
+      "name": "train_diff_000009",
+      "paper_modulus_mae": 7.416864395141602,
+      "chi2_modulus": 0.38341033458709717,
+      "relative_l1_modulus": 0.5310301184654236,
+      "relative_log_mse": 0.11361648887395859,
+      "pearson_corr": 0.7925135493278503,
+      "pearson_loss": 0.20748645067214966,
+      "voxel_mse": 2045.27685546875,
+      "voxel_rmse": 45.22473907470703
+    },
+    {
+      "name": "train_diff_000065",
+      "paper_modulus_mae": 7.017963409423828,
+      "chi2_modulus": 0.5684000849723816,
+      "relative_l1_modulus": 0.5734948515892029,
+      "relative_log_mse": 0.13158588111400604,
+      "pearson_corr": 0.7058227062225342,
+      "pearson_loss": 0.2941772937774658,
+      "voxel_mse": 2474.440185546875,
+      "voxel_rmse": 49.743743896484375
+    }
+  ]
+}

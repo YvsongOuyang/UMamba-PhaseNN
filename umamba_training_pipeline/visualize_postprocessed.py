@@ -103,7 +103,7 @@ def parse_args():
     parser.add_argument("--model-name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
     parser.add_argument("--phase-activation", choices=["tanh", "atan"], default="tanh")
     parser.add_argument("--phase-logit-scale", type=float, default=1.0)
-    parser.add_argument("--checkpoint", default="/home/oyys/code/UMamba-AutoPhaseNN/umamba_training_pipeline/output/checkpoint.pt")
+    parser.add_argument("--checkpoint", default="/home/oyys/code/UMamba-AutoPhaseNN/umamba_training_pipeline/output/umamba_overfit1000_l1_20260603_171121/best_model.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
@@ -116,7 +116,7 @@ def parse_args():
     parser.add_argument(
         "--overfit-samples",
         type=int,
-        default=0,
+        default=100,
         help="Restrict the visualization pool to the same first N samples used by train.py --overfit-samples.",
     )
     parser.add_argument("--num-samples", type=int, default=5)
