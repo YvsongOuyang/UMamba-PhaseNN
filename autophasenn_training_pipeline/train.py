@@ -13,6 +13,10 @@ from losses import get_loss, metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
+DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
+DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
+
+
 def choose_device(name):
     if name == "cuda" and not torch.cuda.is_available():
         print("CUDA requested but unavailable; falling back to CPU.")
@@ -33,6 +37,7 @@ def optional_data_path(data_dir, filename):
 
 def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, args):
     path.parent.mkdir(parents=True, exist_ok=True)
+    best_val = min((item.get("loss", float("inf")) for item in history.get("val", [])), default=float("inf"))
     torch.save(
         {
             "epoch": epoch,
@@ -41,6 +46,7 @@ def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, a
             "scheduler_state_dict": scheduler.state_dict() if scheduler else None,
             "scaler_state_dict": scaler.state_dict() if scaler else None,
             "history": history,
+            "best_val": best_val,
             "args": vars(args),
             "threshold": args.threshold,
         },
@@ -268,6 +274,11 @@ def main():
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
+    parser.add_argument(
+        "--checkpoint-dir",
+        default=DEFAULT_CHECKPOINT_DIR,
+        help="Directory for model checkpoint files. Logs/config/history stay in --output-dir.",
+    )
     parser.add_argument("--train-size", type=int, default=0)
     parser.add_argument(
         "--overfit-samples",
@@ -318,7 +329,7 @@ def main():
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--min-lr", type=float, default=1e-6)
     parser.add_argument("--pretrained", default="")
-    parser.add_argument("--resume", default="")  #/data_ssd/oyys/autophasenn/autophasenn.pth
+    parser.add_argument("--resume", default=DEFAULT_RESUME_PATH)
     parser.add_argument(
         "--from-scratch",
         action="store_true",
@@ -335,6 +346,8 @@ def main():
         print("--batch-average-loss is deprecated and ignored; losses are batch-mean by default.")
     if args.unsupervised:
         args.loss_scope = "diff"
+    if args.from_scratch and args.resume == DEFAULT_RESUME_PATH:
+        args.resume = ""
     if args.from_scratch and (args.pretrained or args.resume):
         raise ValueError("--from-scratch cannot be combined with --pretrained or --resume.")
 
@@ -342,7 +355,11 @@ def main():
     device = choose_device(args.device)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir = Path(args.checkpoint_dir)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
     save_json(output_dir / "config.json", vars(args))
+    print(f"Small output dir: {output_dir}")
+    print(f"Checkpoint dir: {checkpoint_dir}")
 
     data_dir = Path(args.data_dir)
     shape = (args.shape, args.shape, args.shape)
@@ -437,6 +454,7 @@ def main():
         history = checkpoint.get("history", history)
         start_epoch = int(checkpoint.get("epoch", 0)) + 1
         print(f"Resumed checkpoint: {args.resume}")
+        print(f"Resume metadata loaded: next_epoch={start_epoch}")
 
     if args.dry_run:
         model.eval()
@@ -446,7 +464,11 @@ def main():
         print("Dry run complete; no training was performed.")
         return
 
-    best_val = float("inf")
+    best_val = checkpoint.get("best_val", float("inf")) if args.resume else float("inf")
+    if best_val == float("inf"):
+        best_val = min((item.get("loss", float("inf")) for item in history.get("val", [])), default=float("inf"))
+    if best_val < float("inf"):
+        print(f"Loaded best validation loss: {best_val:.6g}")
     t0 = time.time()
     for epoch in range(start_epoch, args.epochs + 1):
         train_stats = run_epoch(
@@ -479,7 +501,7 @@ def main():
         )
 
         save_checkpoint(
-            output_dir / "checkpoint_last.pt",
+            checkpoint_dir / "checkpoint_last.pt",
             model,
             optimizer,
             scheduler,
@@ -490,7 +512,7 @@ def main():
         )
         if epoch % args.save_every == 0:
             save_checkpoint(
-                output_dir / f"checkpoint_epoch_{epoch:04d}.pt",
+                checkpoint_dir / f"checkpoint_epoch_{epoch:04d}.pt",
                 model,
                 optimizer,
                 scheduler,
@@ -502,7 +524,7 @@ def main():
         if val_stats["loss"] < best_val:
             best_val = val_stats["loss"]
             save_checkpoint(
-                output_dir / "checkpoint_best.pt",
+                checkpoint_dir / "checkpoint_best.pt",
                 model,
                 optimizer,
                 scheduler,
