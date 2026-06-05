@@ -13,9 +13,6 @@ from losses import get_loss, metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
-DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
-DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
-
 
 def choose_device(name):
     if name == "cuda" and not torch.cuda.is_available():
@@ -276,7 +273,7 @@ def main():
     parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
     parser.add_argument(
         "--checkpoint-dir",
-        default=DEFAULT_CHECKPOINT_DIR,
+        default="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_last.pt",
         help="Directory for model checkpoint files. Logs/config/history stay in --output-dir.",
     )
     parser.add_argument("--train-size", type=int, default=0)

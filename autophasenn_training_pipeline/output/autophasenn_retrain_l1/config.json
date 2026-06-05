@@ -10,6 +10,7 @@
   "dtype_diff": "float32",
   "dtype_real": "complex64",
   "output_dir": "./autophasenn_training_pipeline/output/autophasenn_retrain_l1",
+  "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1",
   "train_size": 0,
   "overfit_samples": 0,
   "cache_data": false,
