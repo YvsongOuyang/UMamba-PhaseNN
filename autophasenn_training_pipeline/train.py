@@ -13,6 +13,9 @@ from losses import get_loss, metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
+DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
+DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
+
 
 def choose_device(name):
     if name == "cuda" and not torch.cuda.is_available():
@@ -61,6 +64,54 @@ def make_scheduler(args, optimizer):
             optimizer, factor=args.gamma, patience=args.patience, min_lr=args.min_lr
         )
     raise ValueError(f"Unknown scheduler {args.lr_scheduler}")
+
+
+def checkpoint_key_summary(checkpoint):
+    if not isinstance(checkpoint, dict):
+        return "non-dict checkpoint"
+    keys = list(checkpoint.keys())
+    preview = ", ".join(keys[:12])
+    suffix = "..." if len(keys) > 12 else ""
+    return f"{len(keys)} top-level keys: [{preview}{suffix}]"
+
+
+def optimizer_lrs(optimizer):
+    return [group.get("lr", None) for group in optimizer.param_groups]
+
+
+def print_resume_summary(
+    args,
+    checkpoint,
+    optimizer_restored,
+    scheduler_restored,
+    scaler_restored,
+    start_epoch,
+    optimizer,
+):
+    checkpoint_epoch = checkpoint.get("epoch", None) if isinstance(checkpoint, dict) else None
+    history = checkpoint.get("history", {}) if isinstance(checkpoint, dict) else {}
+    train_history = len(history.get("train", [])) if isinstance(history, dict) else 0
+    val_history = len(history.get("val", [])) if isinstance(history, dict) else 0
+    best_val = checkpoint.get("best_val", None) if isinstance(checkpoint, dict) else None
+
+    print("=" * 80, flush=True)
+    print("Checkpoint resume summary", flush=True)
+    print(f"Path: {args.resume}", flush=True)
+    print(f"Checkpoint contents: {checkpoint_key_summary(checkpoint)}", flush=True)
+    print("Model weights restored: True", flush=True)
+    print(f"Optimizer state restored: {optimizer_restored}", flush=True)
+    print(f"Scheduler state restored: {scheduler_restored}", flush=True)
+    print(f"GradScaler state restored: {scaler_restored}", flush=True)
+    print(f"Checkpoint epoch: {checkpoint_epoch} | next_epoch: {start_epoch}", flush=True)
+    print(f"History restored: train={train_history}, val={val_history}", flush=True)
+    print(f"Best validation loss restored: {best_val}", flush=True)
+    print(f"Optimizer LR after restore: {optimizer_lrs(optimizer)}", flush=True)
+    print(
+        "Batch resume: epoch-level only; the current code restarts at "
+        "Batch[1] of next_epoch and does not restore an in-epoch batch index.",
+        flush=True,
+    )
+    print("=" * 80, flush=True)
 
 
 def unpack_outputs(outputs):
@@ -273,7 +324,7 @@ def main():
     parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
     parser.add_argument(
         "--checkpoint-dir",
-        default="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_last.pt",
+        default=DEFAULT_CHECKPOINT_DIR,
         help="Directory for model checkpoint files. Logs/config/history stay in --output-dir.",
     )
     parser.add_argument("--train-size", type=int, default=0)
@@ -439,19 +490,40 @@ def main():
     loss_fn = get_loss(args.loss_type)
     history = {"train": [], "val": []}
     start_epoch = 1
+    checkpoint = None
 
     if args.resume:
+        print(f"Loading checkpoint for resume: {args.resume}", flush=True)
         checkpoint = load_weights(model, args.resume, map_location=device)
+        optimizer_restored = False
+        scheduler_restored = False
+        scaler_restored = False
         if "optimizer_state_dict" in checkpoint:
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            optimizer_restored = True
         if scheduler and checkpoint.get("scheduler_state_dict"):
             scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+            scheduler_restored = True
         if checkpoint.get("scaler_state_dict"):
             scaler.load_state_dict(checkpoint["scaler_state_dict"])
+            scaler_restored = True
         history = checkpoint.get("history", history)
         start_epoch = int(checkpoint.get("epoch", 0)) + 1
-        print(f"Resumed checkpoint: {args.resume}")
-        print(f"Resume metadata loaded: next_epoch={start_epoch}")
+        print_resume_summary(
+            args,
+            checkpoint,
+            optimizer_restored,
+            scheduler_restored,
+            scaler_restored,
+            start_epoch,
+            optimizer,
+        )
+    else:
+        print(
+            f"No checkpoint resume requested; starting at epoch {start_epoch} "
+            f"with optimizer LR {optimizer_lrs(optimizer)}.",
+            flush=True,
+        )
 
     if args.dry_run:
         model.eval()
