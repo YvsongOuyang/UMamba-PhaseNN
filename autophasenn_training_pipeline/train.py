@@ -272,7 +272,7 @@ def main():
     parser.add_argument(
         "--overfit-samples",
         type=int,
-        default=100,
+        default=0,
         help="Train and validate on the same first N training samples for fit debugging.",
     )
     parser.add_argument(
@@ -280,8 +280,8 @@ def main():
         action="store_true",
         help="Load the selected memmap samples into RAM at dataset construction time.",
     )
-    parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--seed", type=int, default=42)
@@ -318,7 +318,7 @@ def main():
     parser.add_argument("--patience", type=int, default=5)
     parser.add_argument("--min-lr", type=float, default=1e-6)
     parser.add_argument("--pretrained", default="")
-    parser.add_argument("--resume", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--resume", default="")  #/data_ssd/oyys/autophasenn/autophasenn.pth
     parser.add_argument(
         "--from-scratch",
         action="store_true",
