@@ -3,6 +3,5 @@ Small output dir: autophasenn_training_pipeline/output/autophasenn_retrain_l1
 Checkpoint dir: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1
 Resolved memmap samples: train=25000, val=5000
 Training setup: from_scratch | loss_scope=diff | loss_type=l1 | cache_data=False
-Epoch[1] Batch[100/1563] | OptTotal: 8.7434e+00 | FTLoss: 8.7434e+00 | AmpL1Full: 4.7891e-01 | PhaseL1PredSup: 8.6178e-01 | SupportBCE: 1.8134e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:00:43 | ETA: 0:10:43
-Epoch[1] Batch[200/1563] | OptTotal: 8.1133e+00 | FTLoss: 8.1133e+00 | AmpL1Full: 3.7412e-01 | PhaseL1PredSup: 7.7591e-01 | SupportBCE: 1.5150e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:01:27 | ETA: 0:09:57
-Epoch[1] Batch[300/1563] | OptTotal: 7.6780e+00 | FTLoss: 7.6780e+00 | AmpL1Full: 4.7391e-02 | PhaseL1PredSup: 1.4976e-01 | SupportBCE: 1.4750e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:02:11 | ETA: 0:09:12
+No checkpoint resume requested; starting at epoch 1 with optimizer LR [0.001].
+Epoch[1] Batch[100/1563] | OptTotal: 8.7434e+00 | FTLoss: 8.7434e+00 | AmpL1Full: 4.7891e-01 | PhaseL1PredSup: 8.6178e-01 | SupportBCE: 1.8134e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:00:44 | ETA: 0:10:47
