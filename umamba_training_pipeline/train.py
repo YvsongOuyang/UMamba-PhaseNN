@@ -262,10 +262,12 @@ def build_model(args, device):
             phase_activation=args.phase_activation,
             phase_logit_scale=args.phase_logit_scale,
             threshold=args.T,
+            center_pad_last_upsample=args.center_pad_last_upsample,
         )
         print(
             f"Using UMamba | phase_activation={args.phase_activation} | "
-            f"phase_logit_scale={args.phase_logit_scale:.4e}",
+            f"phase_logit_scale={args.phase_logit_scale:.4e} | "
+            f"center_pad_last_upsample={args.center_pad_last_upsample}",
             flush=True,
         )
     elif model_name == "autophasenn":
@@ -810,6 +812,14 @@ def parse_args():
     parser.add_argument("--model-name", "--model_name", dest="model_name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
     parser.add_argument("--phase-activation", "--phase_activation", dest="phase_activation", choices=["tanh", "atan"], default="tanh")
     parser.add_argument("--phase-logit-scale", "--phase_logit_scale", dest="phase_logit_scale", type=float, default=1.0)
+    parser.add_argument(
+        "--center-pad-last-upsample",
+        "--center_pad_last_upsample",
+        dest="center_pad_last_upsample",
+        type=str2bool,
+        default=True,
+        help="For UMamba, replace the final decoder upsample+outer skip with center zero-padding.",
+    )
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-train-diff", default="train_diff.npy")
     parser.add_argument("--data-train-real", default="train_real.npy")
