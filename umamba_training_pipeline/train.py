@@ -807,6 +807,8 @@ def validate(args, model, loss_fn, validloader, epoch, device):
     return details_total
 
 
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Hybrid UMamba training pipeline.")
     parser.add_argument("--model-name", "--model_name", dest="model_name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
@@ -872,7 +874,7 @@ def parse_args():
     parser.add_argument("--step-size", type=int, default=10)
     parser.add_argument("--gamma", type=float, default=0.5)
     parser.add_argument("--patience", type=int, default=5)
-    parser.add_argument("--checkpoint", "--resume", dest="checkpoint",  default="/data_ssd/oyys/autophasenn/Unsupfalse_Dfalse_Ufalse_T0.1_comb2_batch8_plateau_Init1e-3_adam_scale1/best_model.pt")
+    parser.add_argument("--checkpoint", "--resume", dest="checkpoint",  default="")
     parser.add_argument("--from-scratch", action="store_true")
     parser.add_argument("--reset-optimizer", action="store_true")
     parser.add_argument("--head-lr-mult", type=float, default=1.0)
