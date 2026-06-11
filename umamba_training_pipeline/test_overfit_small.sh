@@ -21,6 +21,7 @@ GAMMA="${GAMMA:-0.5}"
 PATIENCE="${PATIENCE:-5}"
 GRAD_CLIP="${GRAD_CLIP:-0.0}"
 CENTER_PAD_LAST_UPSAMPLE="${CENTER_PAD_LAST_UPSAMPLE:-true}"
+DROP_LAST_SKIP="${DROP_LAST_SKIP:-false}"
 DEVICE="${DEVICE:-cuda}"
 MODEL_NAME="${MODEL_NAME:-umamba}"
 RUN_NAME="${RUN_NAME:-${MODEL_NAME}_centerpad_overfit${SAMPLES}_${LOSS_TYPE}_fromscratch_$(date +%Y%m%d_%H%M%S)}"
@@ -41,11 +42,13 @@ echo "  gamma:           ${GAMMA}"
 echo "  patience:        ${PATIENCE}"
 echo "  grad_clip:       ${GRAD_CLIP}"
 echo "  center_pad:      ${CENTER_PAD_LAST_UPSAMPLE}"
+echo "  drop_last_skip:  ${DROP_LAST_SKIP}"
 echo
 
 python umamba_training_pipeline/train.py \
   --model-name "${MODEL_NAME}" \
   --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
+  --drop-last-skip "${DROP_LAST_SKIP}" \
   --data-dir "${DATA_DIR}" \
   --output-dir "${OUT_DIR}" \
   --from-scratch \
@@ -72,6 +75,7 @@ python umamba_training_pipeline/train.py \
 python umamba_training_pipeline/evaluate.py \
   --model-name "${MODEL_NAME}" \
   --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
+  --drop-last-skip "${DROP_LAST_SKIP}" \
   --checkpoint "${OUT_DIR}/best_model.pt" \
   --data-dir "${DATA_DIR}" \
   --data-diff train_diff.npy \
@@ -85,6 +89,7 @@ python umamba_training_pipeline/evaluate.py \
 python umamba_training_pipeline/visualize_postprocessed.py \
   --model-name "${MODEL_NAME}" \
   --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
+  --drop-last-skip "${DROP_LAST_SKIP}" \
   --checkpoint "${OUT_DIR}/best_model.pt" \
   --data-dir "${DATA_DIR}" \
   --data-diff train_diff.npy \

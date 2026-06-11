@@ -8,7 +8,7 @@ This folder is a hybrid training entrypoint for the current debugging work:
 - Scheduler options follow `oyys_lcrc_train_singleGPU.py`, but the default is `plateau`, matching the AutoPhaseNN overfit probe.
 - Loss functions follow `autophasenn_training_pipeline/losses.py`.
 - The local `UMambaEnc_3d.py` uses the same postprocessing contract as the AutoPhaseNN pipeline: hard support threshold, masked object as the second output, and `torch.abs(FFT)` far-field modulus.
-- The default UMamba overfit probe enables `--center-pad-last-upsample true`: the last decoder stage center-pads the 32^3 feature to 64^3 and skips the outermost 64^3 skip connection, to test the AutoPhaseNN-like center prior.
+- The default UMamba overfit probe enables `--center-pad-last-upsample true`: the last decoder stage center-pads the 32^3 feature to 64^3 while keeping the outermost 64^3 skip connection. Set `--drop-last-skip true` to reproduce the stronger ablation that removes that skip.
 
 ## Quick Overfit Probe
 
@@ -33,6 +33,7 @@ SUPPORT_WEIGHT=0.0
 LR_SCHEDULER=plateau
 GRAD_CLIP=0.0
 CENTER_PAD_LAST_UPSAMPLE=true
+DROP_LAST_SKIP=false
 ```
 
 Switch models with:

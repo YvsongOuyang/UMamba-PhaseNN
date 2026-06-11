@@ -374,12 +374,14 @@ class UNetResDecoder(nn.Module):
                  n_conv_per_stage: Union[int, Tuple[int, ...], List[int]],
                  deep_supervision,
                  nonlin_first: bool = False,
-                 center_pad_last_upsample: bool = False):
+                 center_pad_last_upsample: bool = False,
+                 drop_last_skip: bool = False):
         super().__init__()
         self.deep_supervision = deep_supervision
         self.encoder = encoder
         self.num_classes = num_classes
         self.center_pad_last_upsample = bool(center_pad_last_upsample)
+        self.drop_last_skip = bool(drop_last_skip)
         n_stages_encoder = len(encoder.output_channels)
         if isinstance(n_conv_per_stage, int):
             n_conv_per_stage = [n_conv_per_stage] * (n_stages_encoder - 1)
@@ -404,7 +406,6 @@ class UNetResDecoder(nn.Module):
                     input_channels=input_features_below,
                     output_channels=input_features_skip,
                 ))
-                stage_input_channels = input_features_skip
             else:
                 upsample_layers.append(UpsampleLayer(
                     conv_op=encoder.conv_op,
@@ -413,6 +414,10 @@ class UNetResDecoder(nn.Module):
                     pool_op_kernel_size=stride_for_upsampling,
                     mode='nearest'
                 ))
+
+            if self.drop_last_skip and is_last_decoder_stage:
+                stage_input_channels = input_features_skip
+            else:
                 stage_input_channels = 2 * input_features_skip
 
             stages.append(nn.Sequential(
@@ -459,6 +464,7 @@ class UNetResDecoder(nn.Module):
                 x = self.upsample_layers[s](lres_input, skips[-(s + 2)].shape[2:])
             else:
                 x = self.upsample_layers[s](lres_input)
+            if not (self.drop_last_skip and is_last_decoder_stage):
                 x = torch.cat((x, skips[-(s+2)]), 1)
             x = self.stages[s](x)
             if self.deep_supervision:
@@ -516,6 +522,7 @@ class UMambaEnc(nn.Module):
                  phase_logit_scale: float = 1.0,
                  threshold: float = 0.1,
                  center_pad_last_upsample: bool = True,
+                 drop_last_skip: bool = False,
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
@@ -562,12 +569,14 @@ class UMambaEnc(nn.Module):
 
         print(f"deep_supervision: {deep_supervision}")
         print(f"center_pad_last_upsample: {center_pad_last_upsample}")
+        print(f"drop_last_skip: {drop_last_skip}")
         self.decoder1 = UNetResDecoder(
             self.encoder,
             num_classes,
             n_conv_per_stage_decoder,
             deep_supervision,
             center_pad_last_upsample=center_pad_last_upsample,
+            drop_last_skip=drop_last_skip,
         )
         self.decoder2 = UNetResDecoder(
             self.encoder,
@@ -575,6 +584,7 @@ class UMambaEnc(nn.Module):
             n_conv_per_stage_decoder,
             deep_supervision,
             center_pad_last_upsample=center_pad_last_upsample,
+            drop_last_skip=drop_last_skip,
         )
 
         self.phi_layer = PhiLayer()                 # Index 89
@@ -634,6 +644,7 @@ def get_umamba_enc_3d_from_plans(
         phase_logit_scale: float = 1.0,
         threshold: float = 0.1,
         center_pad_last_upsample: bool = True,
+        drop_last_skip: bool = False,
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -680,6 +691,7 @@ def get_umamba_enc_3d_from_plans(
         phase_logit_scale=phase_logit_scale,
         threshold=threshold,
         center_pad_last_upsample=center_pad_last_upsample,
+        drop_last_skip=drop_last_skip,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )

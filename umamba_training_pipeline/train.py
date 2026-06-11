@@ -263,11 +263,13 @@ def build_model(args, device):
             phase_logit_scale=args.phase_logit_scale,
             threshold=args.T,
             center_pad_last_upsample=args.center_pad_last_upsample,
+            drop_last_skip=args.drop_last_skip,
         )
         print(
             f"Using UMamba | phase_activation={args.phase_activation} | "
             f"phase_logit_scale={args.phase_logit_scale:.4e} | "
-            f"center_pad_last_upsample={args.center_pad_last_upsample}",
+            f"center_pad_last_upsample={args.center_pad_last_upsample} | "
+            f"drop_last_skip={args.drop_last_skip}",
             flush=True,
         )
     elif model_name == "autophasenn":
@@ -820,7 +822,15 @@ def parse_args():
         dest="center_pad_last_upsample",
         type=str2bool,
         default=True,
-        help="For UMamba, replace the final decoder upsample+outer skip with center zero-padding.",
+        help="For UMamba, replace only the final decoder upsample with center zero-padding.",
+    )
+    parser.add_argument(
+        "--drop-last-skip",
+        "--drop_last_skip",
+        dest="drop_last_skip",
+        type=str2bool,
+        default=False,
+        help="For UMamba, also remove the outermost skip in the final decoder stage. Default false keeps the first ablation.",
     )
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-train-diff", default="train_diff.npy")
