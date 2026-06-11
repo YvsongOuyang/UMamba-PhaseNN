@@ -52,7 +52,7 @@ def parse_args():
         "--center_pad_last_upsample",
         dest="center_pad_last_upsample",
         type=str2bool,
-        default=True,
+        default=False,
         help="For UMamba, replace only the final decoder upsample with center zero-padding.",
     )
     parser.add_argument(
@@ -62,6 +62,22 @@ def parse_args():
         type=str2bool,
         default=False,
         help="For UMamba, also remove the outermost skip in the final decoder stage.",
+    )
+    parser.add_argument(
+        "--center-mask-output",
+        "--center_mask_output",
+        dest="center_mask_output",
+        type=str2bool,
+        default=True,
+        help="For UMamba, multiply amp/phase by a fixed centered cube mask after decoder output.",
+    )
+    parser.add_argument(
+        "--center-mask-size",
+        "--center_mask_size",
+        dest="center_mask_size",
+        type=int,
+        default=32,
+        help="Centered cube edge length for --center-mask-output.",
     )
     parser.add_argument("--checkpoint", default="/home/oyys/code/UMamba-AutoPhaseNN/umamba_training_pipeline/output/checkpoint.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
@@ -159,6 +175,8 @@ def main():
         "model_name": args.model_name,
         "center_pad_last_upsample": args.center_pad_last_upsample,
         "drop_last_skip": args.drop_last_skip,
+        "center_mask_output": args.center_mask_output,
+        "center_mask_size": args.center_mask_size,
         "epoch": epoch,
         "num_samples": len(per_sample),
         "scale_align_loss": args.scale_align_loss,

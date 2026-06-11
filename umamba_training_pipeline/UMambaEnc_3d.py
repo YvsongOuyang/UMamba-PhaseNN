@@ -39,6 +39,25 @@ class SupportLayer(nn.Module):
         )
 
 
+class CenterMaskLayer(nn.Module):
+    def __init__(self, enabled=False, mask_size=32):
+        super().__init__()
+        self.enabled = bool(enabled)
+        self.mask_size = int(mask_size)
+
+    def forward(self, x):
+        if not self.enabled or self.mask_size <= 0:
+            return torch.ones_like(x)
+        mask = torch.zeros_like(x)
+        slices = [slice(None), slice(None)]
+        for dim in x.shape[2:]:
+            width = min(self.mask_size, int(dim))
+            start = (int(dim) - width) // 2
+            slices.append(slice(start, start + width))
+        mask[tuple(slices)] = 1.0
+        return mask
+
+
 class ObjLayer(nn.Module):
     def forward(self, amp, phi):
         return torch.complex(amp * torch.cos(phi), amp * torch.sin(phi))
@@ -521,8 +540,10 @@ class UMambaEnc(nn.Module):
                  phase_activation: str = 'tanh',
                  phase_logit_scale: float = 1.0,
                  threshold: float = 0.1,
-                 center_pad_last_upsample: bool = True,
+                 center_pad_last_upsample: bool = False,
                  drop_last_skip: bool = False,
+                 center_mask_output: bool = True,
+                 center_mask_size: int = 32,
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
@@ -570,6 +591,8 @@ class UMambaEnc(nn.Module):
         print(f"deep_supervision: {deep_supervision}")
         print(f"center_pad_last_upsample: {center_pad_last_upsample}")
         print(f"drop_last_skip: {drop_last_skip}")
+        print(f"center_mask_output: {center_mask_output}")
+        print(f"center_mask_size: {center_mask_size}")
         self.decoder1 = UNetResDecoder(
             self.encoder,
             num_classes,
@@ -588,6 +611,7 @@ class UMambaEnc(nn.Module):
         )
 
         self.phi_layer = PhiLayer()                 # Index 89
+        self.center_mask_layer = CenterMaskLayer(center_mask_output, center_mask_size)
         self.obj_layer = ObjLayer()                 # Index 90
         self.support_layer = SupportLayer(threshold)# Index 91
         self.masked_obj_layer = MaskedObjLayer()    # Index 92
@@ -603,11 +627,14 @@ class UMambaEnc(nn.Module):
         skips = self.encoder(x)
         amp = nn.Sigmoid()(self.decoder1(skips))
         ph = self.phase_from_logits(self.decoder2(skips))
+        center_mask = self.center_mask_layer(amp)
+        amp = amp * center_mask
+        ph = ph * center_mask
 
         # --- Index 91: support ---
         # 对应 TF: Lambda(lambda x: get_mask(x))
         # 注意：TF 图中 support 依赖 amp，虽然索引在 Obj 后面，但数据流通常是并行的
-        support = self.support_layer(amp)
+        support = self.support_layer(amp) * center_mask
 
         # --- Index 90: Obj ---
         # 对应 TF: Lambda(lambda x: combine_complex...)([decoded1, decoded2])
@@ -643,8 +670,10 @@ def get_umamba_enc_3d_from_plans(
         phase_activation: str = 'tanh',
         phase_logit_scale: float = 1.0,
         threshold: float = 0.1,
-        center_pad_last_upsample: bool = True,
+        center_pad_last_upsample: bool = False,
         drop_last_skip: bool = False,
+        center_mask_output: bool = True,
+        center_mask_size: int = 32,
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -692,6 +721,8 @@ def get_umamba_enc_3d_from_plans(
         threshold=threshold,
         center_pad_last_upsample=center_pad_last_upsample,
         drop_last_skip=drop_last_skip,
+        center_mask_output=center_mask_output,
+        center_mask_size=center_mask_size,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )
