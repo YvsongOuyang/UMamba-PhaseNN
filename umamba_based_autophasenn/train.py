@@ -1,0 +1,614 @@
+import argparse
+import json
+import time
+from datetime import timedelta
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+
+from dataset import AutoPhaseDataset
+from losses import get_loss, metric_dict, scale_align_sum
+from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+
+
+DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
+DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
+
+
+def choose_device(name):
+    if name == "cuda" and not torch.cuda.is_available():
+        print("CUDA requested but unavailable; falling back to CPU.")
+        return torch.device("cpu")
+    return torch.device(name)
+
+
+def save_json(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def optional_data_path(data_dir, filename):
+    if filename is None or filename.lower() in {"", "none", "null"}:
+        return None
+    return data_dir / filename
+
+
+def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, args):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    best_val = min((item.get("loss", float("inf")) for item in history.get("val", [])), default=float("inf"))
+    torch.save(
+        {
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict() if scheduler else None,
+            "scaler_state_dict": scaler.state_dict() if scaler else None,
+            "history": history,
+            "best_val": best_val,
+            "args": vars(args),
+            "threshold": args.threshold,
+        },
+        path,
+    )
+
+
+def make_scheduler(args, optimizer):
+    if args.lr_scheduler == "none":
+        return None
+    if args.lr_scheduler == "step":
+        return torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    if args.lr_scheduler == "plateau":
+        return torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, factor=args.gamma, patience=args.patience, min_lr=args.min_lr
+        )
+    raise ValueError(f"Unknown scheduler {args.lr_scheduler}")
+
+
+def checkpoint_key_summary(checkpoint):
+    if not isinstance(checkpoint, dict):
+        return "non-dict checkpoint"
+    keys = list(checkpoint.keys())
+    preview = ", ".join(keys[:12])
+    suffix = "..." if len(keys) > 12 else ""
+    return f"{len(keys)} top-level keys: [{preview}{suffix}]"
+
+
+def optimizer_lrs(optimizer):
+    return [group.get("lr", None) for group in optimizer.param_groups]
+
+
+def print_resume_summary(
+    args,
+    checkpoint,
+    optimizer_restored,
+    scheduler_restored,
+    scaler_restored,
+    start_epoch,
+    optimizer,
+):
+    checkpoint_epoch = checkpoint.get("epoch", None) if isinstance(checkpoint, dict) else None
+    history = checkpoint.get("history", {}) if isinstance(checkpoint, dict) else {}
+    train_history = len(history.get("train", [])) if isinstance(history, dict) else 0
+    val_history = len(history.get("val", [])) if isinstance(history, dict) else 0
+    best_val = checkpoint.get("best_val", None) if isinstance(checkpoint, dict) else None
+
+    print("=" * 80, flush=True)
+    print("Checkpoint resume summary", flush=True)
+    print(f"Path: {args.resume}", flush=True)
+    print(f"Checkpoint contents: {checkpoint_key_summary(checkpoint)}", flush=True)
+    print("Model weights restored: True", flush=True)
+    print(f"Optimizer state restored: {optimizer_restored}", flush=True)
+    print(f"Scheduler state restored: {scheduler_restored}", flush=True)
+    print(f"GradScaler state restored: {scaler_restored}", flush=True)
+    print(f"Checkpoint epoch: {checkpoint_epoch} | next_epoch: {start_epoch}", flush=True)
+    print(f"History restored: train={train_history}, val={val_history}", flush=True)
+    print(f"Best validation loss restored: {best_val}", flush=True)
+    print(f"Optimizer LR after restore: {optimizer_lrs(optimizer)}", flush=True)
+    print(
+        "Batch resume: epoch-level only; the current code restarts at "
+        "Batch[1] of next_epoch and does not restore an in-epoch batch index.",
+        flush=True,
+    )
+    print("=" * 80, flush=True)
+
+
+def unpack_outputs(outputs):
+    if not isinstance(outputs, (tuple, list)) or len(outputs) < 5:
+        raise RuntimeError(
+            "Model must return (pred_diff, pred_obj, pred_amp, pred_phi, support)."
+        )
+    return outputs[:5]
+
+
+def raw_amp_from_outputs(outputs, pred_amp):
+    if isinstance(outputs, (tuple, list)) and len(outputs) >= 6:
+        return outputs[5]
+    return pred_amp
+
+
+def balanced_support_bce(raw_amp, target_support):
+    bce = F.binary_cross_entropy(
+        raw_amp.clamp(1e-6, 1.0 - 1e-6),
+        target_support,
+        reduction="none",
+    )
+    target_support = target_support.float()
+    pos = target_support
+    neg = 1.0 - target_support
+    pos_loss = (bce * pos).sum() / pos.sum().clamp_min(1.0)
+    neg_loss = (bce * neg).sum() / neg.sum().clamp_min(1.0)
+    return 0.5 * (pos_loss + neg_loss)
+
+
+def compute_loss_bundle(args, loss_fn, diff, amp, phi, outputs):
+    pred_diff, _obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
+    raw_amp = raw_amp_from_outputs(outputs, pred_amp)
+    pred_for_loss = scale_align_sum(diff, pred_diff) if args.scale_align_loss else pred_diff
+    loss_ft = loss_fn(diff, pred_for_loss)
+    loss_amp = F.l1_loss(pred_amp, amp)
+    loss_phase = F.l1_loss(pred_phi * support, phi * support)
+    target_support = (amp >= args.threshold).float()
+    loss_support = balanced_support_bce(raw_amp, target_support)
+    if args.unsupervised or args.loss_scope == "diff":
+        loss = loss_ft
+    else:
+        loss = (
+            args.ft_weight * loss_ft
+            + args.amp_weight * loss_amp
+            + args.phase_weight * loss_phase
+        )
+    loss = loss + args.support_weight * loss_support
+    return loss, loss_ft, loss_amp, loss_phase, loss_support, pred_for_loss
+
+
+def run_epoch(args, model, loader, loss_fn, device, epoch=0, optimizer=None, scaler=None, train=True):
+    model.train(train)
+    use_amp = args.fp16 and device.type == "cuda"
+    mode = "train" if train else "val"
+    num_batches = len(loader)
+    if args.max_batches_per_epoch and args.max_batches_per_epoch > 0:
+        num_batches = min(num_batches, args.max_batches_per_epoch)
+    print_freq = max(int(args.print_freq), 1)
+    epoch_start_time = time.time()
+    total = {
+        "loss": 0.0,
+        "loss_ft": 0.0,
+        "loss_amp": 0.0,
+        "loss_phase": 0.0,
+        "loss_support": 0.0,
+        "samples": 0,
+        "batches": 0,
+    }
+
+    grad_context = torch.enable_grad() if train else torch.no_grad()
+    with grad_context:
+        for batch_index, batch in enumerate(loader, start=1):
+            if batch_index > num_batches:
+                break
+            diff = batch["diff"].to(device, non_blocking=True).float()
+            amp = batch["amp"].to(device, non_blocking=True).float()
+            phi = batch["phi"].to(device, non_blocking=True).float()
+
+            if train:
+                optimizer.zero_grad(set_to_none=True)
+
+            with torch.cuda.amp.autocast(enabled=use_amp):
+                outputs = model(diff)
+                loss, loss_ft, loss_amp, loss_phase, loss_support, _pred_for_loss = compute_loss_bundle(
+                    args, loss_fn, diff, amp, phi, outputs
+                )
+            has_grad = False
+            updated = False
+            if train:
+                if use_amp:
+                    scaler.scale(loss).backward()
+                    scaler.unscale_(optimizer)
+                    has_grad = any(
+                        p.grad is not None and bool((p.grad.detach().abs().max() > 0).item())
+                        for p in model.parameters()
+                    )
+                    before = next(model.parameters()).detach().flatten()[0].item()
+                    scaler.step(optimizer)
+                    scaler.update()
+                    after = next(model.parameters()).detach().flatten()[0].item()
+                else:
+                    loss.backward()
+                    has_grad = any(
+                        p.grad is not None and bool((p.grad.detach().abs().max() > 0).item())
+                        for p in model.parameters()
+                    )
+                    before = next(model.parameters()).detach().flatten()[0].item()
+                    optimizer.step()
+                    after = next(model.parameters()).detach().flatten()[0].item()
+                updated = before != after
+
+            batch_size = diff.shape[0]
+            total["loss"] += float(loss.detach().cpu()) * batch_size
+            total["loss_ft"] += float(loss_ft.detach().cpu()) * batch_size
+            total["loss_amp"] += float(loss_amp.detach().cpu()) * batch_size
+            total["loss_phase"] += float(loss_phase.detach().cpu()) * batch_size
+            total["loss_support"] += float(loss_support.detach().cpu()) * batch_size
+            total["samples"] += batch_size
+            total["batches"] += 1
+
+            if batch_index % print_freq == 0 or batch_index == num_batches:
+                elapsed_seconds = time.time() - epoch_start_time
+                avg_time_per_iter = elapsed_seconds / max(batch_index, 1)
+                eta_seconds = (num_batches - batch_index) * avg_time_per_iter
+                elapsed_str = str(timedelta(seconds=int(elapsed_seconds)))
+                eta_str = str(timedelta(seconds=int(eta_seconds)))
+                current_lr = optimizer.param_groups[0]["lr"] if optimizer is not None else 0.0
+                if train:
+                    print(
+                        f"Epoch[{epoch}] Batch[{batch_index}/{num_batches}] | "
+                        f"OptTotal: {loss.item():.4e} | FTLoss: {loss_ft.item():.4e} | "
+                        f"AmpL1Full: {loss_amp.item():.4e} | "
+                        f"PhaseL1PredSup: {loss_phase.item():.4e} | "
+                        f"SupportBCE: {loss_support.item():.4e} | "
+                        f"SupportWeighted: {(args.support_weight * loss_support.item()):.4e} | "
+                        f"BatchLR: {current_lr:.3e} | "
+                        f"Grad: {str(has_grad):5s} | Update: {str(updated):5s} | "
+                        f"Elapsed: {elapsed_str} | ETA: {eta_str}",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"Validation Epoch [{epoch}] | Batch [{batch_index}/{num_batches}] | "
+                        f"OptTotal: {loss.item():.4e} | FTLoss: {loss_ft.item():.4e} | "
+                        f"AmpL1Full: {loss_amp.item():.4e} | "
+                        f"PhaseL1PredSup: {loss_phase.item():.4e} | "
+                        f"SupportBCE: {loss_support.item():.4e}",
+                        flush=True,
+                    )
+
+    denom = max(total["samples"], 1)
+    stats = {
+        "loss": total["loss"] / denom,
+        "loss_ft": total["loss_ft"] / denom,
+        "loss_amp": total["loss_amp"] / denom,
+        "loss_phase": total["loss_phase"] / denom,
+        "loss_support": total["loss_support"] / denom,
+        "samples": total["samples"],
+        "batches": total["batches"],
+    }
+    elapsed_total = time.time() - epoch_start_time
+    print("\n" + "=" * 80, flush=True)
+    if train:
+        print(
+            f"Epoch {epoch} complete | total time: {elapsed_total:.2f}s | "
+            f"average OptTotal: {stats['loss']:.4e}",
+            flush=True,
+        )
+    else:
+        print(f"Epoch {epoch} validation complete", flush=True)
+    print(
+        f"{mode} epoch optimization terms | OptTotal: {stats['loss']:.4e} | "
+        f"FTLoss: {stats['loss_ft']:.4e} | "
+        f"SupportWeighted: {(args.support_weight * stats['loss_support']):.4e}",
+        flush=True,
+    )
+    print(
+        f"{mode} epoch real-space monitors | AmpL1Full: {stats['loss_amp']:.4e} | "
+        f"PhaseL1PredSup: {stats['loss_phase']:.4e} | "
+        f"SupportBCE: {stats['loss_support']:.4e}",
+        flush=True,
+    )
+    print("=" * 80 + "\n", flush=True)
+    return stats
+
+
+@torch.no_grad()
+def one_batch_metrics(args, model, loader, device):
+    batch = next(iter(loader))
+    diff = batch["diff"].to(device).float()
+    pred_diff = model(diff)[0]
+    if args.scale_align_loss:
+        pred_diff = scale_align_sum(diff, pred_diff)
+    return metric_dict(diff, pred_diff)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Standalone UMamba training with AutoPhaseNN pipeline logic.")
+    parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
+    parser.add_argument("--data-train-diff", default="train_diff.npy")
+    parser.add_argument("--data-train-real", default="train_real.npy")
+    parser.add_argument("--data-val-diff", default="val_diff.npy")
+    parser.add_argument("--data-val-real", default="val_real.npy")
+    parser.add_argument("--num-samples-train", type=int, default=25000)
+    parser.add_argument("--num-samples-val", type=int, default=5000)
+    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--dtype-diff", default="float32")
+    parser.add_argument("--dtype-real", default="complex64")
+    parser.add_argument("--output-dir", default="./umamba_based_autophasenn/output/")
+    parser.add_argument(
+        "--checkpoint-dir",
+        default=DEFAULT_CHECKPOINT_DIR,
+        help="Directory for model checkpoint files. Logs/config/history stay in --output-dir.",
+    )
+    parser.add_argument("--train-size", type=int, default=0)
+    parser.add_argument(
+        "--overfit-samples",
+        type=int,
+        default=0,
+        help="Train and validate on the same first N training samples for fit debugging.",
+    )
+    parser.add_argument(
+        "--cache-data",
+        action="store_true",
+        help="Load the selected memmap samples into RAM at dataset construction time.",
+    )
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--num-workers", type=int, default=4)
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument("--scale-i", type=float, default=0.0)
+    parser.add_argument("--scale-align-loss", action="store_true")
+    parser.add_argument("--loss-type", default="l1")
+    parser.add_argument(
+        "--loss-scope",
+        choices=["diff", "supervised"],
+        default="diff",
+        help="diff uses only reciprocal-space --loss-type; supervised also adds amp/phase losses.",
+    )
+    parser.add_argument(
+        "--batch-average-loss",
+        action="store_true",
+        help="Deprecated; losses in losses.py already use batch-mean reduction.",
+    )
+    parser.add_argument("--unsupervised", action="store_true")
+    parser.add_argument("--ft-weight", type=float, default=1.0)
+    parser.add_argument("--amp-weight", type=float, default=1.0)
+    parser.add_argument("--phase-weight", type=float, default=1.0)
+    parser.add_argument(
+        "--support-weight",
+        type=float,
+        default=0.0,
+        help="Optional BCE(raw_amp, amp>=threshold) support-shape loss. Default keeps paper-style diff-only training.",
+    )
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--optimizer", choices=["adam", "adamw"], default="adam")
+    parser.add_argument("--lr-scheduler", choices=["none", "step", "plateau"], default="plateau")
+    parser.add_argument("--step-size", type=int, default=10)
+    parser.add_argument("--gamma", type=float, default=0.5)
+    parser.add_argument("--patience", type=int, default=5)
+    parser.add_argument("--min-lr", type=float, default=1e-6)
+    parser.add_argument("--pretrained", default="")
+    parser.add_argument("--resume", default=DEFAULT_RESUME_PATH)
+    parser.add_argument(
+        "--from-scratch",
+        action="store_true",
+        help="Require training from random initialization; incompatible with --pretrained or --resume.",
+    )
+    parser.add_argument("--save-every", type=int, default=10)
+    parser.add_argument("--fp16", action="store_true")
+    parser.add_argument("--print-freq", type=int, default=100)
+    parser.add_argument("--max-batches-per-epoch", type=int, default=0)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+
+    if args.batch_average_loss:
+        print("--batch-average-loss is deprecated and ignored; losses are batch-mean by default.")
+    if args.unsupervised:
+        args.loss_scope = "diff"
+    if args.from_scratch and args.resume == DEFAULT_RESUME_PATH:
+        args.resume = ""
+    if args.from_scratch and (args.pretrained or args.resume):
+        raise ValueError("--from-scratch cannot be combined with --pretrained or --resume.")
+
+    torch.manual_seed(args.seed)
+    device = choose_device(args.device)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir = Path(args.checkpoint_dir)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    save_json(output_dir / "config.json", vars(args))
+    print(f"Small output dir: {output_dir}")
+    print(f"Checkpoint dir: {checkpoint_dir}")
+
+    data_dir = Path(args.data_dir)
+    shape = (args.shape, args.shape, args.shape)
+    train_samples = args.num_samples_train
+    if args.train_size and args.train_size > 0:
+        train_samples = min(train_samples, args.train_size)
+    overfit_samples = max(args.overfit_samples, 0)
+    overfit_mode = overfit_samples > 0
+    if overfit_mode:
+        train_samples = min(train_samples, overfit_samples)
+    cache_data = args.cache_data or overfit_mode
+    print(
+        f"Resolved memmap samples: train={train_samples}, "
+        f"val={train_samples if overfit_mode else args.num_samples_val}"
+    )
+    print(
+        "Training setup: {} | loss_scope={} | loss_type={} | cache_data={}".format(
+            "from_scratch" if not args.pretrained and not args.resume else "checkpointed",
+            args.loss_scope,
+            args.loss_type,
+            cache_data,
+        )
+    )
+
+    train_dataset = AutoPhaseDataset(
+        data_dir / args.data_train_diff,
+        optional_data_path(data_dir, args.data_train_real),
+        train_samples,
+        shape_diff=shape,
+        shape_real=shape,
+        dtype_diff=args.dtype_diff,
+        dtype_real=args.dtype_real,
+        scale_i=args.scale_i,
+        shuffle=False,
+        cache_data=cache_data,
+    )
+    if overfit_mode:
+        val_dataset = train_dataset
+        print(f"Overfit mode enabled: validating on the same {train_samples} training samples.")
+    else:
+        val_dataset = AutoPhaseDataset(
+            data_dir / args.data_val_diff,
+            optional_data_path(data_dir, args.data_val_real),
+            args.num_samples_val,
+            shape_diff=shape,
+            shape_real=shape,
+            dtype_diff=args.dtype_diff,
+            dtype_real=args.dtype_real,
+            scale_i=args.scale_i,
+            shuffle=False,
+            cache_data=cache_data,
+        )
+    pin_memory = device.type == "cuda"
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=pin_memory,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        pin_memory=pin_memory,
+    )
+
+    model = TFCompatibleAutoPhaseNN(
+        threshold=args.threshold,
+        shape=args.shape,
+        batch_size=args.batch_size,
+    ).to(device)
+    if args.pretrained:
+        load_weights(model, args.pretrained, map_location=device)
+        print(f"Loaded pretrained weights: {args.pretrained}")
+
+    if args.optimizer == "adamw":
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    else:
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = make_scheduler(args, optimizer)
+    scaler = torch.cuda.amp.GradScaler(enabled=args.fp16 and device.type == "cuda")
+    loss_fn = get_loss(args.loss_type)
+    history = {"train": [], "val": []}
+    start_epoch = 1
+    checkpoint = None
+
+    if args.resume:
+        print(f"Loading checkpoint for resume: {args.resume}", flush=True)
+        checkpoint = load_weights(model, args.resume, map_location=device)
+        optimizer_restored = False
+        scheduler_restored = False
+        scaler_restored = False
+        if "optimizer_state_dict" in checkpoint:
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            optimizer_restored = True
+        if scheduler and checkpoint.get("scheduler_state_dict"):
+            scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+            scheduler_restored = True
+        if checkpoint.get("scaler_state_dict"):
+            scaler.load_state_dict(checkpoint["scaler_state_dict"])
+            scaler_restored = True
+        history = checkpoint.get("history", history)
+        start_epoch = int(checkpoint.get("epoch", 0)) + 1
+        print_resume_summary(
+            args,
+            checkpoint,
+            optimizer_restored,
+            scheduler_restored,
+            scaler_restored,
+            start_epoch,
+            optimizer,
+        )
+    else:
+        print(
+            f"No checkpoint resume requested; starting at epoch {start_epoch} "
+            f"with optimizer LR {optimizer_lrs(optimizer)}.",
+            flush=True,
+        )
+
+    if args.dry_run:
+        model.eval()
+        metrics = one_batch_metrics(args, model, val_loader, device)
+        save_json(output_dir / "dry_run_metrics.json", metrics)
+        print(json.dumps(metrics, indent=2))
+        print("Dry run complete; no training was performed.")
+        return
+
+    best_val = checkpoint.get("best_val", float("inf")) if args.resume else float("inf")
+    if best_val == float("inf"):
+        best_val = min((item.get("loss", float("inf")) for item in history.get("val", [])), default=float("inf"))
+    if best_val < float("inf"):
+        print(f"Loaded best validation loss: {best_val:.6g}")
+    t0 = time.time()
+    for epoch in range(start_epoch, args.epochs + 1):
+        train_stats = run_epoch(
+            args, model, train_loader, loss_fn, device, epoch=epoch, optimizer=optimizer, scaler=scaler, train=True
+        )
+        val_stats = run_epoch(args, model, val_loader, loss_fn, device, epoch=epoch, train=False)
+
+        if scheduler:
+            if args.lr_scheduler == "plateau":
+                scheduler.step(val_stats["loss"])
+            else:
+                scheduler.step()
+
+        history["train"].append({"epoch": epoch, **train_stats})
+        history["val"].append({"epoch": epoch, **val_stats})
+        save_json(output_dir / "history.json", history)
+
+        print(
+            f"epoch {epoch}/{args.epochs} "
+            f"train_opt_total={train_stats['loss']:.6g} train_ft_loss={train_stats['loss_ft']:.6g} "
+            f"train_support_weighted={(args.support_weight * train_stats['loss_support']):.6g} "
+            f"train_amp_l1_full={train_stats['loss_amp']:.6g} "
+            f"train_phase_l1_predsup={train_stats['loss_phase']:.6g} "
+            f"train_support_bce={train_stats['loss_support']:.6g} "
+            f"val_opt_total={val_stats['loss']:.6g} val_ft_loss={val_stats['loss_ft']:.6g} "
+            f"val_support_weighted={(args.support_weight * val_stats['loss_support']):.6g} "
+            f"val_amp_l1_full={val_stats['loss_amp']:.6g} "
+            f"val_phase_l1_predsup={val_stats['loss_phase']:.6g} "
+            f"val_support_bce={val_stats['loss_support']:.6g}"
+        )
+
+        save_checkpoint(
+            checkpoint_dir / "checkpoint_last.pt",
+            model,
+            optimizer,
+            scheduler,
+            scaler,
+            epoch,
+            history,
+            args,
+        )
+        if epoch % args.save_every == 0:
+            save_checkpoint(
+                checkpoint_dir / f"checkpoint_epoch_{epoch:04d}.pt",
+                model,
+                optimizer,
+                scheduler,
+                scaler,
+                epoch,
+                history,
+                args,
+            )
+        if val_stats["loss"] < best_val:
+            best_val = val_stats["loss"]
+            save_checkpoint(
+                checkpoint_dir / "checkpoint_best.pt",
+                model,
+                optimizer,
+                scheduler,
+                scaler,
+                epoch,
+                history,
+                args,
+            )
+
+    print(f"Training complete in {time.time() - t0:.1f}s. Best val_loss={best_val:.6g}")
+
+
+if __name__ == "__main__":
+    main()
