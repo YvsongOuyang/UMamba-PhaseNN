@@ -1,0 +1,513 @@
+Training setup
+model_name: umamba
+phase_activation: tanh
+phase_logit_scale: 1.0
+center_pad_last_upsample: False
+drop_last_skip: False
+center_mask_output: True
+center_mask_size: 32
+data_dir: /data_ssd/oyys/autophasenn/
+data_train_diff: train_diff.npy
+data_train_real: train_real.npy
+data_val_diff: val_diff.npy
+data_val_real: val_real.npy
+num_samples_train: 25000
+num_samples_val: 5000
+shape: 64
+dtype_diff: float32
+dtype_real: complex64
+allow_missing_real: False
+output_dir: ./umamba_training_pipeline/output/
+tensorboard_dir: runs
+train_size: 0
+overfit_samples: 0
+debug_overfit_samples: 0
+cache_data: False
+epochs: 100
+batch_size: 8
+num_workers: 4
+device: cuda
+num_threads: 0
+seed: 42
+T: 0.1
+threshold: 0.1
+nconv: 32
+use_down_stride: False
+use_up_stride: False
+n_blocks: 4
+unsupervise: False
+unsupervised: False
+scale_i: 0.0
+scale_align_loss: False
+loss_type: l1
+loss_scope: diff
+ft_weight: 1.0
+amp_weight: 1.0
+phase_weight: 1.0
+support_weight: 0.0
+lr: 0.001
+optimizer: adam
+lr_type: plateau
+min_lr: 1e-06
+clr_step_epochs: 6.0
+step_size: 10
+gamma: 0.5
+patience: 5
+checkpoint: 
+from_scratch: False
+reset_optimizer: False
+head_lr_mult: 1.0
+grad_clip: 1.0
+save_every: 10
+save_model: 20
+fp16: False
+print_freq: 100
+debug_max_train_batches: 0
+debug_max_val_batches: 0
+debug_skip_scheduler: False
+debug_grad_norm: False
+debug_grad_norm_batches: 1
+debug_output_delta: False
+debug_output_delta_batches: 1
+notes: 
+use device: cuda
+Torch threads: 16
+TensorBoard log dir: /home/oyys/code/UMamba-AutoPhaseNN/umamba_training_pipeline/runs/20260612_113632_output
+feature_map_sizes: [[64, 64, 64], [32, 32, 32], [16, 16, 16], [8, 8, 8]]
+do_channel_token: [False, False, False, False]
+MambaLayer: dim: 32
+MambaLayer: dim: 64
+MambaLayer: dim: 128
+MambaLayer: dim: 256
+deep_supervision: False
+center_pad_last_upsample: False
+drop_last_skip: False
+center_mask_output: True
+center_mask_size: 32
+Using UMamba | phase_activation=tanh | phase_logit_scale=1.0000e+00 | center_pad_last_upsample=False | drop_last_skip=False | center_mask_output=True | center_mask_size=32
+model parameters: 10419270
+Training mode: from scratch
+Resolved memmap samples: train=25000, val=5000 | overfit=False | cache_data=False
+DataLoader kwargs: {'num_workers': 4, 'pin_memory': True, 'prefetch_factor': 2, 'persistent_workers': True}
+LR scheduler: plateau | init_lr=1.000e-03 | min_lr=1.000e-06
+Epoch[1] Batch[1/3125] | OptTotal: 4.3831e+01 | FTLoss: 4.3831e+01 | AmpL1Full: 4.9823e-02 | PhaseL1PredSup: 3.0003e-01 | SupportBCE: 6.2619e-01 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:00:03 | ETA: 2:41:33
+Epoch[1] Batch[101/3125] | OptTotal: 8.6121e+00 | FTLoss: 8.6121e+00 | AmpL1Full: 2.2404e-02 | PhaseL1PredSup: 1.2537e-01 | SupportBCE: 1.4957e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:01:02 | ETA: 0:31:12
+Epoch[1] Batch[201/3125] | OptTotal: 8.2099e+00 | FTLoss: 8.2099e+00 | AmpL1Full: 1.9390e-02 | PhaseL1PredSup: 7.9784e-02 | SupportBCE: 2.3718e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:02:01 | ETA: 0:29:33
+Epoch[1] Batch[301/3125] | OptTotal: 9.1596e+00 | FTLoss: 9.1596e+00 | AmpL1Full: 2.3600e-02 | PhaseL1PredSup: 5.4500e-02 | SupportBCE: 5.4458e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:03:01 | ETA: 0:28:21
+Epoch[1] Batch[401/3125] | OptTotal: 1.0928e+01 | FTLoss: 1.0928e+01 | AmpL1Full: 2.1859e-02 | PhaseL1PredSup: 3.8933e-03 | SupportBCE: 6.8947e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:04:00 | ETA: 0:27:15
+Epoch[1] Batch[501/3125] | OptTotal: 9.4883e+00 | FTLoss: 9.4883e+00 | AmpL1Full: 2.7249e-02 | PhaseL1PredSup: 2.6086e-02 | SupportBCE: 6.3412e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:05:00 | ETA: 0:26:12
+Epoch[1] Batch[601/3125] | OptTotal: 9.3074e+00 | FTLoss: 9.3074e+00 | AmpL1Full: 1.9085e-02 | PhaseL1PredSup: 7.4292e-03 | SupportBCE: 5.9091e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:05:59 | ETA: 0:25:10
+Epoch[1] Batch[701/3125] | OptTotal: 9.3966e+00 | FTLoss: 9.3966e+00 | AmpL1Full: 1.8088e-02 | PhaseL1PredSup: 5.7933e-03 | SupportBCE: 5.7156e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:06:59 | ETA: 0:24:09
+Epoch[1] Batch[801/3125] | OptTotal: 9.4146e+00 | FTLoss: 9.4146e+00 | AmpL1Full: 2.7849e-02 | PhaseL1PredSup: 2.9617e-02 | SupportBCE: 5.5436e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:07:58 | ETA: 0:23:08
+Epoch[1] Batch[901/3125] | OptTotal: 1.0324e+01 | FTLoss: 1.0324e+01 | AmpL1Full: 2.0307e-02 | PhaseL1PredSup: 2.3380e-02 | SupportBCE: 6.5324e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:08:58 | ETA: 0:22:08
+Epoch[1] Batch[1001/3125] | OptTotal: 8.6410e+00 | FTLoss: 8.6410e+00 | AmpL1Full: 2.0359e-02 | PhaseL1PredSup: 5.2586e-02 | SupportBCE: 5.2319e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:09:57 | ETA: 0:21:08
+Epoch[1] Batch[1101/3125] | OptTotal: 9.4493e+00 | FTLoss: 9.4493e+00 | AmpL1Full: 2.5156e-02 | PhaseL1PredSup: 5.8419e-03 | SupportBCE: 6.7780e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: True  | Update: True  | Elapsed: 0:10:57 | ETA: 0:20:08
+Epoch[1] Batch[1201/3125] | OptTotal: 1.1933e+01 | FTLoss: 1.1933e+01 | AmpL1Full: 1.6702e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:58 | ETA: 0:19:10
+Epoch[1] Batch[1301/3125] | OptTotal: 1.2353e+01 | FTLoss: 1.2353e+01 | AmpL1Full: 2.0863e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:59 | ETA: 0:18:12
+Epoch[1] Batch[1401/3125] | OptTotal: 1.2181e+01 | FTLoss: 1.2181e+01 | AmpL1Full: 1.7896e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: True  | Elapsed: 0:14:00 | ETA: 0:17:13
+Epoch[1] Batch[1501/3125] | OptTotal: 1.2070e+01 | FTLoss: 1.2070e+01 | AmpL1Full: 1.8108e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:01 | ETA: 0:16:14
+Epoch[1] Batch[1601/3125] | OptTotal: 1.1836e+01 | FTLoss: 1.1836e+01 | AmpL1Full: 1.6216e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:02 | ETA: 0:15:15
+Epoch[1] Batch[1701/3125] | OptTotal: 1.1689e+01 | FTLoss: 1.1689e+01 | AmpL1Full: 1.5371e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:03 | ETA: 0:14:16
+Epoch[1] Batch[1801/3125] | OptTotal: 1.1711e+01 | FTLoss: 1.1711e+01 | AmpL1Full: 1.9036e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:04 | ETA: 0:13:16
+Epoch[1] Batch[1901/3125] | OptTotal: 1.1521e+01 | FTLoss: 1.1521e+01 | AmpL1Full: 1.6329e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:06 | ETA: 0:12:18
+Epoch[1] Batch[2001/3125] | OptTotal: 1.1936e+01 | FTLoss: 1.1936e+01 | AmpL1Full: 1.6976e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:07 | ETA: 0:11:18
+Epoch[1] Batch[2101/3125] | OptTotal: 1.2269e+01 | FTLoss: 1.2269e+01 | AmpL1Full: 2.0408e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:09 | ETA: 0:10:18
+Epoch[1] Batch[2201/3125] | OptTotal: 1.1858e+01 | FTLoss: 1.1858e+01 | AmpL1Full: 1.8579e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:10 | ETA: 0:09:18
+Epoch[1] Batch[2301/3125] | OptTotal: 1.1759e+01 | FTLoss: 1.1759e+01 | AmpL1Full: 1.6008e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:11 | ETA: 0:08:18
+Epoch[1] Batch[2401/3125] | OptTotal: 1.2053e+01 | FTLoss: 1.2053e+01 | AmpL1Full: 2.6182e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:12 | ETA: 0:07:18
+Epoch[1] Batch[2501/3125] | OptTotal: 1.1458e+01 | FTLoss: 1.1458e+01 | AmpL1Full: 1.6457e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:13 | ETA: 0:06:17
+Epoch[1] Batch[2601/3125] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0040e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:14 | ETA: 0:05:17
+Epoch[1] Batch[2701/3125] | OptTotal: 1.1873e+01 | FTLoss: 1.1873e+01 | AmpL1Full: 1.6950e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:15 | ETA: 0:04:16
+Epoch[1] Batch[2801/3125] | OptTotal: 1.1531e+01 | FTLoss: 1.1531e+01 | AmpL1Full: 1.7911e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:16 | ETA: 0:03:16
+Epoch[1] Batch[2901/3125] | OptTotal: 1.1908e+01 | FTLoss: 1.1908e+01 | AmpL1Full: 2.1962e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:18 | ETA: 0:02:15
+Epoch[1] Batch[3001/3125] | OptTotal: 1.2697e+01 | FTLoss: 1.2697e+01 | AmpL1Full: 2.3068e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:19 | ETA: 0:01:15
+Epoch[1] Batch[3101/3125] | OptTotal: 1.1863e+01 | FTLoss: 1.1863e+01 | AmpL1Full: 1.7801e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:21 | ETA: 0:00:14
+Epoch[1] Batch[3125/3125] | OptTotal: 1.1601e+01 | FTLoss: 1.1601e+01 | AmpL1Full: 2.0338e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:35 | ETA: 0:00:00
+
+================================================================================
+Epoch 1 complete | total time: 1895.84s | average OptTotal: 1.0893e+01
+Average train optimization terms | FTLoss: 1.0893e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.9871e-02 | PhaseL1PredSup: 1.9520e-02 | SupportBCE: 6.2238e+00
+================================================================================
+
+Validation Epoch [1] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [1] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 1 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 1 scheduler lr: 1.000e-03
+Saved new best model | best loss: 11.800087 | epoch: 1
+Epoch[2] Batch[1/3125] | OptTotal: 1.1603e+01 | FTLoss: 1.1603e+01 | AmpL1Full: 1.7023e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:47:17
+Epoch[2] Batch[101/3125] | OptTotal: 1.2274e+01 | FTLoss: 1.2274e+01 | AmpL1Full: 2.3141e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:02 | ETA: 0:31:08
+Epoch[2] Batch[201/3125] | OptTotal: 1.1527e+01 | FTLoss: 1.1527e+01 | AmpL1Full: 1.9536e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:03 | ETA: 0:29:58
+Epoch[2] Batch[301/3125] | OptTotal: 1.1539e+01 | FTLoss: 1.1539e+01 | AmpL1Full: 1.2960e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:05 | ETA: 0:28:55
+Epoch[2] Batch[401/3125] | OptTotal: 1.2179e+01 | FTLoss: 1.2179e+01 | AmpL1Full: 2.2389e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:06 | ETA: 0:27:53
+Epoch[2] Batch[501/3125] | OptTotal: 1.2190e+01 | FTLoss: 1.2190e+01 | AmpL1Full: 1.8475e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:07 | ETA: 0:26:50
+Epoch[2] Batch[601/3125] | OptTotal: 1.2008e+01 | FTLoss: 1.2008e+01 | AmpL1Full: 1.8197e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:08 | ETA: 0:25:47
+Epoch[2] Batch[701/3125] | OptTotal: 1.1840e+01 | FTLoss: 1.1840e+01 | AmpL1Full: 1.7137e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:09 | ETA: 0:24:45
+Epoch[2] Batch[801/3125] | OptTotal: 1.1032e+01 | FTLoss: 1.1032e+01 | AmpL1Full: 1.3296e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:10 | ETA: 0:23:43
+Epoch[2] Batch[901/3125] | OptTotal: 1.1370e+01 | FTLoss: 1.1370e+01 | AmpL1Full: 1.7730e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:11 | ETA: 0:22:41
+Epoch[2] Batch[1001/3125] | OptTotal: 1.2145e+01 | FTLoss: 1.2145e+01 | AmpL1Full: 2.1513e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:13 | ETA: 0:21:40
+Epoch[2] Batch[1101/3125] | OptTotal: 1.1757e+01 | FTLoss: 1.1757e+01 | AmpL1Full: 1.9976e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:13 | ETA: 0:20:38
+Epoch[2] Batch[1201/3125] | OptTotal: 1.0777e+01 | FTLoss: 1.0777e+01 | AmpL1Full: 1.2042e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:14 | ETA: 0:19:37
+Epoch[2] Batch[1301/3125] | OptTotal: 1.1287e+01 | FTLoss: 1.1287e+01 | AmpL1Full: 1.2782e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:15 | ETA: 0:18:35
+Epoch[2] Batch[1401/3125] | OptTotal: 1.2451e+01 | FTLoss: 1.2451e+01 | AmpL1Full: 1.8483e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:16 | ETA: 0:17:34
+Epoch[2] Batch[1501/3125] | OptTotal: 1.1740e+01 | FTLoss: 1.1740e+01 | AmpL1Full: 1.6283e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:17 | ETA: 0:16:33
+Epoch[2] Batch[1601/3125] | OptTotal: 1.1771e+01 | FTLoss: 1.1771e+01 | AmpL1Full: 1.7925e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:19 | ETA: 0:15:32
+Epoch[2] Batch[1701/3125] | OptTotal: 1.2316e+01 | FTLoss: 1.2316e+01 | AmpL1Full: 2.2194e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:20 | ETA: 0:14:31
+Epoch[2] Batch[1801/3125] | OptTotal: 1.2363e+01 | FTLoss: 1.2363e+01 | AmpL1Full: 2.1776e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:21 | ETA: 0:13:29
+Epoch[2] Batch[1901/3125] | OptTotal: 1.1678e+01 | FTLoss: 1.1678e+01 | AmpL1Full: 1.8122e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:22 | ETA: 0:12:28
+Epoch[2] Batch[2001/3125] | OptTotal: 1.1993e+01 | FTLoss: 1.1993e+01 | AmpL1Full: 1.9636e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:23 | ETA: 0:11:27
+Epoch[2] Batch[2101/3125] | OptTotal: 1.1798e+01 | FTLoss: 1.1798e+01 | AmpL1Full: 1.8390e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:24 | ETA: 0:10:26
+Epoch[2] Batch[2201/3125] | OptTotal: 1.2052e+01 | FTLoss: 1.2052e+01 | AmpL1Full: 2.4473e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:26 | ETA: 0:09:25
+Epoch[2] Batch[2301/3125] | OptTotal: 1.2052e+01 | FTLoss: 1.2052e+01 | AmpL1Full: 2.0130e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:26 | ETA: 0:08:23
+Epoch[2] Batch[2401/3125] | OptTotal: 1.1141e+01 | FTLoss: 1.1141e+01 | AmpL1Full: 1.3368e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:27 | ETA: 0:07:22
+Epoch[2] Batch[2501/3125] | OptTotal: 1.2173e+01 | FTLoss: 1.2173e+01 | AmpL1Full: 2.0684e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:28 | ETA: 0:06:21
+Epoch[2] Batch[2601/3125] | OptTotal: 1.1902e+01 | FTLoss: 1.1902e+01 | AmpL1Full: 2.0161e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:29 | ETA: 0:05:20
+Epoch[2] Batch[2701/3125] | OptTotal: 1.2006e+01 | FTLoss: 1.2006e+01 | AmpL1Full: 1.7615e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:30 | ETA: 0:04:19
+Epoch[2] Batch[2801/3125] | OptTotal: 1.1628e+01 | FTLoss: 1.1628e+01 | AmpL1Full: 1.5644e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:31 | ETA: 0:03:17
+Epoch[2] Batch[2901/3125] | OptTotal: 1.1272e+01 | FTLoss: 1.1272e+01 | AmpL1Full: 1.6928e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:32 | ETA: 0:02:16
+Epoch[2] Batch[3001/3125] | OptTotal: 1.2163e+01 | FTLoss: 1.2163e+01 | AmpL1Full: 1.7385e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:33 | ETA: 0:01:15
+Epoch[2] Batch[3101/3125] | OptTotal: 1.2420e+01 | FTLoss: 1.2420e+01 | AmpL1Full: 1.7763e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:33 | ETA: 0:00:14
+Epoch[2] Batch[3125/3125] | OptTotal: 1.1989e+01 | FTLoss: 1.1989e+01 | AmpL1Full: 1.8715e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:48 | ETA: 0:00:00
+
+================================================================================
+Epoch 2 complete | total time: 1908.39s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [2] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [2] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 2 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 2 scheduler lr: 1.000e-03
+Epoch[3] Batch[1/3125] | OptTotal: 1.1702e+01 | FTLoss: 1.1702e+01 | AmpL1Full: 1.8108e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:43:49
+Epoch[3] Batch[101/3125] | OptTotal: 1.2134e+01 | FTLoss: 1.2134e+01 | AmpL1Full: 1.8708e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:01 | ETA: 0:30:48
+Epoch[3] Batch[201/3125] | OptTotal: 1.1917e+01 | FTLoss: 1.1917e+01 | AmpL1Full: 1.7635e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:02 | ETA: 0:29:43
+Epoch[3] Batch[301/3125] | OptTotal: 1.1264e+01 | FTLoss: 1.1264e+01 | AmpL1Full: 1.4446e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:03 | ETA: 0:28:45
+Epoch[3] Batch[401/3125] | OptTotal: 1.1234e+01 | FTLoss: 1.1234e+01 | AmpL1Full: 1.6746e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:05 | ETA: 0:27:46
+Epoch[3] Batch[501/3125] | OptTotal: 1.1852e+01 | FTLoss: 1.1852e+01 | AmpL1Full: 2.3296e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:06 | ETA: 0:26:43
+Epoch[3] Batch[601/3125] | OptTotal: 1.1629e+01 | FTLoss: 1.1629e+01 | AmpL1Full: 2.0045e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:06 | ETA: 0:25:40
+Epoch[3] Batch[701/3125] | OptTotal: 1.1311e+01 | FTLoss: 1.1311e+01 | AmpL1Full: 1.3834e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:08 | ETA: 0:24:40
+Epoch[3] Batch[801/3125] | OptTotal: 1.1281e+01 | FTLoss: 1.1281e+01 | AmpL1Full: 1.7518e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:09 | ETA: 0:23:40
+Epoch[3] Batch[901/3125] | OptTotal: 1.1752e+01 | FTLoss: 1.1752e+01 | AmpL1Full: 1.6144e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:10 | ETA: 0:22:38
+Epoch[3] Batch[1001/3125] | OptTotal: 1.2217e+01 | FTLoss: 1.2217e+01 | AmpL1Full: 1.9204e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:11 | ETA: 0:21:37
+Epoch[3] Batch[1101/3125] | OptTotal: 1.2263e+01 | FTLoss: 1.2263e+01 | AmpL1Full: 2.3618e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:12 | ETA: 0:20:36
+Epoch[3] Batch[1201/3125] | OptTotal: 1.2219e+01 | FTLoss: 1.2219e+01 | AmpL1Full: 1.8207e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:13 | ETA: 0:19:35
+Epoch[3] Batch[1301/3125] | OptTotal: 1.2315e+01 | FTLoss: 1.2315e+01 | AmpL1Full: 2.0071e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:14 | ETA: 0:18:33
+Epoch[3] Batch[1401/3125] | OptTotal: 1.2267e+01 | FTLoss: 1.2267e+01 | AmpL1Full: 1.8463e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:15 | ETA: 0:17:32
+Epoch[3] Batch[1501/3125] | OptTotal: 1.2004e+01 | FTLoss: 1.2004e+01 | AmpL1Full: 1.8160e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:16 | ETA: 0:16:31
+Epoch[3] Batch[1601/3125] | OptTotal: 1.1613e+01 | FTLoss: 1.1613e+01 | AmpL1Full: 1.5577e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:17 | ETA: 0:15:30
+Epoch[3] Batch[1701/3125] | OptTotal: 1.1643e+01 | FTLoss: 1.1643e+01 | AmpL1Full: 1.2955e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:19 | ETA: 0:14:29
+Epoch[3] Batch[1801/3125] | OptTotal: 1.1799e+01 | FTLoss: 1.1799e+01 | AmpL1Full: 2.2040e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:20 | ETA: 0:13:29
+Epoch[3] Batch[1901/3125] | OptTotal: 1.1578e+01 | FTLoss: 1.1578e+01 | AmpL1Full: 1.7414e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:21 | ETA: 0:12:28
+Epoch[3] Batch[2001/3125] | OptTotal: 1.1372e+01 | FTLoss: 1.1372e+01 | AmpL1Full: 1.7325e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:23 | ETA: 0:11:27
+Epoch[3] Batch[2101/3125] | OptTotal: 1.1045e+01 | FTLoss: 1.1045e+01 | AmpL1Full: 1.6101e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:24 | ETA: 0:10:25
+Epoch[3] Batch[2201/3125] | OptTotal: 1.2254e+01 | FTLoss: 1.2254e+01 | AmpL1Full: 1.9746e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:25 | ETA: 0:09:24
+Epoch[3] Batch[2301/3125] | OptTotal: 1.1176e+01 | FTLoss: 1.1176e+01 | AmpL1Full: 1.8005e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:26 | ETA: 0:08:23
+Epoch[3] Batch[2401/3125] | OptTotal: 1.2116e+01 | FTLoss: 1.2116e+01 | AmpL1Full: 1.7782e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:27 | ETA: 0:07:22
+Epoch[3] Batch[2501/3125] | OptTotal: 1.2042e+01 | FTLoss: 1.2042e+01 | AmpL1Full: 2.2405e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:29 | ETA: 0:06:21
+Epoch[3] Batch[2601/3125] | OptTotal: 1.1975e+01 | FTLoss: 1.1975e+01 | AmpL1Full: 1.9698e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:30 | ETA: 0:05:20
+Epoch[3] Batch[2701/3125] | OptTotal: 1.1519e+01 | FTLoss: 1.1519e+01 | AmpL1Full: 1.5585e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:31 | ETA: 0:04:19
+Epoch[3] Batch[2801/3125] | OptTotal: 1.1205e+01 | FTLoss: 1.1205e+01 | AmpL1Full: 1.2201e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:32 | ETA: 0:03:18
+Epoch[3] Batch[2901/3125] | OptTotal: 1.2040e+01 | FTLoss: 1.2040e+01 | AmpL1Full: 2.2526e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:34 | ETA: 0:02:16
+Epoch[3] Batch[3001/3125] | OptTotal: 1.1475e+01 | FTLoss: 1.1475e+01 | AmpL1Full: 1.6776e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:35 | ETA: 0:01:15
+Epoch[3] Batch[3101/3125] | OptTotal: 1.1858e+01 | FTLoss: 1.1858e+01 | AmpL1Full: 1.8605e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:36 | ETA: 0:00:14
+Epoch[3] Batch[3125/3125] | OptTotal: 1.1925e+01 | FTLoss: 1.1925e+01 | AmpL1Full: 1.8553e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:51 | ETA: 0:00:00
+
+================================================================================
+Epoch 3 complete | total time: 1911.35s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [3] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [3] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 3 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 3 scheduler lr: 1.000e-03
+Epoch[4] Batch[1/3125] | OptTotal: 1.2284e+01 | FTLoss: 1.2284e+01 | AmpL1Full: 1.9037e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:44:47
+Epoch[4] Batch[101/3125] | OptTotal: 1.2012e+01 | FTLoss: 1.2012e+01 | AmpL1Full: 1.7269e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:02 | ETA: 0:31:05
+Epoch[4] Batch[201/3125] | OptTotal: 1.1540e+01 | FTLoss: 1.1540e+01 | AmpL1Full: 1.6939e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:03 | ETA: 0:29:56
+Epoch[4] Batch[301/3125] | OptTotal: 1.1871e+01 | FTLoss: 1.1871e+01 | AmpL1Full: 1.7267e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:04 | ETA: 0:28:50
+Epoch[4] Batch[401/3125] | OptTotal: 1.2188e+01 | FTLoss: 1.2188e+01 | AmpL1Full: 2.2385e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:05 | ETA: 0:27:46
+Epoch[4] Batch[501/3125] | OptTotal: 1.0647e+01 | FTLoss: 1.0647e+01 | AmpL1Full: 1.1912e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:06 | ETA: 0:26:44
+Epoch[4] Batch[601/3125] | OptTotal: 1.1294e+01 | FTLoss: 1.1294e+01 | AmpL1Full: 1.5019e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:07 | ETA: 0:25:42
+Epoch[4] Batch[701/3125] | OptTotal: 1.2252e+01 | FTLoss: 1.2252e+01 | AmpL1Full: 2.5249e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:08 | ETA: 0:24:41
+Epoch[4] Batch[801/3125] | OptTotal: 1.2133e+01 | FTLoss: 1.2133e+01 | AmpL1Full: 2.3615e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:09 | ETA: 0:23:39
+Epoch[4] Batch[901/3125] | OptTotal: 1.1555e+01 | FTLoss: 1.1555e+01 | AmpL1Full: 1.5354e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:09 | ETA: 0:22:37
+Epoch[4] Batch[1001/3125] | OptTotal: 1.1722e+01 | FTLoss: 1.1722e+01 | AmpL1Full: 2.2081e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:10 | ETA: 0:21:36
+Epoch[4] Batch[1101/3125] | OptTotal: 1.0545e+01 | FTLoss: 1.0545e+01 | AmpL1Full: 1.1510e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:11 | ETA: 0:20:34
+Epoch[4] Batch[1201/3125] | OptTotal: 1.1163e+01 | FTLoss: 1.1163e+01 | AmpL1Full: 1.3923e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:12 | ETA: 0:19:33
+Epoch[4] Batch[1301/3125] | OptTotal: 1.2363e+01 | FTLoss: 1.2363e+01 | AmpL1Full: 2.2506e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:13 | ETA: 0:18:32
+Epoch[4] Batch[1401/3125] | OptTotal: 1.1634e+01 | FTLoss: 1.1634e+01 | AmpL1Full: 1.6713e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:13 | ETA: 0:17:30
+Epoch[4] Batch[1501/3125] | OptTotal: 1.2309e+01 | FTLoss: 1.2309e+01 | AmpL1Full: 2.1854e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:14 | ETA: 0:16:29
+Epoch[4] Batch[1601/3125] | OptTotal: 1.2165e+01 | FTLoss: 1.2165e+01 | AmpL1Full: 1.8621e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:15 | ETA: 0:15:28
+Epoch[4] Batch[1701/3125] | OptTotal: 1.1931e+01 | FTLoss: 1.1931e+01 | AmpL1Full: 1.7298e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:15 | ETA: 0:14:27
+Epoch[4] Batch[1801/3125] | OptTotal: 1.2999e+01 | FTLoss: 1.2999e+01 | AmpL1Full: 2.2996e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:16 | ETA: 0:13:26
+Epoch[4] Batch[1901/3125] | OptTotal: 1.1524e+01 | FTLoss: 1.1524e+01 | AmpL1Full: 1.7702e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:17 | ETA: 0:12:25
+Epoch[4] Batch[2001/3125] | OptTotal: 1.2054e+01 | FTLoss: 1.2054e+01 | AmpL1Full: 1.7602e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:18 | ETA: 0:11:24
+Epoch[4] Batch[2101/3125] | OptTotal: 1.2578e+01 | FTLoss: 1.2578e+01 | AmpL1Full: 2.4546e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:18 | ETA: 0:10:23
+Epoch[4] Batch[2201/3125] | OptTotal: 1.1972e+01 | FTLoss: 1.1972e+01 | AmpL1Full: 1.9525e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:19 | ETA: 0:09:22
+Epoch[4] Batch[2301/3125] | OptTotal: 1.2047e+01 | FTLoss: 1.2047e+01 | AmpL1Full: 1.9467e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:20 | ETA: 0:08:21
+Epoch[4] Batch[2401/3125] | OptTotal: 1.2262e+01 | FTLoss: 1.2262e+01 | AmpL1Full: 2.2171e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:22 | ETA: 0:07:20
+Epoch[4] Batch[2501/3125] | OptTotal: 1.2303e+01 | FTLoss: 1.2303e+01 | AmpL1Full: 2.0016e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:22 | ETA: 0:06:19
+Epoch[4] Batch[2601/3125] | OptTotal: 1.2250e+01 | FTLoss: 1.2250e+01 | AmpL1Full: 1.9593e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:23 | ETA: 0:05:19
+Epoch[4] Batch[2701/3125] | OptTotal: 1.2482e+01 | FTLoss: 1.2482e+01 | AmpL1Full: 2.4586e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:24 | ETA: 0:04:18
+Epoch[4] Batch[2801/3125] | OptTotal: 1.2521e+01 | FTLoss: 1.2521e+01 | AmpL1Full: 2.0022e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:24 | ETA: 0:03:17
+Epoch[4] Batch[2901/3125] | OptTotal: 1.2387e+01 | FTLoss: 1.2387e+01 | AmpL1Full: 2.0616e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:25 | ETA: 0:02:16
+Epoch[4] Batch[3001/3125] | OptTotal: 1.1539e+01 | FTLoss: 1.1539e+01 | AmpL1Full: 1.6873e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:26 | ETA: 0:01:15
+Epoch[4] Batch[3101/3125] | OptTotal: 1.1841e+01 | FTLoss: 1.1841e+01 | AmpL1Full: 1.9035e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:26 | ETA: 0:00:14
+Epoch[4] Batch[3125/3125] | OptTotal: 1.1705e+01 | FTLoss: 1.1705e+01 | AmpL1Full: 2.2127e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:41 | ETA: 0:00:00
+
+================================================================================
+Epoch 4 complete | total time: 1901.66s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [4] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [4] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 4 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 4 scheduler lr: 1.000e-03
+Epoch[5] Batch[1/3125] | OptTotal: 1.1813e+01 | FTLoss: 1.1813e+01 | AmpL1Full: 1.9785e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:40:57
+Epoch[5] Batch[101/3125] | OptTotal: 1.1704e+01 | FTLoss: 1.1704e+01 | AmpL1Full: 1.7826e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:01 | ETA: 0:30:40
+Epoch[5] Batch[201/3125] | OptTotal: 1.1853e+01 | FTLoss: 1.1853e+01 | AmpL1Full: 1.8753e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:02 | ETA: 0:29:44
+Epoch[5] Batch[301/3125] | OptTotal: 1.2012e+01 | FTLoss: 1.2012e+01 | AmpL1Full: 2.1693e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:03 | ETA: 0:28:40
+Epoch[5] Batch[401/3125] | OptTotal: 1.0426e+01 | FTLoss: 1.0426e+01 | AmpL1Full: 1.0575e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:04 | ETA: 0:27:39
+Epoch[5] Batch[501/3125] | OptTotal: 1.1307e+01 | FTLoss: 1.1307e+01 | AmpL1Full: 1.6777e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:05 | ETA: 0:26:37
+Epoch[5] Batch[601/3125] | OptTotal: 1.1069e+01 | FTLoss: 1.1069e+01 | AmpL1Full: 1.3146e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:06 | ETA: 0:25:37
+Epoch[5] Batch[701/3125] | OptTotal: 1.2040e+01 | FTLoss: 1.2040e+01 | AmpL1Full: 2.0708e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:07 | ETA: 0:24:37
+Epoch[5] Batch[801/3125] | OptTotal: 1.0837e+01 | FTLoss: 1.0837e+01 | AmpL1Full: 1.3374e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:07 | ETA: 0:23:35
+Epoch[5] Batch[901/3125] | OptTotal: 1.1407e+01 | FTLoss: 1.1407e+01 | AmpL1Full: 1.5285e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:08 | ETA: 0:22:33
+Epoch[5] Batch[1001/3125] | OptTotal: 1.2185e+01 | FTLoss: 1.2185e+01 | AmpL1Full: 1.7542e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:09 | ETA: 0:21:33
+Epoch[5] Batch[1101/3125] | OptTotal: 1.1659e+01 | FTLoss: 1.1659e+01 | AmpL1Full: 1.7479e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:10 | ETA: 0:20:31
+Epoch[5] Batch[1201/3125] | OptTotal: 1.0945e+01 | FTLoss: 1.0945e+01 | AmpL1Full: 1.4286e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:10 | ETA: 0:19:30
+Epoch[5] Batch[1301/3125] | OptTotal: 1.2005e+01 | FTLoss: 1.2005e+01 | AmpL1Full: 1.8458e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:11 | ETA: 0:18:29
+Epoch[5] Batch[1401/3125] | OptTotal: 1.2879e+01 | FTLoss: 1.2879e+01 | AmpL1Full: 2.7618e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:12 | ETA: 0:17:28
+Epoch[5] Batch[1501/3125] | OptTotal: 1.1348e+01 | FTLoss: 1.1348e+01 | AmpL1Full: 1.7390e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:12 | ETA: 0:16:27
+Epoch[5] Batch[1601/3125] | OptTotal: 1.1917e+01 | FTLoss: 1.1917e+01 | AmpL1Full: 2.0597e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:14 | ETA: 0:15:27
+Epoch[5] Batch[1701/3125] | OptTotal: 1.1792e+01 | FTLoss: 1.1792e+01 | AmpL1Full: 1.7865e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:15 | ETA: 0:14:26
+Epoch[5] Batch[1801/3125] | OptTotal: 1.2166e+01 | FTLoss: 1.2166e+01 | AmpL1Full: 1.5583e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:16 | ETA: 0:13:26
+Epoch[5] Batch[1901/3125] | OptTotal: 1.2853e+01 | FTLoss: 1.2853e+01 | AmpL1Full: 2.7613e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:17 | ETA: 0:12:25
+Epoch[5] Batch[2001/3125] | OptTotal: 1.1041e+01 | FTLoss: 1.1041e+01 | AmpL1Full: 1.4672e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:18 | ETA: 0:11:24
+Epoch[5] Batch[2101/3125] | OptTotal: 1.2181e+01 | FTLoss: 1.2181e+01 | AmpL1Full: 1.9266e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:19 | ETA: 0:10:23
+Epoch[5] Batch[2201/3125] | OptTotal: 1.1616e+01 | FTLoss: 1.1616e+01 | AmpL1Full: 1.6531e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:20 | ETA: 0:09:22
+Epoch[5] Batch[2301/3125] | OptTotal: 1.1938e+01 | FTLoss: 1.1938e+01 | AmpL1Full: 1.6768e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:21 | ETA: 0:08:21
+Epoch[5] Batch[2401/3125] | OptTotal: 1.1976e+01 | FTLoss: 1.1976e+01 | AmpL1Full: 1.9657e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:22 | ETA: 0:07:20
+Epoch[5] Batch[2501/3125] | OptTotal: 1.2723e+01 | FTLoss: 1.2723e+01 | AmpL1Full: 2.2170e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:23 | ETA: 0:06:20
+Epoch[5] Batch[2601/3125] | OptTotal: 1.2184e+01 | FTLoss: 1.2184e+01 | AmpL1Full: 2.1983e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:24 | ETA: 0:05:19
+Epoch[5] Batch[2701/3125] | OptTotal: 1.1118e+01 | FTLoss: 1.1118e+01 | AmpL1Full: 1.2793e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:25 | ETA: 0:04:18
+Epoch[5] Batch[2801/3125] | OptTotal: 1.1666e+01 | FTLoss: 1.1666e+01 | AmpL1Full: 1.6437e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:26 | ETA: 0:03:17
+Epoch[5] Batch[2901/3125] | OptTotal: 1.1724e+01 | FTLoss: 1.1724e+01 | AmpL1Full: 1.6237e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:27 | ETA: 0:02:16
+Epoch[5] Batch[3001/3125] | OptTotal: 1.1560e+01 | FTLoss: 1.1560e+01 | AmpL1Full: 1.8944e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:28 | ETA: 0:01:15
+Epoch[5] Batch[3101/3125] | OptTotal: 1.1700e+01 | FTLoss: 1.1700e+01 | AmpL1Full: 1.9612e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:29 | ETA: 0:00:14
+Epoch[5] Batch[3125/3125] | OptTotal: 1.1207e+01 | FTLoss: 1.1207e+01 | AmpL1Full: 1.2936e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:44 | ETA: 0:00:00
+
+================================================================================
+Epoch 5 complete | total time: 1904.16s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [5] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [5] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 5 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 5 scheduler lr: 1.000e-03
+Epoch[6] Batch[1/3125] | OptTotal: 1.1291e+01 | FTLoss: 1.1291e+01 | AmpL1Full: 1.8224e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:38:27
+Epoch[6] Batch[101/3125] | OptTotal: 1.1862e+01 | FTLoss: 1.1862e+01 | AmpL1Full: 1.8881e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:01 | ETA: 0:30:39
+Epoch[6] Batch[201/3125] | OptTotal: 1.1517e+01 | FTLoss: 1.1517e+01 | AmpL1Full: 1.7388e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:02 | ETA: 0:29:41
+Epoch[6] Batch[301/3125] | OptTotal: 1.1769e+01 | FTLoss: 1.1769e+01 | AmpL1Full: 1.8531e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:03 | ETA: 0:28:43
+Epoch[6] Batch[401/3125] | OptTotal: 1.1976e+01 | FTLoss: 1.1976e+01 | AmpL1Full: 2.1197e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:05 | ETA: 0:27:45
+Epoch[6] Batch[501/3125] | OptTotal: 1.2081e+01 | FTLoss: 1.2081e+01 | AmpL1Full: 1.9975e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:06 | ETA: 0:26:44
+Epoch[6] Batch[601/3125] | OptTotal: 1.2070e+01 | FTLoss: 1.2070e+01 | AmpL1Full: 1.9174e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:07 | ETA: 0:25:42
+Epoch[6] Batch[701/3125] | OptTotal: 1.1542e+01 | FTLoss: 1.1542e+01 | AmpL1Full: 1.8685e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:07 | ETA: 0:24:39
+Epoch[6] Batch[801/3125] | OptTotal: 1.1152e+01 | FTLoss: 1.1152e+01 | AmpL1Full: 1.4620e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:08 | ETA: 0:23:37
+Epoch[6] Batch[901/3125] | OptTotal: 1.2340e+01 | FTLoss: 1.2340e+01 | AmpL1Full: 2.5403e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:09 | ETA: 0:22:36
+Epoch[6] Batch[1001/3125] | OptTotal: 1.1930e+01 | FTLoss: 1.1930e+01 | AmpL1Full: 1.7534e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:10 | ETA: 0:21:35
+Epoch[6] Batch[1101/3125] | OptTotal: 1.1887e+01 | FTLoss: 1.1887e+01 | AmpL1Full: 1.6349e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:11 | ETA: 0:20:33
+Epoch[6] Batch[1201/3125] | OptTotal: 1.2095e+01 | FTLoss: 1.2095e+01 | AmpL1Full: 1.9472e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:11 | ETA: 0:19:32
+Epoch[6] Batch[1301/3125] | OptTotal: 1.1555e+01 | FTLoss: 1.1555e+01 | AmpL1Full: 1.4776e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:12 | ETA: 0:18:31
+Epoch[6] Batch[1401/3125] | OptTotal: 1.2503e+01 | FTLoss: 1.2503e+01 | AmpL1Full: 2.0431e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:14 | ETA: 0:17:30
+Epoch[6] Batch[1501/3125] | OptTotal: 1.2287e+01 | FTLoss: 1.2287e+01 | AmpL1Full: 1.9231e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:14 | ETA: 0:16:29
+Epoch[6] Batch[1601/3125] | OptTotal: 1.1769e+01 | FTLoss: 1.1769e+01 | AmpL1Full: 2.0475e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:15 | ETA: 0:15:28
+Epoch[6] Batch[1701/3125] | OptTotal: 1.1824e+01 | FTLoss: 1.1824e+01 | AmpL1Full: 1.6894e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:16 | ETA: 0:14:27
+Epoch[6] Batch[1801/3125] | OptTotal: 1.2237e+01 | FTLoss: 1.2237e+01 | AmpL1Full: 2.3774e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:18:17 | ETA: 0:13:26
+Epoch[6] Batch[1901/3125] | OptTotal: 1.2367e+01 | FTLoss: 1.2367e+01 | AmpL1Full: 2.1137e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:18 | ETA: 0:12:26
+Epoch[6] Batch[2001/3125] | OptTotal: 1.1066e+01 | FTLoss: 1.1066e+01 | AmpL1Full: 1.4621e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:19 | ETA: 0:11:24
+Epoch[6] Batch[2101/3125] | OptTotal: 1.2350e+01 | FTLoss: 1.2350e+01 | AmpL1Full: 2.1561e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:20 | ETA: 0:10:24
+Epoch[6] Batch[2201/3125] | OptTotal: 1.1593e+01 | FTLoss: 1.1593e+01 | AmpL1Full: 1.5573e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:21 | ETA: 0:09:22
+Epoch[6] Batch[2301/3125] | OptTotal: 1.2034e+01 | FTLoss: 1.2034e+01 | AmpL1Full: 2.2259e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:21 | ETA: 0:08:21
+Epoch[6] Batch[2401/3125] | OptTotal: 1.1780e+01 | FTLoss: 1.1780e+01 | AmpL1Full: 1.8752e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:22 | ETA: 0:07:21
+Epoch[6] Batch[2501/3125] | OptTotal: 1.2141e+01 | FTLoss: 1.2141e+01 | AmpL1Full: 2.0772e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:23 | ETA: 0:06:20
+Epoch[6] Batch[2601/3125] | OptTotal: 1.2145e+01 | FTLoss: 1.2145e+01 | AmpL1Full: 2.1371e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:25 | ETA: 0:05:19
+Epoch[6] Batch[2701/3125] | OptTotal: 1.1450e+01 | FTLoss: 1.1450e+01 | AmpL1Full: 1.9871e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:31 | ETA: 0:04:19
+Epoch[6] Batch[2801/3125] | OptTotal: 1.1512e+01 | FTLoss: 1.1512e+01 | AmpL1Full: 1.9717e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:38 | ETA: 0:03:18
+Epoch[6] Batch[2901/3125] | OptTotal: 1.1612e+01 | FTLoss: 1.1612e+01 | AmpL1Full: 1.6548e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:45 | ETA: 0:02:17
+Epoch[6] Batch[3001/3125] | OptTotal: 1.1851e+01 | FTLoss: 1.1851e+01 | AmpL1Full: 1.7410e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:51 | ETA: 0:01:16
+Epoch[6] Batch[3101/3125] | OptTotal: 1.2210e+01 | FTLoss: 1.2210e+01 | AmpL1Full: 1.8176e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:59 | ETA: 0:00:14
+Epoch[6] Batch[3125/3125] | OptTotal: 1.1612e+01 | FTLoss: 1.1612e+01 | AmpL1Full: 1.8759e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:32:14 | ETA: 0:00:00
+
+================================================================================
+Epoch 6 complete | total time: 1934.99s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [6] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [6] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 6 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 6 scheduler lr: 1.000e-03
+Epoch[7] Batch[1/3125] | OptTotal: 1.2201e+01 | FTLoss: 1.2201e+01 | AmpL1Full: 2.0909e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:43:00
+Epoch[7] Batch[101/3125] | OptTotal: 1.1886e+01 | FTLoss: 1.1886e+01 | AmpL1Full: 1.9289e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:01:07 | ETA: 0:33:28
+Epoch[7] Batch[201/3125] | OptTotal: 1.2492e+01 | FTLoss: 1.2492e+01 | AmpL1Full: 2.3241e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:02:08 | ETA: 0:31:07
+Epoch[7] Batch[301/3125] | OptTotal: 1.0947e+01 | FTLoss: 1.0947e+01 | AmpL1Full: 1.7578e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:03:09 | ETA: 0:29:38
+Epoch[7] Batch[401/3125] | OptTotal: 1.1150e+01 | FTLoss: 1.1150e+01 | AmpL1Full: 1.4716e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:04:14 | ETA: 0:28:46
+Epoch[7] Batch[501/3125] | OptTotal: 1.2172e+01 | FTLoss: 1.2172e+01 | AmpL1Full: 1.7711e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:05:19 | ETA: 0:27:52
+Epoch[7] Batch[601/3125] | OptTotal: 1.0829e+01 | FTLoss: 1.0829e+01 | AmpL1Full: 1.3420e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:06:23 | ETA: 0:26:51
+Epoch[7] Batch[701/3125] | OptTotal: 1.2035e+01 | FTLoss: 1.2035e+01 | AmpL1Full: 2.1641e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:07:27 | ETA: 0:25:48
+Epoch[7] Batch[801/3125] | OptTotal: 1.1657e+01 | FTLoss: 1.1657e+01 | AmpL1Full: 1.8217e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:08:31 | ETA: 0:24:42
+Epoch[7] Batch[901/3125] | OptTotal: 1.2164e+01 | FTLoss: 1.2164e+01 | AmpL1Full: 2.1768e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:09:35 | ETA: 0:23:39
+Epoch[7] Batch[1001/3125] | OptTotal: 1.1215e+01 | FTLoss: 1.1215e+01 | AmpL1Full: 1.5408e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:10:36 | ETA: 0:22:29
+Epoch[7] Batch[1101/3125] | OptTotal: 1.1298e+01 | FTLoss: 1.1298e+01 | AmpL1Full: 1.9283e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:11:37 | ETA: 0:21:22
+Epoch[7] Batch[1201/3125] | OptTotal: 1.1120e+01 | FTLoss: 1.1120e+01 | AmpL1Full: 1.2480e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:12:41 | ETA: 0:20:20
+Epoch[7] Batch[1301/3125] | OptTotal: 1.1231e+01 | FTLoss: 1.1231e+01 | AmpL1Full: 1.1804e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:13:46 | ETA: 0:19:19
+Epoch[7] Batch[1401/3125] | OptTotal: 1.1539e+01 | FTLoss: 1.1539e+01 | AmpL1Full: 1.8858e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:14:48 | ETA: 0:18:13
+Epoch[7] Batch[1501/3125] | OptTotal: 1.0663e+01 | FTLoss: 1.0663e+01 | AmpL1Full: 1.4544e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:15:52 | ETA: 0:17:10
+Epoch[7] Batch[1601/3125] | OptTotal: 1.0359e+01 | FTLoss: 1.0359e+01 | AmpL1Full: 1.6611e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:16:56 | ETA: 0:16:07
+Epoch[7] Batch[1701/3125] | OptTotal: 1.1111e+01 | FTLoss: 1.1111e+01 | AmpL1Full: 1.4266e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:17:59 | ETA: 0:15:04
+Epoch[7] Batch[1801/3125] | OptTotal: 1.2516e+01 | FTLoss: 1.2516e+01 | AmpL1Full: 2.1770e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:19:01 | ETA: 0:13:59
+Epoch[7] Batch[1901/3125] | OptTotal: 1.1495e+01 | FTLoss: 1.1495e+01 | AmpL1Full: 1.4304e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:20:03 | ETA: 0:12:54
+Epoch[7] Batch[2001/3125] | OptTotal: 1.2338e+01 | FTLoss: 1.2338e+01 | AmpL1Full: 2.6444e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:21:05 | ETA: 0:11:51
+Epoch[7] Batch[2101/3125] | OptTotal: 1.1286e+01 | FTLoss: 1.1286e+01 | AmpL1Full: 1.7158e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:22:08 | ETA: 0:10:47
+Epoch[7] Batch[2201/3125] | OptTotal: 1.2272e+01 | FTLoss: 1.2272e+01 | AmpL1Full: 2.0084e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:23:12 | ETA: 0:09:44
+Epoch[7] Batch[2301/3125] | OptTotal: 1.2209e+01 | FTLoss: 1.2209e+01 | AmpL1Full: 1.9012e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:24:16 | ETA: 0:08:41
+Epoch[7] Batch[2401/3125] | OptTotal: 1.1424e+01 | FTLoss: 1.1424e+01 | AmpL1Full: 1.8755e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:25:19 | ETA: 0:07:38
+Epoch[7] Batch[2501/3125] | OptTotal: 1.1949e+01 | FTLoss: 1.1949e+01 | AmpL1Full: 2.1295e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:26:23 | ETA: 0:06:35
+Epoch[7] Batch[2601/3125] | OptTotal: 1.1477e+01 | FTLoss: 1.1477e+01 | AmpL1Full: 1.9716e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:27:24 | ETA: 0:05:31
+Epoch[7] Batch[2701/3125] | OptTotal: 1.1305e+01 | FTLoss: 1.1305e+01 | AmpL1Full: 1.9380e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:28:25 | ETA: 0:04:27
+Epoch[7] Batch[2801/3125] | OptTotal: 1.2315e+01 | FTLoss: 1.2315e+01 | AmpL1Full: 2.1094e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:29:26 | ETA: 0:03:24
+Epoch[7] Batch[2901/3125] | OptTotal: 1.2081e+01 | FTLoss: 1.2081e+01 | AmpL1Full: 1.9809e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:30:27 | ETA: 0:02:21
+Epoch[7] Batch[3001/3125] | OptTotal: 1.2618e+01 | FTLoss: 1.2618e+01 | AmpL1Full: 2.5836e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:31:27 | ETA: 0:01:18
+Epoch[7] Batch[3101/3125] | OptTotal: 1.1210e+01 | FTLoss: 1.1210e+01 | AmpL1Full: 1.5896e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:32:33 | ETA: 0:00:15
+Epoch[7] Batch[3125/3125] | OptTotal: 1.1658e+01 | FTLoss: 1.1658e+01 | AmpL1Full: 1.8920e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 1.000e-03 | Grad: False | Update: False | Elapsed: 0:32:49 | ETA: 0:00:00
+
+================================================================================
+Epoch 7 complete | total time: 1969.15s | average OptTotal: 1.1814e+01
+Average train optimization terms | FTLoss: 1.1814e+01 | SupportWeighted: 0.0000e+00
+Average train real-space monitors | AmpL1Full: 1.8572e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00
+================================================================================
+
+Validation Epoch [7] | Batch [100/625] | OptTotal: 1.2094e+01 | FTLoss: 1.2094e+01 | AmpL1Full: 1.7877e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2094e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [200/625] | OptTotal: 1.1815e+01 | FTLoss: 1.1815e+01 | AmpL1Full: 2.0076e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1815e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [300/625] | OptTotal: 1.2194e+01 | FTLoss: 1.2194e+01 | AmpL1Full: 1.7587e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.2194e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [400/625] | OptTotal: 1.1390e+01 | FTLoss: 1.1390e+01 | AmpL1Full: 1.5358e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1390e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [500/625] | OptTotal: 1.1921e+01 | FTLoss: 1.1921e+01 | AmpL1Full: 1.9984e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1921e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [600/625] | OptTotal: 1.1365e+01 | FTLoss: 1.1365e+01 | AmpL1Full: 1.6683e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1365e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+Validation Epoch [7] | Batch [625/625] | OptTotal: 1.1885e+01 | FTLoss: 1.1885e+01 | AmpL1Full: 1.8223e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | FT_L1: 1.1885e+01 | FT_RelL1: 1.0000e+00 | FT_Chi2: 1.0000e+00 | FT_PearsonCorr: 0.0000e+00
+
+================================================================================
+Epoch 7 validation complete
+Average validation metrics:
+   Optimization: OptTotal=1.1800e+01 | FTLoss=1.1800e+01 | SupportWeighted=0.0000e+00
+   Real-space monitors: AmpL1Full=1.8488e-02 | PhaseL1PredSup=0.0000e+00 | SupportBCE=6.9078e+00
+   Reciprocal primary: FT_L1=1.1800e+01 | FT_RelL1=1.0000e+00 | FT_Chi2=1.0000e+00 | FT_PearsonCorr=0.0000e+00
+   Reciprocal diagnostics: FT_Huber=1.1340e+01 | FT_PearsonLoss=1.0000e+00 | FT_LogRelMSE=1.0000e+00 | FT_Comb=1.0000e+00 | FT_Comb2=1.0000e+00
+   Raw-scale diagnostics: FT_VoxelMSE=4.0640e+03 | FT_VoxelRMSE=6.1927e+01
+================================================================================
+
+Epoch 7 scheduler lr: 5.000e-04
+Epoch[8] Batch[1/3125] | OptTotal: 1.0450e+01 | FTLoss: 1.0450e+01 | AmpL1Full: 1.0844e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:00:00 | ETA: 0:43:50
+Epoch[8] Batch[101/3125] | OptTotal: 1.2172e+01 | FTLoss: 1.2172e+01 | AmpL1Full: 1.8860e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:01:08 | ETA: 0:33:59
+Epoch[8] Batch[201/3125] | OptTotal: 1.2654e+01 | FTLoss: 1.2654e+01 | AmpL1Full: 2.1329e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:02:15 | ETA: 0:32:52
+Epoch[8] Batch[301/3125] | OptTotal: 1.1445e+01 | FTLoss: 1.1445e+01 | AmpL1Full: 1.8199e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:03:23 | ETA: 0:31:46
+Epoch[8] Batch[401/3125] | OptTotal: 1.1395e+01 | FTLoss: 1.1395e+01 | AmpL1Full: 1.7577e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:04:30 | ETA: 0:30:35
+Epoch[8] Batch[501/3125] | OptTotal: 1.1591e+01 | FTLoss: 1.1591e+01 | AmpL1Full: 1.9503e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:05:37 | ETA: 0:29:26
+Epoch[8] Batch[601/3125] | OptTotal: 1.1806e+01 | FTLoss: 1.1806e+01 | AmpL1Full: 2.1326e-02 | PhaseL1PredSup: 0.0000e+00 | SupportBCE: 6.9078e+00 | SupportWeighted: 0.0000e+00 | BatchLR: 5.000e-04 | Grad: False | Update: False | Elapsed: 0:06:44 | ETA: 0:28:17

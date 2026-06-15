@@ -13,8 +13,8 @@ from losses import get_loss, metric_dict, scale_align_sum
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
-DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
-DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
+DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn//umamba_pipeline_output/umamba_train_l1_0612"
+DEFAULT_RESUME_PATH = "/data_ssd/oyys/autophasenn/umamba_pipeline_output/umamba_train_l1_0612/checkpoint_last.pt"
 
 
 def choose_device(name):
@@ -340,7 +340,7 @@ def main():
         help="Load the selected memmap samples into RAM at dataset construction time.",
     )
     parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--seed", type=int, default=42)
@@ -383,7 +383,7 @@ def main():
         action="store_true",
         help="Require training from random initialization; incompatible with --pretrained or --resume.",
     )
-    parser.add_argument("--save-every", type=int, default=10)
+    parser.add_argument("--save-every", type=int, default=20)
     parser.add_argument("--fp16", action="store_true")
     parser.add_argument("--print-freq", type=int, default=100)
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
