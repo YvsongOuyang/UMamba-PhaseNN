@@ -477,7 +477,6 @@ class UMambaEnc(nn.Module):
                  stem_channels: int = None,
                  phase_activation: str = 'tanh',
                  phase_logit_scale: float = 1.0,
-                 threshold: float = 0.1,
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
@@ -528,7 +527,7 @@ class UMambaEnc(nn.Module):
 
         self.phi_layer = PhiLayer()                 # Index 89
         self.obj_layer = ObjLayer()                 # Index 90
-        self.support_layer = SupportLayer(threshold)# Index 91
+        self.support_layer = SupportLayer(0.1)# Index 91
         self.masked_obj_layer = MaskedObjLayer()    # Index 92
         self.farfield_layer = FarfieldDiffLayer()   # Index 93
 
@@ -563,7 +562,7 @@ class UMambaEnc(nn.Module):
         psi = self.farfield_layer(masked_obj)
         
 
-        return psi, masked_obj, preds_amp, ph, support, amp
+        return psi, obj, preds_amp, ph, support
 
 
     def compute_conv_feature_map_size(self, input_size):
@@ -581,7 +580,6 @@ def get_umamba_enc_3d_from_plans(
         deep_supervision: bool = False,
         phase_activation: str = 'tanh',
         phase_logit_scale: float = 1.0,
-        threshold: float = 0.1,
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -626,7 +624,6 @@ def get_umamba_enc_3d_from_plans(
         deep_supervision=deep_supervision,
         phase_activation=phase_activation,
         phase_logit_scale=phase_logit_scale,
-        threshold=threshold,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )
