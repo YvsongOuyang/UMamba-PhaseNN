@@ -262,18 +262,10 @@ def build_model(args, device):
             phase_activation=args.phase_activation,
             phase_logit_scale=args.phase_logit_scale,
             threshold=args.T,
-            center_pad_last_upsample=args.center_pad_last_upsample,
-            drop_last_skip=args.drop_last_skip,
-            center_mask_output=args.center_mask_output,
-            center_mask_size=args.center_mask_size,
         )
         print(
             f"Using UMamba | phase_activation={args.phase_activation} | "
-            f"phase_logit_scale={args.phase_logit_scale:.4e} | "
-            f"center_pad_last_upsample={args.center_pad_last_upsample} | "
-            f"drop_last_skip={args.drop_last_skip} | "
-            f"center_mask_output={args.center_mask_output} | "
-            f"center_mask_size={args.center_mask_size}",
+            f"phase_logit_scale={args.phase_logit_scale:.4e}",
             flush=True,
         )
     elif model_name == "autophasenn":
@@ -820,38 +812,6 @@ def parse_args():
     parser.add_argument("--model-name", "--model_name", dest="model_name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
     parser.add_argument("--phase-activation", "--phase_activation", dest="phase_activation", choices=["tanh", "atan"], default="tanh")
     parser.add_argument("--phase-logit-scale", "--phase_logit_scale", dest="phase_logit_scale", type=float, default=1.0)
-    parser.add_argument(
-        "--center-pad-last-upsample",
-        "--center_pad_last_upsample",
-        dest="center_pad_last_upsample",
-        type=str2bool,
-        default=False,
-        help="For UMamba, replace only the final decoder upsample with center zero-padding.",
-    )
-    parser.add_argument(
-        "--drop-last-skip",
-        "--drop_last_skip",
-        dest="drop_last_skip",
-        type=str2bool,
-        default=False,
-        help="For UMamba, also remove the outermost skip in the final decoder stage. Default false keeps the first ablation.",
-    )
-    parser.add_argument(
-        "--center-mask-output",
-        "--center_mask_output",
-        dest="center_mask_output",
-        type=str2bool,
-        default=True,
-        help="For UMamba, multiply amp/phase by a fixed centered cube mask after decoder output.",
-    )
-    parser.add_argument(
-        "--center-mask-size",
-        "--center_mask_size",
-        dest="center_mask_size",
-        type=int,
-        default=32,
-        help="Centered cube edge length for --center-mask-output. Use <=0 to disable masking.",
-    )
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-train-diff", default="train_diff.npy")
     parser.add_argument("--data-train-real", default="train_real.npy")

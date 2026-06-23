@@ -20,13 +20,9 @@ MIN_LR="${MIN_LR:-1e-6}"
 GAMMA="${GAMMA:-0.5}"
 PATIENCE="${PATIENCE:-5}"
 GRAD_CLIP="${GRAD_CLIP:-0.0}"
-CENTER_PAD_LAST_UPSAMPLE="${CENTER_PAD_LAST_UPSAMPLE:-false}"
-DROP_LAST_SKIP="${DROP_LAST_SKIP:-false}"
-CENTER_MASK_OUTPUT="${CENTER_MASK_OUTPUT:-true}"
-CENTER_MASK_SIZE="${CENTER_MASK_SIZE:-32}"
 DEVICE="${DEVICE:-cuda}"
 MODEL_NAME="${MODEL_NAME:-umamba}"
-RUN_NAME="${RUN_NAME:-${MODEL_NAME}_centermask${CENTER_MASK_SIZE}_overfit${SAMPLES}_${LOSS_TYPE}_fromscratch_$(date +%Y%m%d_%H%M%S)}"
+RUN_NAME="${RUN_NAME:-${MODEL_NAME}_original_overfit${SAMPLES}_${LOSS_TYPE}_fromscratch_$(date +%Y%m%d_%H%M%S)}"
 OUT_DIR="${OUT_DIR:-./umamba_training_pipeline/output/${RUN_NAME}}"
 
 echo "UMamba pipeline overfit test"
@@ -43,18 +39,10 @@ echo "  min_lr:          ${MIN_LR}"
 echo "  gamma:           ${GAMMA}"
 echo "  patience:        ${PATIENCE}"
 echo "  grad_clip:       ${GRAD_CLIP}"
-echo "  center_pad:      ${CENTER_PAD_LAST_UPSAMPLE}"
-echo "  drop_last_skip:  ${DROP_LAST_SKIP}"
-echo "  center_mask:     ${CENTER_MASK_OUTPUT}"
-echo "  center_mask_size:${CENTER_MASK_SIZE}"
 echo
 
 python umamba_training_pipeline/train.py \
   --model-name "${MODEL_NAME}" \
-  --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
-  --drop-last-skip "${DROP_LAST_SKIP}" \
-  --center-mask-output "${CENTER_MASK_OUTPUT}" \
-  --center-mask-size "${CENTER_MASK_SIZE}" \
   --data-dir "${DATA_DIR}" \
   --output-dir "${OUT_DIR}" \
   --from-scratch \
@@ -80,10 +68,6 @@ python umamba_training_pipeline/train.py \
 
 python umamba_training_pipeline/evaluate.py \
   --model-name "${MODEL_NAME}" \
-  --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
-  --drop-last-skip "${DROP_LAST_SKIP}" \
-  --center-mask-output "${CENTER_MASK_OUTPUT}" \
-  --center-mask-size "${CENTER_MASK_SIZE}" \
   --checkpoint "${OUT_DIR}/best_model.pt" \
   --data-dir "${DATA_DIR}" \
   --data-diff train_diff.npy \
@@ -96,10 +80,6 @@ python umamba_training_pipeline/evaluate.py \
 
 python umamba_training_pipeline/visualize_postprocessed.py \
   --model-name "${MODEL_NAME}" \
-  --center-pad-last-upsample "${CENTER_PAD_LAST_UPSAMPLE}" \
-  --drop-last-skip "${DROP_LAST_SKIP}" \
-  --center-mask-output "${CENTER_MASK_OUTPUT}" \
-  --center-mask-size "${CENTER_MASK_SIZE}" \
   --checkpoint "${OUT_DIR}/best_model.pt" \
   --data-dir "${DATA_DIR}" \
   --data-diff train_diff.npy \

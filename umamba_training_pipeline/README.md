@@ -8,7 +8,7 @@ This folder is a hybrid training entrypoint for the current debugging work:
 - Scheduler options follow `oyys_lcrc_train_singleGPU.py`, but the default is `plateau`, matching the AutoPhaseNN overfit probe.
 - Loss functions follow `autophasenn_training_pipeline/losses.py`.
 - The local `UMambaEnc_3d.py` uses the same postprocessing contract as the AutoPhaseNN pipeline: hard support threshold, masked object as the second output, and `torch.abs(FFT)` far-field modulus.
-- The default UMamba overfit probe keeps the original UMamba decoder (`--center-pad-last-upsample false`) and applies `--center-mask-output true`: amp/phase are multiplied by a fixed centered cube mask before support/object/FFT computation.
+- The UMamba model structure is restored to the original decoder path: nearest-neighbor upsampling plus skip concatenation. It no longer applies center zero-padding, skip dropping, or a fixed centered output mask.
 
 ## Quick Overfit Probe
 
@@ -21,7 +21,7 @@ from scratch on the first `SAMPLES` training samples, validates on the same samp
 pool, evaluates `best_model.pt` on that train subset, and visualizes only samples
 from that same overfit pool.
 
-Current defaults are chosen for the center-pad ablation:
+Current defaults are chosen for original-structure UMamba overfit testing:
 
 ```bash
 SAMPLES=100
@@ -32,10 +32,6 @@ LOSS_SCOPE=diff
 SUPPORT_WEIGHT=0.0
 LR_SCHEDULER=plateau
 GRAD_CLIP=0.0
-CENTER_PAD_LAST_UPSAMPLE=false
-DROP_LAST_SKIP=false
-CENTER_MASK_OUTPUT=true
-CENTER_MASK_SIZE=32
 ```
 
 Switch models with:

@@ -39,25 +39,6 @@ class SupportLayer(nn.Module):
         )
 
 
-class CenterMaskLayer(nn.Module):
-    def __init__(self, enabled=False, mask_size=32):
-        super().__init__()
-        self.enabled = bool(enabled)
-        self.mask_size = int(mask_size)
-
-    def forward(self, x):
-        if not self.enabled or self.mask_size <= 0:
-            return torch.ones_like(x)
-        mask = torch.zeros_like(x)
-        slices = [slice(None), slice(None)]
-        for dim in x.shape[2:]:
-            width = min(self.mask_size, int(dim))
-            start = (int(dim) - width) // 2
-            slices.append(slice(start, start + width))
-        mask[tuple(slices)] = 1.0
-        return mask
-
-
 class ObjLayer(nn.Module):
     def forward(self, amp, phi):
         return torch.complex(amp * torch.cos(phi), amp * torch.sin(phi))
@@ -99,27 +80,6 @@ class UpsampleLayer(nn.Module):
         x = self.conv(x)
         return x
 
-
-class CenterPadLayer(nn.Module):
-    def __init__(self, conv_op, input_channels, output_channels):
-        super().__init__()
-        self.conv = conv_op(input_channels, output_channels, kernel_size=1)
-
-    def forward(self, x, target_spatial_shape):
-        pad = []
-        for current, target in reversed(list(zip(x.shape[2:], target_spatial_shape))):
-            total_pad = int(target) - int(current)
-            if total_pad < 0:
-                raise ValueError(
-                    f"Cannot center-pad from spatial shape {tuple(x.shape[2:])} "
-                    f"to smaller target {tuple(target_spatial_shape)}."
-                )
-            left = total_pad // 2
-            right = total_pad - left
-            pad.extend([left, right])
-        x = F.pad(x, pad, mode="constant", value=0.0)
-        x = self.conv(x)
-        return x
 
 class MambaLayer(nn.Module):
     def __init__(self, dim, d_state = 16, d_conv = 4, expand = 2, channel_token = False):
@@ -392,15 +352,11 @@ class UNetResDecoder(nn.Module):
                  num_classes,
                  n_conv_per_stage: Union[int, Tuple[int, ...], List[int]],
                  deep_supervision,
-                 nonlin_first: bool = False,
-                 center_pad_last_upsample: bool = False,
-                 drop_last_skip: bool = False):
+                 nonlin_first: bool = False):
         super().__init__()
         self.deep_supervision = deep_supervision
         self.encoder = encoder
         self.num_classes = num_classes
-        self.center_pad_last_upsample = bool(center_pad_last_upsample)
-        self.drop_last_skip = bool(drop_last_skip)
         n_stages_encoder = len(encoder.output_channels)
         if isinstance(n_conv_per_stage, int):
             n_conv_per_stage = [n_conv_per_stage] * (n_stages_encoder - 1)
@@ -417,27 +373,14 @@ class UNetResDecoder(nn.Module):
             input_features_below = encoder.output_channels[-s]
             input_features_skip = encoder.output_channels[-(s + 1)]
             stride_for_upsampling = encoder.strides[-s]
-            is_last_decoder_stage = s == n_stages_encoder - 1
 
-            if self.center_pad_last_upsample and is_last_decoder_stage:
-                upsample_layers.append(CenterPadLayer(
-                    conv_op=encoder.conv_op,
-                    input_channels=input_features_below,
-                    output_channels=input_features_skip,
-                ))
-            else:
-                upsample_layers.append(UpsampleLayer(
-                    conv_op=encoder.conv_op,
-                    input_channels=input_features_below,
-                    output_channels=input_features_skip,
-                    pool_op_kernel_size=stride_for_upsampling,
-                    mode='nearest'
-                ))
-
-            if self.drop_last_skip and is_last_decoder_stage:
-                stage_input_channels = input_features_skip
-            else:
-                stage_input_channels = 2 * input_features_skip
+            upsample_layers.append(UpsampleLayer(
+                conv_op = encoder.conv_op,
+                input_channels = input_features_below,
+                output_channels = input_features_skip,
+                pool_op_kernel_size = stride_for_upsampling,
+                mode='nearest'
+            ))
 
             stages.append(nn.Sequential(
                 BasicResBlock(
@@ -446,7 +389,7 @@ class UNetResDecoder(nn.Module):
                     norm_op_kwargs = encoder.norm_op_kwargs,
                     nonlin = encoder.nonlin,
                     nonlin_kwargs = encoder.nonlin_kwargs,
-                    input_channels = stage_input_channels,
+                    input_channels = 2 * input_features_skip,
                     output_channels = input_features_skip,
                     kernel_size = encoder.kernel_sizes[-(s + 1)],
                     padding=encoder.conv_pad_sizes[-(s + 1)],
@@ -478,13 +421,8 @@ class UNetResDecoder(nn.Module):
         lres_input = skips[-1]
         seg_outputs = []
         for s in range(len(self.stages)):
-            is_last_decoder_stage = s == len(self.stages) - 1
-            if self.center_pad_last_upsample and is_last_decoder_stage:
-                x = self.upsample_layers[s](lres_input, skips[-(s + 2)].shape[2:])
-            else:
-                x = self.upsample_layers[s](lres_input)
-            if not (self.drop_last_skip and is_last_decoder_stage):
-                x = torch.cat((x, skips[-(s+2)]), 1)
+            x = self.upsample_layers[s](lres_input)
+            x = torch.cat((x, skips[-(s+2)]), 1)
             x = self.stages[s](x)
             if self.deep_supervision:
                 seg_outputs.append(self.seg_layers[s](x))
@@ -540,10 +478,6 @@ class UMambaEnc(nn.Module):
                  phase_activation: str = 'tanh',
                  phase_logit_scale: float = 1.0,
                  threshold: float = 0.1,
-                 center_pad_last_upsample: bool = False,
-                 drop_last_skip: bool = False,
-                 center_mask_output: bool = True,
-                 center_mask_size: int = 32,
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
@@ -589,29 +523,10 @@ class UMambaEnc(nn.Module):
         )
 
         print(f"deep_supervision: {deep_supervision}")
-        print(f"center_pad_last_upsample: {center_pad_last_upsample}")
-        print(f"drop_last_skip: {drop_last_skip}")
-        print(f"center_mask_output: {center_mask_output}")
-        print(f"center_mask_size: {center_mask_size}")
-        self.decoder1 = UNetResDecoder(
-            self.encoder,
-            num_classes,
-            n_conv_per_stage_decoder,
-            deep_supervision,
-            center_pad_last_upsample=center_pad_last_upsample,
-            drop_last_skip=drop_last_skip,
-        )
-        self.decoder2 = UNetResDecoder(
-            self.encoder,
-            num_classes,
-            n_conv_per_stage_decoder,
-            deep_supervision,
-            center_pad_last_upsample=center_pad_last_upsample,
-            drop_last_skip=drop_last_skip,
-        )
+        self.decoder1 = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
+        self.decoder2 = UNetResDecoder(self.encoder, num_classes, n_conv_per_stage_decoder, deep_supervision)
 
         self.phi_layer = PhiLayer()                 # Index 89
-        self.center_mask_layer = CenterMaskLayer(center_mask_output, center_mask_size)
         self.obj_layer = ObjLayer()                 # Index 90
         self.support_layer = SupportLayer(threshold)# Index 91
         self.masked_obj_layer = MaskedObjLayer()    # Index 92
@@ -627,14 +542,11 @@ class UMambaEnc(nn.Module):
         skips = self.encoder(x)
         amp = nn.Sigmoid()(self.decoder1(skips))
         ph = self.phase_from_logits(self.decoder2(skips))
-        center_mask = self.center_mask_layer(amp)
-        amp = amp * center_mask
-        ph = ph * center_mask
 
         # --- Index 91: support ---
         # 对应 TF: Lambda(lambda x: get_mask(x))
         # 注意：TF 图中 support 依赖 amp，虽然索引在 Obj 后面，但数据流通常是并行的
-        support = self.support_layer(amp) * center_mask
+        support = self.support_layer(amp)
 
         # --- Index 90: Obj ---
         # 对应 TF: Lambda(lambda x: combine_complex...)([decoded1, decoded2])
@@ -670,10 +582,6 @@ def get_umamba_enc_3d_from_plans(
         phase_activation: str = 'tanh',
         phase_logit_scale: float = 1.0,
         threshold: float = 0.1,
-        center_pad_last_upsample: bool = False,
-        drop_last_skip: bool = False,
-        center_mask_output: bool = True,
-        center_mask_size: int = 32,
     ):
     """
     we may have to change this in the future to accommodate other plans -> network mappings
@@ -719,10 +627,6 @@ def get_umamba_enc_3d_from_plans(
         phase_activation=phase_activation,
         phase_logit_scale=phase_logit_scale,
         threshold=threshold,
-        center_pad_last_upsample=center_pad_last_upsample,
-        drop_last_skip=drop_last_skip,
-        center_mask_output=center_mask_output,
-        center_mask_size=center_mask_size,
         **conv_or_blocks_per_stage,
         **kwargs[segmentation_network_class_name]
     )

@@ -103,38 +103,6 @@ def parse_args():
     parser.add_argument("--model-name", choices=["umamba", "autophasenn", "autophasenn_relu"], default="umamba")
     parser.add_argument("--phase-activation", choices=["tanh", "atan"], default="tanh")
     parser.add_argument("--phase-logit-scale", type=float, default=1.0)
-    parser.add_argument(
-        "--center-pad-last-upsample",
-        "--center_pad_last_upsample",
-        dest="center_pad_last_upsample",
-        type=str2bool,
-        default=False,
-        help="For UMamba, replace only the final decoder upsample with center zero-padding.",
-    )
-    parser.add_argument(
-        "--drop-last-skip",
-        "--drop_last_skip",
-        dest="drop_last_skip",
-        type=str2bool,
-        default=False,
-        help="For UMamba, also remove the outermost skip in the final decoder stage.",
-    )
-    parser.add_argument(
-        "--center-mask-output",
-        "--center_mask_output",
-        dest="center_mask_output",
-        type=str2bool,
-        default=True,
-        help="For UMamba, multiply amp/phase by a fixed centered cube mask after decoder output.",
-    )
-    parser.add_argument(
-        "--center-mask-size",
-        "--center_mask_size",
-        dest="center_mask_size",
-        type=int,
-        default=32,
-        help="Centered cube edge length for --center-mask-output.",
-    )
     parser.add_argument("--checkpoint", default="/home/oyys/code/UMamba-AutoPhaseNN/umamba_training_pipeline/output/umamba_overfit1000_l1_20260603_171121/best_model.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
@@ -253,10 +221,6 @@ def main():
             {
                 "seed": args.seed,
                 "model_name": args.model_name,
-                "center_pad_last_upsample": args.center_pad_last_upsample,
-                "drop_last_skip": args.drop_last_skip,
-                "center_mask_output": args.center_mask_output,
-                "center_mask_size": args.center_mask_size,
                 "dataset_size": args.dataset_size,
                 "sample_pool_size": sample_pool_size,
                 "overfit_samples": args.overfit_samples,
