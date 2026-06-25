@@ -26,18 +26,28 @@ class PhiLayer(nn.Module):
         return x * torch.pi
 
 
+# class SupportLayer(nn.Module):
+#     def __init__(self, threshold=0.1):
+#         super().__init__()
+#         self.threshold = threshold
+
+#     def forward(self, amp):
+#         return torch.where(
+#             amp >= self.threshold,
+#             torch.ones_like(amp),
+#             torch.zeros_like(amp),
+#         )
+
 class SupportLayer(nn.Module):
     def __init__(self, threshold=0.1):
         super().__init__()
         self.threshold = threshold
 
     def forward(self, amp):
-        return torch.where(
-            amp >= self.threshold,
-            torch.ones_like(amp),
-            torch.zeros_like(amp),
-        )
-
+        # 用 sigmoid 近似阶跃函数，处处可微
+        # steepness 控制陡峭程度，越大越接近原来的硬阈值
+        steepness = 50.0
+        return torch.sigmoid(steepness * (amp - self.threshold))
 
 class ObjLayer(nn.Module):
     def forward(self, amp, phi):

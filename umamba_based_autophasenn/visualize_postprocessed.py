@@ -106,7 +106,7 @@ def plot_rows(rows, names, output_png):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="TF test-style PyTorch visualization.")
-    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt")
+    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/umamba.pt")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
