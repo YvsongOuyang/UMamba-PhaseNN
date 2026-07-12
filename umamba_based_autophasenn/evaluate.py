@@ -41,7 +41,7 @@ def optional_data_path(data_dir, filename):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a UMamba checkpoint with AutoPhaseNN pipeline metrics.")
-    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/umamba.pth")
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")

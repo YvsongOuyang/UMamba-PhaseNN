@@ -122,7 +122,7 @@ def main():
         help="Restrict the visualization pool to the same first N samples used by train.py --overfit-samples.",
     )
     parser.add_argument("--num-samples", type=int, default=5)
-    parser.add_argument("--seed", type=int, default=43)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--sample-mode",
         choices=["seeded", "first"],

@@ -1,72 +1,72 @@
 {
-  "seed": 43,
+  "seed": 42,
   "dataset_size": 5000,
   "sample_pool_size": 5000,
   "overfit_samples": 5000,
   "sample_mode": "seeded",
   "num_samples": 5,
   "sample_names": [
-    "val_diff_002911",
-    "val_diff_002895",
-    "val_diff_004330",
-    "val_diff_003569",
-    "val_diff_004712"
+    "val_diff_001383",
+    "val_diff_001881",
+    "val_diff_004901",
+    "val_diff_001524",
+    "val_diff_004654"
   ],
   "per_sample": [
     {
-      "name": "val_diff_002911",
-      "paper_modulus_mae": 5.18825626373291,
-      "chi2_modulus": 0.024378295987844467,
-      "relative_l1_modulus": 0.399055540561676,
-      "relative_log_mse": 0.13930416107177734,
-      "pearson_corr": 0.9877965450286865,
-      "pearson_loss": 0.012203454971313477,
-      "voxel_mse": 203.5189208984375,
-      "voxel_rmse": 14.266005516052246
+      "name": "val_diff_001383",
+      "paper_modulus_mae": 4.639603614807129,
+      "chi2_modulus": 0.023038100451231003,
+      "relative_l1_modulus": 0.38393500447273254,
+      "relative_log_mse": 0.12400821596384048,
+      "pearson_corr": 0.9890241026878357,
+      "pearson_loss": 0.010975897312164307,
+      "voxel_mse": 107.4676284790039,
+      "voxel_rmse": 10.366659164428711
     },
     {
-      "name": "val_diff_002895",
-      "paper_modulus_mae": 2.920109748840332,
-      "chi2_modulus": 0.0037356745451688766,
-      "relative_l1_modulus": 0.22349868714809418,
-      "relative_log_mse": 0.09352777153253555,
-      "pearson_corr": 0.9981638789176941,
-      "pearson_loss": 0.0018361210823059082,
-      "voxel_mse": 33.91148376464844,
-      "voxel_rmse": 5.823356628417969
+      "name": "val_diff_001881",
+      "paper_modulus_mae": 3.1315412521362305,
+      "chi2_modulus": 0.004630033392459154,
+      "relative_l1_modulus": 0.2554287314414978,
+      "relative_log_mse": 0.11056284606456757,
+      "pearson_corr": 0.997755229473114,
+      "pearson_loss": 0.0022447705268859863,
+      "voxel_mse": 31.21392059326172,
+      "voxel_rmse": 5.586942195892334
     },
     {
-      "name": "val_diff_004330",
-      "paper_modulus_mae": 3.243600368499756,
-      "chi2_modulus": 0.007155589759349823,
-      "relative_l1_modulus": 0.2512836456298828,
-      "relative_log_mse": 0.0796888917684555,
-      "pearson_corr": 0.9963117241859436,
-      "pearson_loss": 0.0036882758140563965,
-      "voxel_mse": 26.68984031677246,
-      "voxel_rmse": 5.1662211418151855
+      "name": "val_diff_004901",
+      "paper_modulus_mae": 2.8235578536987305,
+      "chi2_modulus": 0.02923314832150936,
+      "relative_l1_modulus": 0.34843188524246216,
+      "relative_log_mse": 0.12087486684322357,
+      "pearson_corr": 0.9840759038925171,
+      "pearson_loss": 0.01592409610748291,
+      "voxel_mse": 21.32861328125,
+      "voxel_rmse": 4.61829137802124
     },
     {
-      "name": "val_diff_003569",
-      "paper_modulus_mae": 3.2686972618103027,
-      "chi2_modulus": 0.011111591011285782,
-      "relative_l1_modulus": 0.32222849130630493,
-      "relative_log_mse": 0.12829183042049408,
-      "pearson_corr": 0.9942894577980042,
-      "pearson_loss": 0.00571054220199585,
-      "voxel_mse": 37.50373840332031,
-      "voxel_rmse": 6.124029636383057
+      "name": "val_diff_001524",
+      "paper_modulus_mae": 3.8509559631347656,
+      "chi2_modulus": 0.01485841628164053,
+      "relative_l1_modulus": 0.354531854391098,
+      "relative_log_mse": 0.12946003675460815,
+      "pearson_corr": 0.9929547905921936,
+      "pearson_loss": 0.0070452094078063965,
+      "voxel_mse": 48.0038948059082,
+      "voxel_rmse": 6.9284844398498535
     },
     {
-      "name": "val_diff_004712",
-      "paper_modulus_mae": 4.249156951904297,
-      "chi2_modulus": 0.02613745629787445,
-      "relative_l1_modulus": 0.3853658139705658,
-      "relative_log_mse": 0.12141969054937363,
-      "pearson_corr": 0.9863215088844299,
-      "pearson_loss": 0.013678491115570068,
-      "voxel_mse": 52.39727783203125,
-      "voxel_rmse": 7.238596439361572
+      "name": "val_diff_004654",
+      "paper_modulus_mae": 4.6641435623168945,
+      "chi2_modulus": 0.041343268007040024,
+      "relative_l1_modulus": 0.37009197473526,
+      "relative_log_mse": 0.11859956383705139,
+      "pearson_corr": 0.979159414768219,
+      "pearson_loss": 0.020840585231781006,
+      "voxel_mse": 175.62469482421875,
+      "voxel_rmse": 13.252346992492676
     }
   ]
 }
