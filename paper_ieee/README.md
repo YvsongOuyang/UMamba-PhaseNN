@@ -23,20 +23,37 @@ If a figure is missing, `main.tex` will render a placeholder box.
 
 ## Build
 
-Use a TeX distribution with `IEEEtran` installed. For example:
+This workspace uses MiKTeX installed at:
 
-```bash
-latexmk -pdf main.tex
+```text
+D:\Program Files\MiKTeX\miktex\bin\x64
 ```
 
-or:
+In TeXworks:
 
-```bash
-pdflatex main.tex
+1. Open `main.tex`.
+2. Select `pdfLaTeX` in the green compile drop-down.
+3. Run `pdfLaTeX`.
+4. Run `BibTeX`.
+5. Run `pdfLaTeX` twice more.
+
+From PowerShell:
+
+```powershell
+$bin = "D:\Program Files\MiKTeX\miktex\bin\x64"
+$env:Path = "$bin;$env:Path"
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
 bibtex main
-pdflatex main.tex
-pdflatex main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-The current Windows workspace did not have `latexmk`, `pdflatex`, or `xelatex`
-available, so compilation was not run locally.
+If MiKTeX asks to install a missing package, choose install. The compiled PDF is
+`main.pdf`.
+
+## Editing
+
+- Write the paper body in `sections/*.tex`.
+- Keep `main.tex` for document setup, title, abstract, and section imports.
+- Put images in `figures/` using the filenames listed above.
+- Missing figures render as placeholder boxes so the draft remains compilable.

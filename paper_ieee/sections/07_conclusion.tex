@@ -1,8 +1,11 @@
 \section{Conclusion}
 
-This draft establishes an IEEE-style paper structure for reporting the
-AutoPhaseNN reproduction and UMamba replacement experiments. The main open issue
-is the mismatch between Fourier-domain fitting quality and real-space physical
-correctness. Future work should focus on isolating the role of spatial support
-priors and designing constraints that preserve physical plausibility without
+This work frames the current experiments as a controlled study of neural phase
+retrieval rather than only as a backbone replacement. Reproducing AutoPhaseNN
+provides a reference pipeline, while the UMamba replacement tests whether a
+different architecture can preserve the same physical behavior under aligned
+training and evaluation conditions. The main open issue is the mismatch between
+Fourier-domain fitting quality and real-space physical correctness. Future work
+should focus on isolating the role of spatial support priors and designing hard
+or architecture-level constraints that preserve physical plausibility without
 overcomplicating the loss function.

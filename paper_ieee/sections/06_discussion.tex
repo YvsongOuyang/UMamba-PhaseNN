@@ -6,10 +6,30 @@ incorrect object support or phase distribution. This is consistent with the
 ill-posed nature of phase retrieval: multiple real-space configurations may
 produce similar diffraction-domain errors unless additional priors are imposed.
 
-The original AutoPhaseNN decoder appears to encode stronger spatial structure
-through its architecture and post-processing assumptions. In contrast, the
-UMamba replacement must be examined carefully to determine whether it preserves
-the same support prior or only matches the Fourier-domain objective.
+\subsection{Why Far-field Fitting Can Be Misleading}
+The far-field objective observes only the magnitude of the Fourier transform.
+Consequently, it does not uniquely supervise the object-domain phase, support,
+or spatial localization. The post-processing layer couples these variables, but
+the loss is still applied after the FFT. A model can therefore exploit degrees
+of freedom in amplitude and phase while still reducing the far-field residual.
 
-\todo{Add analysis of square/central support prior, oversampling assumptions,
-and whether hard masking or architecture-level constraints are needed.}
+\subsection{What the AutoPhaseNN Prior Provides}
+The original AutoPhaseNN decoder appears to encode stronger spatial structure
+through its architecture and post-processing assumptions. This prior may not be
+a single explicit loss term. Instead, it can arise from the combination of
+decoder topology, upsampling behavior, activation ranges, hard support masking,
+and the oversampled diffraction setting. The practical effect is that the
+network is biased toward compact object-domain solutions.
+
+\subsection{Implication for Model Design}
+The comparison suggests that replacing the backbone is not sufficient unless
+the replacement preserves the physical bias of the original pipeline. A useful
+future model should either inherit a hard spatial prior from its architecture or
+enforce the prior through a simple post-processing constraint. Soft auxiliary
+losses may help optimization, but they should not be presented as the central
+solution unless they demonstrably improve real-space amplitude, phase, and
+support at the same time.
+
+\todo{Add concise analysis of the square/central support prior and oversampling
+assumption, but keep the discussion focused on what is needed for the proposed
+model design.}

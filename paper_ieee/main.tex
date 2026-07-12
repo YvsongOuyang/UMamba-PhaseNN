@@ -47,14 +47,16 @@ email@example.com}
 \maketitle
 
 \begin{abstract}
-This paper investigates neural phase retrieval for coherent diffraction imaging.
-We first reproduce an AutoPhaseNN-style pipeline and then replace the backbone
-with a UMamba-based model while keeping the data flow, Fourier-domain
-post-processing, and evaluation protocol aligned. Preliminary experiments show
-that Fourier-domain losses alone can be misleading: models may obtain competitive
-diffraction fitting metrics while producing poor real-space amplitude, phase, or
-support reconstructions. We analyze this gap and discuss the role of spatial
-support priors in neural phase retrieval.
+This paper investigates neural phase retrieval for coherent diffraction imaging
+through a controlled reproduction and model-replacement study. We first
+reproduce an AutoPhaseNN-style pipeline, then replace the original convolutional
+backbone with a UMamba-based model while keeping the data flow, Fourier-domain
+post-processing, training objective, checkpointing, and evaluation protocol
+aligned. The experiments reveal a practical failure mode: far-field fitting
+metrics can improve while the reconstructed real-space amplitude, phase, and
+support remain physically implausible. We use this gap to analyze which parts of
+the AutoPhaseNN pipeline provide effective spatial priors and what must be
+controlled before attributing performance differences to the backbone itself.
 \end{abstract}
 
 \begin{IEEEkeywords}

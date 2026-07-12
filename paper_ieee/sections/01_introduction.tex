@@ -9,9 +9,11 @@ Deep neural networks offer a data-driven alternative to iterative phase
 retrieval algorithms. AutoPhaseNN demonstrates that a convolutional neural
 network can be trained to map diffraction amplitudes to object-domain amplitude
 and phase, followed by a differentiable Fourier-domain reconstruction step.
-In this work, we use AutoPhaseNN as the reproduction baseline and investigate
-whether a UMamba-based architecture can replace the original backbone under the
-same training and evaluation protocol.
+In this work, AutoPhaseNN is used first as a reproduction target rather than
+only as a baseline. This choice is important: before testing a new architecture,
+the data preprocessing, Fourier projection, support masking, checkpoint loading,
+and evaluation metrics must match the reference pipeline closely enough that
+model differences are not confused with implementation differences.
 
 The current experimental evidence suggests a central problem: optimizing
 diffraction-domain L1 loss alone does not guarantee a physically meaningful
@@ -19,14 +21,21 @@ real-space solution. This motivates a careful comparison between Fourier-domain
 metrics and real-space metrics such as amplitude error, phase error, and support
 agreement.
 
+The main question is therefore not simply whether a UMamba-based network can
+reduce far-field loss. The more useful question is whether it can do so while
+recovering an object-domain representation that is consistent with the physical
+support and phase structure expected by the phase retrieval problem. This paper
+reports the current reproduction results, the UMamba replacement experiments,
+and the diagnostic evidence behind this distinction.
+
 The contributions of this draft are:
 \begin{itemize}
   \item We establish a reproducible AutoPhaseNN-style PyTorch training and
   evaluation pipeline.
   \item We compare the original AutoPhaseNN backbone and UMamba-based variants
   under aligned data loading, post-processing, checkpointing, and metrics.
-  \item We analyze why Fourier-domain fitting can be inconsistent with
-  real-space reconstruction quality.
-  \item We discuss spatial support priors as a key factor for stable phase
-  retrieval.
+  \item We show how far-field losses can be inconsistent with real-space
+  reconstruction quality, especially when support structure is weakly enforced.
+  \item We organize the evidence for spatial support priors as a key factor in
+  stable neural phase retrieval.
 \end{itemize}

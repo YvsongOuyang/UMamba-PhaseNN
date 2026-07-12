@@ -9,7 +9,7 @@ volume. The measured diffraction modulus is
 where $\mathcal{F}$ denotes the 3D Fourier transform. The network receives $y$
 and predicts object-domain amplitude $\hat{a}$ and phase $\hat{\phi}$.
 
-\subsection{Post-processing Layer}
+\subsection{Network Output and Post-processing}
 The predicted complex object is constructed as
 \begin{equation}
   \hat{x} = s(\hat{a}) \cdot \hat{a}\exp(i\hat{\phi}),
@@ -27,6 +27,11 @@ The predicted diffraction modulus is
 \begin{equation}
   \hat{y} = \left|\mathcal{F}\{\operatorname{ifftshift}(\hat{x})\}\right|.
 \end{equation}
+This layer is central to the comparison because it couples three quantities:
+the predicted amplitude determines the support mask, the support mask gates the
+complex object, and the gated object determines the far-field loss. A low
+far-field error therefore does not directly imply that $\hat{a}$, $\hat{\phi}$,
+or $s(\hat{a})$ are individually correct.
 
 \subsection{Training Objective}
 The main training objective follows the paper-style far-field modulus L1 loss:
@@ -37,10 +42,27 @@ The main training objective follows the paper-style far-field modulus L1 loss:
 Additional real-space metrics are reported for diagnosis, but the default
 AutoPhaseNN reproduction uses only the diffraction-domain loss.
 
+\subsection{Controlled Backbone Replacement}
+The UMamba experiment is designed as a controlled replacement rather than a new
+pipeline. The intended controlled variables are:
+\begin{itemize}
+  \item identical train/validation sample selection;
+  \item identical preprocessing of diffraction, amplitude, and phase tensors;
+  \item identical physical post-processing from amplitude and phase to far-field
+  modulus;
+  \item identical far-field training loss unless an ablation explicitly changes
+  it;
+  \item identical evaluation metrics and visualization protocol.
+\end{itemize}
+Under this setup, any persistent difference in reconstruction quality is more
+likely to come from the model architecture or from the strength of the encoded
+spatial prior.
+
 \subsection{Model Variants}
 We compare the following models:
 \begin{itemize}
   \item AutoPhaseNN reproduction with the original convolutional architecture.
   \item UMamba replacement with the same data and post-processing pipeline.
-  \item UMamba variants with modified support thresholding or spatial priors.
+  \item UMamba variants with modified support thresholding or explicit spatial
+  priors.
 \end{itemize}
