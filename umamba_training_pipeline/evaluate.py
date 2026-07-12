@@ -8,8 +8,10 @@ from tqdm import tqdm
 
 from dataset import AutoPhaseDataset
 from losses import (
+    FIXED_METRIC_DESCRIPTIONS,
     METRIC_DESCRIPTIONS,
-    format_metric_groups,
+    fixed_metric_groups,
+    format_fixed_metric_groups,
     group_metrics,
     metric_dict,
     realspace_metric_dict,
@@ -145,6 +147,8 @@ def main():
         "num_samples": len(per_sample),
         "scale_align_loss": args.scale_align_loss,
         "realspace_metrics": has_realspace,
+        "fixed_metric_groups": fixed_metric_groups(mean_metrics),
+        "fixed_metric_descriptions": FIXED_METRIC_DESCRIPTIONS,
         "metric_groups": group_metrics(mean_metrics),
         "metric_descriptions": METRIC_DESCRIPTIONS,
         "metric_notes": {
@@ -160,7 +164,7 @@ def main():
     output_json = Path(args.output_json)
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_json.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(format_metric_groups(report["mean"], title="Evaluation mean metrics"), flush=True)
+    print(format_fixed_metric_groups(report["mean"], title="Evaluation mean metrics"), flush=True)
 
 
 if __name__ == "__main__":

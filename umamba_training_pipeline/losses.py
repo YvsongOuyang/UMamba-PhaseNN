@@ -263,6 +263,84 @@ METRIC_DESCRIPTIONS = {
 }
 
 
+FIXED_EVALUATION_GROUPS = {
+    "FT": [
+        ("L1", "paper_modulus_mae"),
+        ("RelL1", "relative_l1_modulus"),
+        ("Chi2", "chi2_modulus"),
+        ("LogMSE", "relative_log_mse"),
+        ("PCCLoss", "pearson_loss"),
+        ("PCC", "pearson_corr"),
+    ],
+    "Amplitude": [
+        ("L1", "real_amp_l1"),
+        ("MSE", "real_amp_mse"),
+        ("RMSE", "real_amp_rmse"),
+        ("GlobalSSIM", "real_amp_global_ssim"),
+    ],
+    "Phase": [
+        ("MAE_true_support", "real_phase_mae_true_support"),
+        ("RMSE_true_support", "real_phase_rmse_true_support"),
+        ("MAE_support_intersection", "real_phase_mae_intersection"),
+    ],
+    "Support": [
+        ("IoU", "real_support_iou"),
+        ("Dice", "real_support_dice"),
+        ("TrueFraction", "real_support_true_fraction"),
+        ("PredFraction", "real_support_pred_fraction"),
+        ("VolumeRatio", "real_support_volume_ratio"),
+    ],
+}
+
+
+FIXED_METRIC_DESCRIPTIONS = {
+    "FT/L1": "Far-field diffraction modulus L1. This is the paper-style primary fitting loss.",
+    "FT/RelL1": "Far-field L1 normalized by target modulus sum.",
+    "FT/Chi2": "Far-field chi-square style relative squared error.",
+    "FT/LogMSE": "Far-field log-domain relative MSE.",
+    "FT/PCCLoss": "1 - far-field Pearson correlation.",
+    "FT/PCC": "Far-field Pearson correlation.",
+    "Amplitude/L1": "Full-volume real-space amplitude L1.",
+    "Amplitude/MSE": "Full-volume real-space amplitude MSE.",
+    "Amplitude/RMSE": "Full-volume real-space amplitude RMSE.",
+    "Amplitude/GlobalSSIM": "Global 3D SSIM-like amplitude score.",
+    "Phase/MAE_true_support": "Wrapped phase MAE on true support.",
+    "Phase/RMSE_true_support": "Wrapped phase RMSE on true support.",
+    "Phase/MAE_support_intersection": "Wrapped phase MAE on true/predicted support intersection.",
+    "Support/IoU": "Support intersection-over-union.",
+    "Support/Dice": "Support Dice score.",
+    "Support/TrueFraction": "True support volume fraction.",
+    "Support/PredFraction": "Predicted support volume fraction.",
+    "Support/VolumeRatio": "Predicted support volume divided by true support volume.",
+}
+
+
+def fixed_metric_groups(metrics):
+    grouped = {}
+    for group_name, entries in FIXED_EVALUATION_GROUPS.items():
+        group = {}
+        for display_name, metric_key in entries:
+            if metric_key in metrics:
+                group[display_name] = metrics[metric_key]
+        if group:
+            grouped[group_name] = group
+    return grouped
+
+
+def format_fixed_metric_groups(metrics, title=None):
+    lines = []
+    if title:
+        lines.append(title)
+    for group_name, group in fixed_metric_groups(metrics).items():
+        lines.append(f"{group_name}:")
+        for key, value in group.items():
+            if isinstance(value, (int, float)):
+                lines.append(f"  {key}: {value:.6g}")
+            else:
+                lines.append(f"  {key}: {value}")
+    return "\n".join(lines)
+
+
 def group_metrics(metrics):
     grouped = {}
     used = set()
