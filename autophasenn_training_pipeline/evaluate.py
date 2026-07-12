@@ -20,6 +20,10 @@ from losses import (
 from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
+DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
+DEFAULT_CHECKPOINT_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_best.pt"
+
+
 def choose_device(name):
     if name == "cuda" and not torch.cuda.is_available():
         print("CUDA requested but unavailable; falling back to CPU.")
@@ -41,7 +45,7 @@ def optional_data_path(data_dir, filename):
 @torch.no_grad()
 def main():
     parser = argparse.ArgumentParser(description="Evaluate an AutoPhaseNN PyTorch checkpoint.")
-    parser.add_argument("--checkpoint", default="/data_ssd/oyys/autophasenn/autophasenn.pth")
+    parser.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT_PATH)
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
@@ -87,6 +91,15 @@ def main():
     model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
     checkpoint = load_weights(model, args.checkpoint, map_location=device)
     epoch = checkpoint.get("epoch", None) if isinstance(checkpoint, dict) else None
+    best_val = checkpoint.get("best_val", None) if isinstance(checkpoint, dict) else None
+    print("\nEvaluation checkpoint", flush=True)
+    print(f"Path: {args.checkpoint}", flush=True)
+    print(f"Epoch: {epoch} | best_val: {best_val}", flush=True)
+    print(
+        f"Data: diff={data_dir / args.data_diff} | real={optional_data_path(data_dir, args.data_real)} | "
+        f"samples={num_samples} | scale_i={args.scale_i} | scale_align_loss={args.scale_align_loss}",
+        flush=True,
+    )
     model.eval()
 
     total = {}
