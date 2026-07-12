@@ -1,0 +1,27 @@
+\section{Experiments}
+
+\subsection{Dataset}
+The experiments use simulated 3D diffraction data and corresponding real-space
+complex volumes. The training split contains \todo{number} samples and the
+validation/test split contains \todo{number} samples. Each sample has spatial
+size $64^3$.
+
+\subsection{Training Setup}
+Unless otherwise specified, models are trained from scratch with Adam and an
+initial learning rate of \todo{learning rate}. The default loss is far-field L1.
+For small-sample debugging, we also use an overfitting protocol in which a fixed
+subset of samples is used for both training and validation.
+
+\subsection{Evaluation Metrics}
+We report fixed metric groups:
+\begin{itemize}
+  \item FT metrics: L1, MSE, RMSE, and relative L1 of diffraction modulus.
+  \item Amplitude metrics: full-volume L1, MSE, RMSE, and relative L1.
+  \item Phase metrics: wrapped phase error on the true support.
+  \item Support metrics: L1, IoU, Dice score, and predicted support fraction.
+\end{itemize}
+
+\subsection{Implementation Details}
+The AutoPhaseNN and UMamba pipelines share the same dataset interface,
+post-processing logic, checkpoint format, and evaluation scripts wherever
+possible. This controls for non-model factors in the comparison.

@@ -1,0 +1,34 @@
+\section{Results}
+
+\placeholderfigure{fig_autophasenn_reproduction.png}{AutoPhaseNN reproduction visualization.}
+
+\placeholderfigure{fig_umamba_original.png}{UMamba original hard-threshold visualization.}
+
+\placeholderfigure{fig_umamba_soft_threshold.png}{UMamba soft-threshold visualization.}
+
+\placeholderfigure{fig_training_curves.png}{Training and validation loss curves from TensorBoard event files.}
+
+\begin{table}[!t]
+  \caption{Evaluation Metrics of Model Variants}
+  \label{tab:main_results}
+  \centering
+  \begin{tabular}{lcccc}
+    \toprule
+    Model & FT L1 $\downarrow$ & Amp L1 $\downarrow$ & Phase L1 $\downarrow$ & Support IoU $\uparrow$ \\
+    \midrule
+    AutoPhaseNN & \todo{} & \todo{} & \todo{} & \todo{} \\
+    UMamba & \todo{} & \todo{} & \todo{} & \todo{} \\
+    UMamba + soft threshold & \todo{} & \todo{} & \todo{} & \todo{} \\
+    UMamba + spatial prior & \todo{} & \todo{} & \todo{} & \todo{} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{AutoPhaseNN Reproduction}
+\todo{Summarize reproduced AutoPhaseNN visual results and numerical metrics.}
+
+\subsection{UMamba Replacement}
+\todo{Summarize UMamba FT metrics, real-space reconstruction quality, and failure modes.}
+
+\subsection{Effect of Support Thresholding}
+\todo{Discuss hard threshold versus soft threshold results.}

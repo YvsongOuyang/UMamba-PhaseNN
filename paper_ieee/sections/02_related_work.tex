@@ -1,0 +1,21 @@
+\section{Related Work}
+
+\subsection{Classical Phase Retrieval}
+Classical phase retrieval methods usually combine Fourier-domain consistency
+with object-domain constraints such as finite support, positivity, and
+oversampling assumptions~\cite{gerchberg1972practical,fienup1982phase}.
+\todo{Add references to HIO and oversampling theory.}
+
+\subsection{AutoPhaseNN}
+AutoPhaseNN trains a neural network to predict object-domain amplitude and phase
+from diffraction measurements. The predicted amplitude and phase are converted
+into a complex object, masked by a support constraint, and transformed back to
+the far field with FFT~\cite{autophasenn}. The training loss is then computed
+in the diffraction domain.
+
+\subsection{State Space Models and UMamba}
+Mamba and UMamba introduce state-space sequence modeling into vision and medical
+image segmentation architectures~\cite{gu2023mamba,umamba}. UMamba-style blocks
+may provide a larger effective receptive field than local convolution alone, but
+the architecture does not necessarily encode the same hard spatial support prior
+as the original AutoPhaseNN decoder.

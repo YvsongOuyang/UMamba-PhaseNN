@@ -1,0 +1,46 @@
+\section{Method}
+
+\subsection{Problem Formulation}
+Let $x \in \mathbb{C}^{N \times N \times N}$ denote the object-domain complex
+volume. The measured diffraction modulus is
+\begin{equation}
+  y = \left|\mathcal{F}\{x\}\right|,
+\end{equation}
+where $\mathcal{F}$ denotes the 3D Fourier transform. The network receives $y$
+and predicts object-domain amplitude $\hat{a}$ and phase $\hat{\phi}$.
+
+\subsection{Post-processing Layer}
+The predicted complex object is constructed as
+\begin{equation}
+  \hat{x} = s(\hat{a}) \cdot \hat{a}\exp(i\hat{\phi}),
+\end{equation}
+where $s(\hat{a})$ is the support mask. In the AutoPhaseNN-style pipeline, a
+hard support threshold is applied:
+\begin{equation}
+  s(\hat{a}) =
+  \begin{cases}
+  1, & \hat{a} \geq T,\\
+  0, & \hat{a} < T.
+  \end{cases}
+\end{equation}
+The predicted diffraction modulus is
+\begin{equation}
+  \hat{y} = \left|\mathcal{F}\{\operatorname{ifftshift}(\hat{x})\}\right|.
+\end{equation}
+
+\subsection{Training Objective}
+The main training objective follows the paper-style far-field modulus L1 loss:
+\begin{equation}
+  \mathcal{L}_{FT} = \frac{1}{|\Omega|}\sum_{v \in \Omega}
+  \left| \hat{y}_v - y_v \right|.
+\end{equation}
+Additional real-space metrics are reported for diagnosis, but the default
+AutoPhaseNN reproduction uses only the diffraction-domain loss.
+
+\subsection{Model Variants}
+We compare the following models:
+\begin{itemize}
+  \item AutoPhaseNN reproduction with the original convolutional architecture.
+  \item UMamba replacement with the same data and post-processing pipeline.
+  \item UMamba variants with modified support thresholding or spatial priors.
+\end{itemize}

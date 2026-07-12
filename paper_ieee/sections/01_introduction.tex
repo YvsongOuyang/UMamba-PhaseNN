@@ -1,0 +1,32 @@
+\section{Introduction}
+
+Phase retrieval aims to recover a complex-valued object from diffraction
+measurements whose phase information is not directly observed. In coherent
+diffraction imaging, this inverse problem is highly non-linear and admits
+ambiguities unless additional physical priors are imposed.
+
+Deep neural networks offer a data-driven alternative to iterative phase
+retrieval algorithms. AutoPhaseNN demonstrates that a convolutional neural
+network can be trained to map diffraction amplitudes to object-domain amplitude
+and phase, followed by a differentiable Fourier-domain reconstruction step.
+In this work, we use AutoPhaseNN as the reproduction baseline and investigate
+whether a UMamba-based architecture can replace the original backbone under the
+same training and evaluation protocol.
+
+The current experimental evidence suggests a central problem: optimizing
+diffraction-domain L1 loss alone does not guarantee a physically meaningful
+real-space solution. This motivates a careful comparison between Fourier-domain
+metrics and real-space metrics such as amplitude error, phase error, and support
+agreement.
+
+The contributions of this draft are:
+\begin{itemize}
+  \item We establish a reproducible AutoPhaseNN-style PyTorch training and
+  evaluation pipeline.
+  \item We compare the original AutoPhaseNN backbone and UMamba-based variants
+  under aligned data loading, post-processing, checkpointing, and metrics.
+  \item We analyze why Fourier-domain fitting can be inconsistent with
+  real-space reconstruction quality.
+  \item We discuss spatial support priors as a key factor for stable phase
+  retrieval.
+\end{itemize}

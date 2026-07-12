@@ -1,0 +1,15 @@
+\section{Discussion}
+
+The experiments indicate that diffraction-domain loss alone can be insufficient
+for judging reconstruction quality. A model may reduce FT L1 while producing an
+incorrect object support or phase distribution. This is consistent with the
+ill-posed nature of phase retrieval: multiple real-space configurations may
+produce similar diffraction-domain errors unless additional priors are imposed.
+
+The original AutoPhaseNN decoder appears to encode stronger spatial structure
+through its architecture and post-processing assumptions. In contrast, the
+UMamba replacement must be examined carefully to determine whether it preserves
+the same support prior or only matches the Fourier-domain objective.
+
+\todo{Add analysis of square/central support prior, oversampling assumptions,
+and whether hard masking or architecture-level constraints are needed.}
