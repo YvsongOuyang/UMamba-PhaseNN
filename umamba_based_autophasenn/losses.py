@@ -146,6 +146,18 @@ def masked_reduce(values, mask, reduction="mean"):
     return reduce_per_sample(per_sample, reduction)
 
 
+def relative_abs_error(y_true, abs_error, mask=None, reduction="mean"):
+    if mask is not None:
+        mask = mask.float()
+        y_true = y_true * mask
+        abs_error = abs_error * mask
+    true = flatten_sample(y_true)
+    err = flatten_sample(abs_error)
+    numerator = torch.sum(err, dim=1)
+    denominator = torch.sum(torch.abs(true), dim=1)
+    return reduce_per_sample(numerator / (denominator + EPS), reduction)
+
+
 @torch.no_grad()
 def realspace_metric_dict(true_amp, true_phi, pred_amp, pred_phi, pred_support=None, threshold=0.1):
     """Metrics for the reconstructed real-space object."""
@@ -169,20 +181,31 @@ def realspace_metric_dict(true_amp, true_phi, pred_amp, pred_phi, pred_support=N
 
     phase_err = wrapped_phase_abs_error(true_phi, pred_phi)
     phase_sq = phase_err**2
+    phase_mse_true_support = masked_reduce(phase_sq, true_support)
+    support_abs_error = torch.abs(pred_support - true_support)
+    support_mse = F.mse_loss(pred_support, true_support)
 
     return {
         "real_amp_l1": float(F.l1_loss(pred_amp, true_amp).detach().cpu()),
         "real_amp_mse": float(F.mse_loss(pred_amp, true_amp).detach().cpu()),
         "real_amp_rmse": float(torch.sqrt(F.mse_loss(pred_amp, true_amp) + EPS).detach().cpu()),
+        "real_amp_rel_l1": float(relative_abs_error(true_amp, torch.abs(pred_amp - true_amp)).detach().cpu()),
         "real_amp_global_ssim": float(global_ssim(true_amp, pred_amp).detach().cpu()),
+        "real_support_l1": float(F.l1_loss(pred_support, true_support).detach().cpu()),
+        "real_support_mse": float(support_mse.detach().cpu()),
+        "real_support_rmse": float(torch.sqrt(support_mse + EPS).detach().cpu()),
+        "real_support_rel_l1": float(relative_abs_error(true_support, support_abs_error).detach().cpu()),
         "real_support_iou": float(torch.mean(inter / (union_count + EPS)).detach().cpu()),
         "real_support_dice": float(torch.mean((2 * inter) / (true_count + pred_count + EPS)).detach().cpu()),
         "real_support_true_fraction": float(torch.mean(true_count / true_flat.shape[1]).detach().cpu()),
         "real_support_pred_fraction": float(torch.mean(pred_count / pred_flat.shape[1]).detach().cpu()),
         "real_support_volume_ratio": float(torch.mean(pred_count / (true_count + EPS)).detach().cpu()),
+        "real_phase_l1_true_support": float(masked_reduce(phase_err, true_support).detach().cpu()),
+        "real_phase_mse_true_support": float(phase_mse_true_support.detach().cpu()),
+        "real_phase_rel_l1_true_support": float(relative_abs_error(true_phi, phase_err, true_support).detach().cpu()),
         "real_phase_mae_true_support": float(masked_reduce(phase_err, true_support).detach().cpu()),
         "real_phase_mae_intersection": float(masked_reduce(phase_err, intersection).detach().cpu()),
-        "real_phase_rmse_true_support": float(torch.sqrt(masked_reduce(phase_sq, true_support) + EPS).detach().cpu()),
+        "real_phase_rmse_true_support": float(torch.sqrt(phase_mse_true_support + EPS).detach().cpu()),
     }
 
 
@@ -257,12 +280,20 @@ METRIC_DESCRIPTIONS = {
     "real_amp_l1": "Real-space full-volume amplitude L1. Lower is better, but can be small for sparse objects.",
     "real_amp_mse": "Real-space full-volume amplitude MSE. Lower is better.",
     "real_amp_rmse": "Real-space full-volume amplitude RMSE. Lower is better.",
+    "real_amp_rel_l1": "Real-space amplitude L1 normalized by true amplitude sum. Lower is better.",
     "real_amp_global_ssim": "Global 3D amplitude SSIM-like score. Higher is better.",
+    "real_support_l1": "Binary support mask L1. Lower is better.",
+    "real_support_mse": "Binary support mask MSE. Lower is better.",
+    "real_support_rmse": "Binary support mask RMSE. Lower is better.",
+    "real_support_rel_l1": "Binary support mask L1 normalized by true support volume. Lower is better.",
     "real_support_iou": "Intersection-over-union between predicted and true support. Higher is better.",
     "real_support_dice": "Dice score between predicted and true support. Higher is better.",
     "real_support_true_fraction": "True support fraction in the 64^3 volume.",
     "real_support_pred_fraction": "Predicted support fraction in the 64^3 volume; should be close to true fraction.",
     "real_support_volume_ratio": "pred_support_fraction / true_support_fraction; ideal is near 1.",
+    "real_phase_l1_true_support": "Wrapped phase L1 on the true support. Lower is better.",
+    "real_phase_mse_true_support": "Wrapped phase MSE on the true support. Lower is better.",
+    "real_phase_rel_l1_true_support": "Wrapped phase L1 normalized by target phase magnitude on the true support. Lower is better.",
     "real_phase_mae_true_support": "Wrapped phase MAE on the true support. Lower is better.",
     "real_phase_mae_intersection": "Wrapped phase MAE on support intersection. Lower is better.",
     "real_phase_rmse_true_support": "Wrapped phase RMSE on the true support. Lower is better.",
@@ -272,52 +303,48 @@ METRIC_DESCRIPTIONS = {
 FIXED_EVALUATION_GROUPS = {
     "FT": [
         ("L1", "paper_modulus_mae"),
+        ("MSE", "voxel_mse"),
+        ("RMSE", "voxel_rmse"),
         ("RelL1", "relative_l1_modulus"),
-        ("Chi2", "chi2_modulus"),
-        ("LogMSE", "relative_log_mse"),
-        ("PCCLoss", "pearson_loss"),
-        ("PCC", "pearson_corr"),
     ],
     "Amplitude": [
         ("L1", "real_amp_l1"),
         ("MSE", "real_amp_mse"),
         ("RMSE", "real_amp_rmse"),
-        ("GlobalSSIM", "real_amp_global_ssim"),
+        ("RelL1", "real_amp_rel_l1"),
     ],
     "Phase": [
-        ("MAE_true_support", "real_phase_mae_true_support"),
-        ("RMSE_true_support", "real_phase_rmse_true_support"),
-        ("MAE_support_intersection", "real_phase_mae_intersection"),
+        ("L1", "real_phase_l1_true_support"),
+        ("MSE", "real_phase_mse_true_support"),
+        ("RMSE", "real_phase_rmse_true_support"),
+        ("RelL1", "real_phase_rel_l1_true_support"),
     ],
     "Support": [
-        ("IoU", "real_support_iou"),
-        ("Dice", "real_support_dice"),
-        ("TrueFraction", "real_support_true_fraction"),
-        ("PredFraction", "real_support_pred_fraction"),
-        ("VolumeRatio", "real_support_volume_ratio"),
+        ("L1", "real_support_l1"),
+        ("MSE", "real_support_mse"),
+        ("RMSE", "real_support_rmse"),
+        ("RelL1", "real_support_rel_l1"),
     ],
 }
 
 
 FIXED_METRIC_DESCRIPTIONS = {
     "FT/L1": "Far-field diffraction modulus L1. This is the paper-style primary fitting loss.",
+    "FT/MSE": "Far-field diffraction modulus MSE.",
+    "FT/RMSE": "Far-field diffraction modulus RMSE.",
     "FT/RelL1": "Far-field L1 normalized by target modulus sum.",
-    "FT/Chi2": "Far-field chi-square style relative squared error.",
-    "FT/LogMSE": "Far-field log-domain relative MSE.",
-    "FT/PCCLoss": "1 - far-field Pearson correlation.",
-    "FT/PCC": "Far-field Pearson correlation.",
     "Amplitude/L1": "Full-volume real-space amplitude L1.",
     "Amplitude/MSE": "Full-volume real-space amplitude MSE.",
     "Amplitude/RMSE": "Full-volume real-space amplitude RMSE.",
-    "Amplitude/GlobalSSIM": "Global 3D SSIM-like amplitude score.",
-    "Phase/MAE_true_support": "Wrapped phase MAE on true support.",
-    "Phase/RMSE_true_support": "Wrapped phase RMSE on true support.",
-    "Phase/MAE_support_intersection": "Wrapped phase MAE on true/predicted support intersection.",
-    "Support/IoU": "Support intersection-over-union.",
-    "Support/Dice": "Support Dice score.",
-    "Support/TrueFraction": "True support volume fraction.",
-    "Support/PredFraction": "Predicted support volume fraction.",
-    "Support/VolumeRatio": "Predicted support volume divided by true support volume.",
+    "Amplitude/RelL1": "Full-volume amplitude L1 normalized by target amplitude sum.",
+    "Phase/L1": "Wrapped phase L1 on true support.",
+    "Phase/MSE": "Wrapped phase MSE on true support.",
+    "Phase/RMSE": "Wrapped phase RMSE on true support.",
+    "Phase/RelL1": "Wrapped phase L1 normalized by target phase magnitude on true support.",
+    "Support/L1": "Binary support mask L1.",
+    "Support/MSE": "Binary support mask MSE.",
+    "Support/RMSE": "Binary support mask RMSE.",
+    "Support/RelL1": "Binary support mask L1 normalized by true support volume.",
 }
 
 
