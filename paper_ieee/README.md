@@ -37,19 +37,37 @@ In TeXworks:
 4. Run `BibTeX`.
 5. Run `pdfLaTeX` twice more.
 
-From PowerShell:
+From PowerShell, use the bundled build script:
+
+```powershell
+cd D:\code\PYTHON\UMamba-PhaseNN\paper_ieee
+.\build_paper.ps1
+```
+
+To remove generated LaTeX files before compiling:
+
+```powershell
+.\build_paper.ps1 -Clean
+```
+
+The script disables SyncTeX for command-line builds. This avoids the common
+Windows case where TeXworks or a PDF viewer keeps `main.synctex.gz` locked and
+makes the next build appear to hang.
+
+The equivalent manual commands are:
 
 ```powershell
 $bin = "D:\Program Files\MiKTeX\miktex\bin\x64"
 $env:Path = "$bin;$env:Path"
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -synctex=0 -interaction=nonstopmode -halt-on-error main.tex
 bibtex main
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
-pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -synctex=0 -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -synctex=0 -interaction=nonstopmode -halt-on-error main.tex
 ```
 
 If MiKTeX asks to install a missing package, choose install. The compiled PDF is
-`main.pdf`.
+`main.pdf`. If the package dialog is open behind another window, the compiler
+will wait for it; bring the MiKTeX dialog to the front and finish or cancel it.
 
 ## Editing
 
