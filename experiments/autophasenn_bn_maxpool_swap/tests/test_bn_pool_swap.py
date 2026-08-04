@@ -24,7 +24,10 @@ from bn_pool_experiment.model import (
     audit_all_bn_scales,
     audit_bn_scales,
 )
-from bn_pool_experiment.metrics import complex_tensor_pair_metrics
+from bn_pool_experiment.metrics import (
+    _histogram_js_divergence,
+    complex_tensor_pair_metrics,
+)
 from bn_pool_experiment.config import ExperimentConfig
 from bn_pool_experiment.multi_dataset import (
     DatasetSpec,
@@ -81,6 +84,11 @@ class PoolBNCommutationTest(unittest.TestCase):
         value = torch.complex(real, imag)
         metrics = complex_tensor_pair_metrics(value, value.clone())
         self.assertTrue(all(metric == 0.0 for metric in metrics.values()))
+
+    def test_histogram_js_is_zero_for_identical_boundary_values(self) -> None:
+        value = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
+        divergence = _histogram_js_divergence(value, value.clone(), bins=4)
+        self.assertEqual(divergence, 0.0)
 
     def test_full_model_contains_twenty_six_bn_layers(self) -> None:
         model = PoolBNSwapAutoPhaseNN()

@@ -209,6 +209,20 @@ def complex_tensor_pair_metrics(
 
 
 @torch.no_grad()
+def _uniform_histogram(
+    values: torch.Tensor,
+    bins: int,
+    low: float,
+    high: float,
+) -> torch.Tensor:
+    """Count uniform bins deterministically without CUDA ``torch.histc``."""
+
+    scaled = (values - low) * (float(bins) / (high - low))
+    bin_indices = torch.floor(scaled).to(torch.int64).clamp_(0, bins - 1)
+    return torch.bincount(bin_indices, minlength=bins)
+
+
+@torch.no_grad()
 def _histogram_js_divergence(
     reference: torch.Tensor,
     candidate: torch.Tensor,
@@ -220,8 +234,8 @@ def _histogram_js_divergence(
     high = float(torch.maximum(ref.max(), cand.max()).cpu())
     if math.isclose(low, high, rel_tol=0.0, abs_tol=1e-12):
         return 0.0
-    ref_hist = torch.histc(ref, bins=bins, min=low, max=high)
-    cand_hist = torch.histc(cand, bins=bins, min=low, max=high)
+    ref_hist = _uniform_histogram(ref, bins=bins, low=low, high=high).float()
+    cand_hist = _uniform_histogram(cand, bins=bins, low=low, high=high).float()
     p = ref_hist / ref_hist.sum().clamp_min(1.0)
     q = cand_hist / cand_hist.sum().clamp_min(1.0)
     midpoint = 0.5 * (p + q)
