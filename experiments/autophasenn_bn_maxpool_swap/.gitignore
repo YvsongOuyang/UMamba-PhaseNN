@@ -1,0 +1,6 @@
+/tmp*/
+/outputs/
+/outputs_random/
+/outputs_multi/
+__pycache__/
+*.py[cod]

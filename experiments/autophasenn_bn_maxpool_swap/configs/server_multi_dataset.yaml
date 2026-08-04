@@ -1,0 +1,41 @@
+# Paths may be overridden with --checkpoint, --data-dir, and --output-dir.
+base_config: default.yaml
+checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt
+data_dir: /data_ssd/oyys/autophasenn
+output_dir: experiments/autophasenn_bn_maxpool_swap/outputs_multi
+run_name: null
+device: cuda
+
+# These filenames, dtypes, shapes, and preprocessing exactly follow
+# autophasenn_training_pipeline.dataset.AutoPhaseDataset.
+datasets:
+  - name: train
+    enabled: true
+    diff_file: train_diff.npy
+    real_file: train_real.npy
+    num_samples: 5000
+    shape: [64, 64, 64]
+    dtype_diff: float32
+    dtype_real: complex64
+    scale_i: 0.0
+
+  - name: validation
+    enabled: true
+    diff_file: val_diff.npy
+    real_file: val_real.npy
+    num_samples: 5000
+    shape: [64, 64, 64]
+    dtype_diff: float32
+    dtype_real: complex64
+    scale_i: 0.0
+
+  # Enable this entry after placing a test split with the configured filenames.
+  - name: test
+    enabled: false
+    diff_file: test_diff.npy
+    real_file: test_real.npy
+    num_samples: 5000
+    shape: [64, 64, 64]
+    dtype_diff: float32
+    dtype_real: complex64
+    scale_i: 0.0

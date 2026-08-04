@@ -1,0 +1,53 @@
+data:
+  mode: random
+  data_dir: .
+  diff_file: unused.npy
+  real_file: null
+  num_samples: 16
+  shape: [64, 64, 64]
+  dtype_diff: float32
+  dtype_real: complex64
+  scale_i: 0.0
+  random_distribution: uniform
+  random_min: 0.0
+  random_max: 1.0
+  random_seed: 20260803
+
+model:
+  checkpoint: experiments/autophasenn_bn_maxpool_swap/autophasenn.pth
+  threshold: null
+  strict_load: true
+  allow_unsafe_checkpoint: false
+
+runtime:
+  device: cpu
+  batch_size: 1
+  num_workers: 0
+  seed: 20260803
+  deterministic: true
+  hash_checkpoint: true
+  log_level: INFO
+
+metrics:
+  amplitude_data_range: 1.0
+  ssim_window_size: 7
+  histogram_bins: 64
+
+statistics:
+  bootstrap_samples: 2000
+  confidence_level: 0.95
+  seed: 20260803
+
+acceptance:
+  primary_metrics:
+    - paper_modulus_mae
+    - real_amp_psnr
+    - real_amp_ssim3d
+    - real_phase_mae_true_support
+  max_primary_metric_degradation_percent: 1.0
+  max_farfield_relative_l1: 0.001
+  min_positive_bn_scale_fraction: 1.0
+
+output:
+  root_dir: experiments/autophasenn_bn_maxpool_swap/outputs_random
+  run_name: pretrained_uniform_seed20260803_n16
