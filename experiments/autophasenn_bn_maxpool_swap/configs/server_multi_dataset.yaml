@@ -5,6 +5,7 @@ data_dir: /data_ssd/oyys/autophasenn
 output_dir: experiments/autophasenn_bn_maxpool_swap/outputs_multi
 run_name: null
 device: cuda
+batch_size: 2
 
 # These filenames, dtypes, shapes, and preprocessing exactly follow
 # autophasenn_training_pipeline.dataset.AutoPhaseDataset.
@@ -13,7 +14,7 @@ datasets:
     enabled: true
     diff_file: train_diff.npy
     real_file: train_real.npy
-    num_samples: 5000
+    num_samples: 1000
     shape: [64, 64, 64]
     dtype_diff: float32
     dtype_real: complex64
@@ -23,7 +24,7 @@ datasets:
     enabled: true
     diff_file: val_diff.npy
     real_file: val_real.npy
-    num_samples: 5000
+    num_samples: 1000
     shape: [64, 64, 64]
     dtype_diff: float32
     dtype_real: complex64
@@ -34,7 +35,7 @@ datasets:
     enabled: false
     diff_file: test_diff.npy
     real_file: test_real.npy
-    num_samples: 5000
+    num_samples: 1000
     shape: [64, 64, 64]
     dtype_diff: float32
     dtype_real: complex64

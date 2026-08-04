@@ -3,7 +3,7 @@ data:
   data_dir: /data_ssd/oyys/autophasenn
   diff_file: val_diff.npy
   real_file: val_real.npy
-  num_samples: 5000
+  num_samples: 1000
   shape: [64, 64, 64]
   dtype_diff: float32
   dtype_real: complex64
@@ -21,7 +21,7 @@ model:
 
 runtime:
   device: cuda
-  batch_size: 1
+  batch_size: 2
   num_workers: 0
   seed: 20260708
   deterministic: true

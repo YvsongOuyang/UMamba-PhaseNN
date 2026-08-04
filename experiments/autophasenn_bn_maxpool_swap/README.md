@@ -94,7 +94,7 @@ python experiments/autophasenn_bn_maxpool_swap/run_experiment.py \
 ## 服务器多数据集运行（推荐）
 
 `run_multi_dataset.py` 会用同一个检查点依次评估多个 memmap 数据集。默认配置
-`configs/server_multi_dataset.yaml` 已启用训练集前 5000 个样本和完整 5000 个验证
+`configs/server_multi_dataset.yaml` 已启用训练集前 1000 个样本和验证集前 1000 个
 样本，并预留了一个默认关闭的测试集条目。可以继续在 `datasets` 列表中增加其他
 数据集；每项均可独立设置文件名、样本数、形状、dtype 和 `scale_i`。
 
@@ -105,7 +105,8 @@ python experiments/autophasenn_bn_maxpool_swap/run_multi_dataset.py \
   --config experiments/autophasenn_bn_maxpool_swap/configs/server_multi_dataset.yaml \
   --checkpoint /path/to/checkpoint_best.pt \
   --data-dir /data_ssd/oyys/autophasenn \
-  --device cuda
+  --device cuda \
+  --batch-size 2
 ```
 
 先验证环境和路径时，建议在每个数据集只跑 2 个样本：
@@ -149,6 +150,17 @@ train_real.npy / val_real.npy: complex64, (N, 64, 64, 64)
   RMSE、最大绝对差、相对 L1/L2、Pearson 相关系数和直方图 JS 散度。
 
 权重文件、数据文件和本地输出不会提交到 GitHub，需要在服务器上通过参数指定。
+
+### 显存和输出存储说明
+
+两个模型不会分别跑完整个数据集并把体数据保存下来。对于每个 batch，程序先执行
+基线模型的完整 forward，再执行交换模型的完整 forward，随后立即在显存中逐样本
+计算重建指标和两模型输出差异。原始 `64³` 远场、复数物体、幅值、相位和 support
+不会写入磁盘；磁盘上只保存标量指标 CSV、JSON、Markdown 报告和日志。
+
+默认 `batch_size=2` 是考虑到两个模型参数和当前 batch 的中间特征需要同时驻留显存。
+显存充足时可以尝试 `--batch-size 4`；若出现 CUDA OOM，则改回
+`--batch-size 1`。batch size 只影响运行速度和显存，不改变样本配对方式或指标定义。
 
 ## 随机输入一致性预检
 

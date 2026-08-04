@@ -17,7 +17,7 @@ class DataConfig:
     data_dir: str = "/data_ssd/oyys/autophasenn"
     diff_file: str = "val_diff.npy"
     real_file: Optional[str] = "val_real.npy"
-    num_samples: int = 5000
+    num_samples: int = 1000
     shape: list[int] = field(default_factory=lambda: [64, 64, 64])
     dtype_diff: str = "float32"
     dtype_real: str = "complex64"
@@ -43,7 +43,7 @@ class RuntimeConfig:
     """Runtime and reproducibility configuration."""
 
     device: str = "cuda"
-    batch_size: int = 1
+    batch_size: int = 2
     num_workers: int = 0
     seed: int = 20260708
     deterministic: bool = True

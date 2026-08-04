@@ -52,6 +52,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-name", default=None)
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default=None)
     parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Override the paired inference batch size for every dataset.",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -76,6 +82,10 @@ def main() -> None:
         multi_config.run_name = args.run_name
     if args.device is not None:
         multi_config.device = args.device
+    if args.batch_size is not None:
+        if args.batch_size <= 0:
+            raise ValueError("--batch-size must be positive.")
+        multi_config.batch_size = args.batch_size
     if args.limit is not None and args.limit <= 0:
         raise ValueError("--limit must be positive.")
 
@@ -101,13 +111,15 @@ def main() -> None:
             checkpoint=args.checkpoint,
             data_dir=args.data_dir,
             device=args.device,
+            batch_size=args.batch_size,
             limit=args.limit,
         )
         dataset_output = output_root / dataset.name
         LOGGER.info(
-            "Evaluating dataset=%s, samples=%d, diff=%s, real=%s",
+            "Evaluating dataset=%s, samples=%d, batch_size=%d, diff=%s, real=%s",
             dataset.name,
             config.data.num_samples,
+            config.runtime.batch_size,
             Path(config.data.data_dir) / config.data.diff_file,
             (
                 Path(config.data.data_dir) / config.data.real_file

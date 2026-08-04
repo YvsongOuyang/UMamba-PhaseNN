@@ -107,6 +107,7 @@ class MultiDatasetConfigurationTest(unittest.TestCase):
             data_dir="/datasets/autophasenn",
             output_dir="outputs_multi",
             device="cuda",
+            batch_size=2,
             datasets=[
                 DatasetSpec(
                     name="validation",
@@ -134,12 +135,15 @@ class MultiDatasetConfigurationTest(unittest.TestCase):
         self.assertEqual(config.data.dtype_real, "complex64")
         self.assertEqual(config.model.checkpoint, "checkpoint.pt")
         self.assertEqual(config.runtime.device, "cuda")
+        self.assertEqual(config.runtime.batch_size, 2)
 
     def test_shipped_multi_dataset_config_is_valid(self) -> None:
         config_path = EXPERIMENT_ROOT / "configs" / "server_multi_dataset.yaml"
         config = load_multi_dataset_config(config_path)
         enabled_names = [item.name for item in config.datasets if item.enabled]
         self.assertEqual(enabled_names, ["train", "validation"])
+        self.assertTrue(all(item.num_samples == 1000 for item in config.datasets))
+        self.assertEqual(config.batch_size, 2)
         base_path = resolve_base_config_path(config_path, config.base_config)
         self.assertEqual(base_path.resolve(), (config_path.parent / "default.yaml").resolve())
 

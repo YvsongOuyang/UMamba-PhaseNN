@@ -40,6 +40,7 @@ class MultiDatasetConfig:
     datasets: list[DatasetSpec]
     run_name: Optional[str] = None
     device: Optional[str] = None
+    batch_size: Optional[int] = None
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable mapping."""
@@ -72,6 +73,8 @@ def _validate(config: MultiDatasetConfig) -> None:
         raise ValueError("output_dir cannot be empty.")
     if config.device is not None and config.device not in {"auto", "cpu", "cuda"}:
         raise ValueError("device must be one of: auto, cpu, cuda.")
+    if config.batch_size is not None and config.batch_size <= 0:
+        raise ValueError("batch_size must be positive.")
     if not config.datasets:
         raise ValueError("At least one dataset must be configured.")
 
@@ -113,6 +116,7 @@ def load_multi_dataset_config(path: str | Path) -> MultiDatasetConfig:
         "output_dir",
         "run_name",
         "device",
+        "batch_size",
         "datasets",
     }
     unknown = sorted(set(raw) - allowed)
@@ -132,6 +136,7 @@ def load_multi_dataset_config(path: str | Path) -> MultiDatasetConfig:
         output_dir=str(raw["output_dir"]),
         run_name=raw.get("run_name"),
         device=raw.get("device"),
+        batch_size=raw.get("batch_size"),
         datasets=[_build_dataset(item, index) for index, item in enumerate(datasets_raw)],
     )
     _validate(config)
@@ -158,6 +163,7 @@ def build_experiment_config(
     checkpoint: str | None = None,
     data_dir: str | None = None,
     device: str | None = None,
+    batch_size: int | None = None,
     limit: int | None = None,
 ) -> ExperimentConfig:
     """Create an independent single-dataset config from batch-level settings."""
@@ -175,6 +181,13 @@ def build_experiment_config(
     config.model.checkpoint = checkpoint or multi_config.checkpoint
     if device or multi_config.device:
         config.runtime.device = device or multi_config.device or config.runtime.device
+    selected_batch_size = (
+        batch_size if batch_size is not None else multi_config.batch_size
+    )
+    if selected_batch_size is not None:
+        if selected_batch_size <= 0:
+            raise ValueError("batch_size must be positive.")
+        config.runtime.batch_size = selected_batch_size
     if limit is not None:
         if limit <= 0:
             raise ValueError("limit must be positive.")
