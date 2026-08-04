@@ -487,12 +487,14 @@ class UMambaEnc(nn.Module):
                  stem_channels: int = None,
                  phase_activation: str = 'tanh',
                  phase_logit_scale: float = 1.0,
+                 threshold: float = 0.1
                  ):
         super().__init__()
         if phase_activation not in ('tanh', 'atan'):
             raise ValueError(f"Unsupported phase_activation: {phase_activation}")
         self.phase_activation = phase_activation
         self.phase_logit_scale = phase_logit_scale
+        self.threshold = threshold
         n_blocks_per_stage = n_conv_per_stage
         if isinstance(n_blocks_per_stage, int):
             n_blocks_per_stage = [n_blocks_per_stage] * n_stages
@@ -550,29 +552,44 @@ class UMambaEnc(nn.Module):
     def forward(self, x):
         skips = self.encoder(x)
         amp = nn.Sigmoid()(self.decoder1(skips))
-        ph = self.phase_from_logits(self.decoder2(skips))
+        #ph = self.phase_from_logits(self.decoder2(skips))
+        phi = math.pi * torch.tanh(self.decoder2(skips))
+        
+        support = torch.where(
+            amp >= self.threshold, torch.ones_like(amp), torch.zeros_like(amp)
+        )
+        obj = torch.complex(amp * torch.cos(phi), amp * torch.sin(phi))
+        masked_obj = obj * support.to(torch.complex64)
+        
+        shifted = torch.fft.ifftshift(masked_obj, dim=(-3, -2, -1))
+        farfield = torch.fft.fftn(shifted, dim=(-3, -2, -1))
+        farfield = torch.fft.fftshift(farfield, dim=(-3, -2, -1))
+        farfield = torch.abs(farfield).to(torch.float32)
+        
+        masked_amp = torch.abs(masked_obj).to(torch.float32)
+        return farfield, masked_obj, masked_amp, phi, support
 
-        # --- Index 91: support ---
-        # 对应 TF: Lambda(lambda x: get_mask(x))
-        # 注意：TF 图中 support 依赖 amp，虽然索引在 Obj 后面，但数据流通常是并行的
-        support = self.support_layer(amp)
+        # # --- Index 91: support ---
+        # # 对应 TF: Lambda(lambda x: get_mask(x))
+        # # 注意：TF 图中 support 依赖 amp，虽然索引在 Obj 后面，但数据流通常是并行的
+        # support = self.support_layer(amp)
 
-        # --- Index 90: Obj ---
-        # 对应 TF: Lambda(lambda x: combine_complex...)([decoded1, decoded2])
-        obj = self.obj_layer(amp, ph)
+        # # --- Index 90: Obj ---
+        # # 对应 TF: Lambda(lambda x: combine_complex...)([decoded1, decoded2])
+        # obj = self.obj_layer(amp, ph)
 
-        # --- Index 92: masked_obj ---
-        # 对应 TF: Lambda(lambda x: x[0] * x[1])([obj, support])
-        masked_obj = self.masked_obj_layer(obj, support)
+        # # --- Index 92: masked_obj ---
+        # # 对应 TF: Lambda(lambda x: x[0] * x[1])([obj, support])
+        # masked_obj = self.masked_obj_layer(obj, support)
 
-        preds_amp = torch.abs(masked_obj)
+        # preds_amp = torch.abs(masked_obj)
 
-        # --- Index 93: farfield_diff ---
-        # 对应 TF: Lambda(lambda x: ff_propagation(x))(masked_obj)
-        psi = self.farfield_layer(masked_obj)
+        # # --- Index 93: farfield_diff ---
+        # # 对应 TF: Lambda(lambda x: ff_propagation(x))(masked_obj)
+        # psi = self.farfield_layer(masked_obj)
         
 
-        return psi, obj, preds_amp, ph, support
+        # return psi, obj, preds_amp, ph, support
 
 
     def compute_conv_feature_map_size(self, input_size):
