@@ -1,0 +1,48 @@
+\section{Experiments}
+
+\subsection{Dataset}
+The experiments use simulated 3D diffraction data and corresponding real-space
+complex volumes. The training split contains \todo{number} samples and the
+validation/test split contains \todo{number} samples. Each sample has spatial
+size $64^3$.
+
+\subsection{Training Setup}
+Unless otherwise specified, models are trained from scratch with Adam and an
+initial learning rate of \todo{learning rate}. The default loss is far-field L1.
+For small-sample debugging, we also use an overfitting protocol in which a fixed
+subset of samples is used for both training and validation.
+
+The small-sample protocol is used to answer a narrower question than general
+validation accuracy: can the model fit a known fixed subset and produce
+physically plausible object-domain amplitude and phase for those same samples?
+This prevents generalization error from being confused with an optimization or
+architecture-prior problem.
+
+\subsection{Experiment Design}
+The paper focuses on a small number of experiments that directly support the
+main claim, rather than reporting every debugging run. The core comparison is:
+\begin{itemize}
+  \item AutoPhaseNN reproduction from scratch with the paper-style far-field
+  objective.
+  \item UMamba backbone replacement with the same data interface,
+  post-processing, objective, and evaluation protocol.
+  \item One representative diagnostic ablation, selected only if it helps
+  explain why Fourier-domain fitting and real-space correctness diverge.
+\end{itemize}
+Learning-rate sweeps, checkpoint debugging, gradient probes, and implementation
+sanity checks are treated as internal controls and are not reported as main
+experiments unless they change the scientific conclusion.
+
+\subsection{Evaluation Metrics}
+We report fixed metric groups:
+\begin{itemize}
+  \item FT metrics: L1, MSE, RMSE, and relative L1 of diffraction modulus.
+  \item Amplitude metrics: full-volume L1, MSE, RMSE, and relative L1.
+  \item Phase metrics: wrapped phase error on the true support.
+  \item Support metrics: L1, IoU, Dice score, and predicted support fraction.
+\end{itemize}
+
+\subsection{Implementation Details}
+The AutoPhaseNN and UMamba pipelines share the same dataset interface,
+post-processing logic, checkpoint format, and evaluation scripts wherever
+possible. This controls for non-model factors in the comparison.

@@ -1,2 +1,2 @@
-"""Standalone PyTorch training pipeline for AutoPhaseNN."""
+"""Standalone UMamba-based training pipeline with AutoPhaseNN-style data flow."""
 

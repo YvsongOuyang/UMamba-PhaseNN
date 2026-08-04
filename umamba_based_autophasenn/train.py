@@ -8,9 +8,14 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from dataset import AutoPhaseDataset
-from losses import get_loss, metric_dict, scale_align_sum
-from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+try:
+    from .dataset import AutoPhaseDataset
+    from .losses import get_loss, metric_dict, scale_align_sum
+    from .umamba_model import UMambaAutoPhaseNN, load_weights
+except ImportError:
+    from dataset import AutoPhaseDataset
+    from losses import get_loss, metric_dict, scale_align_sum
+    from umamba_model import UMambaAutoPhaseNN, load_weights
 
 
 DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn//umamba_pipeline_output/umamba_train_l1_0612"
@@ -476,7 +481,7 @@ def main():
         pin_memory=pin_memory,
     )
 
-    model = TFCompatibleAutoPhaseNN(
+    model = UMambaAutoPhaseNN(
         threshold=args.threshold,
         shape=args.shape,
         batch_size=args.batch_size,

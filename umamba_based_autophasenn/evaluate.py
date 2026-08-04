@@ -6,18 +6,32 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import AutoPhaseDataset
-from losses import (
-    FIXED_METRIC_DESCRIPTIONS,
-    METRIC_DESCRIPTIONS,
-    fixed_metric_groups,
-    format_fixed_metric_groups,
-    group_metrics,
-    metric_dict,
-    realspace_metric_dict,
-    scale_align_sum,
-)
-from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+try:
+    from .dataset import AutoPhaseDataset
+    from .losses import (
+        FIXED_METRIC_DESCRIPTIONS,
+        METRIC_DESCRIPTIONS,
+        fixed_metric_groups,
+        format_fixed_metric_groups,
+        group_metrics,
+        metric_dict,
+        realspace_metric_dict,
+        scale_align_sum,
+    )
+    from .umamba_model import UMambaAutoPhaseNN, load_weights
+except ImportError:
+    from dataset import AutoPhaseDataset
+    from losses import (
+        FIXED_METRIC_DESCRIPTIONS,
+        METRIC_DESCRIPTIONS,
+        fixed_metric_groups,
+        format_fixed_metric_groups,
+        group_metrics,
+        metric_dict,
+        realspace_metric_dict,
+        scale_align_sum,
+    )
+    from umamba_model import UMambaAutoPhaseNN, load_weights
 
 
 def choose_device(name):
@@ -84,7 +98,7 @@ def main():
         pin_memory=device.type == "cuda",
     )
 
-    model = TFCompatibleAutoPhaseNN(
+    model = UMambaAutoPhaseNN(
         threshold=args.threshold,
         shape=args.shape,
         batch_size=args.batch_size,

@@ -168,6 +168,10 @@ very slow, so CPU is mostly useful for dry runs or small checks.
 
 ## Evaluate
 
+By default `evaluate.py` loads the retraining output checkpoint
+`/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt`.
+Pass `--checkpoint` explicitly when evaluating an older converted checkpoint.
+
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "autophasenn_training_pipeline\evaluate.py" `

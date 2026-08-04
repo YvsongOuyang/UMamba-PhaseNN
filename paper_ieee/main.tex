@@ -1,0 +1,80 @@
+\documentclass[conference]{IEEEtran}
+
+\IEEEoverridecommandlockouts
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{url}
+
+\graphicspath{{figures/}}
+
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\placeholderfigure}[2]{%
+  \begin{figure}[!t]
+    \centering
+    \IfFileExists{figures/#1}{%
+      \includegraphics[width=\linewidth]{#1}%
+    }{%
+      \fbox{\begin{minipage}[c][0.25\textheight][c]{0.92\linewidth}
+      \centering #2\\[0.5em]\path{figures/#1}
+      \end{minipage}}%
+    }
+    \caption{#2}
+    \label{fig:#1}
+  \end{figure}
+}
+
+\begin{document}
+
+\title{Physics-Constrained Phase Retrieval with AutoPhaseNN and UMamba-Based Networks}
+
+\author{
+\IEEEauthorblockN{Author Name}
+\IEEEauthorblockA{
+Affiliation\\
+City, Country\\
+email@example.com}
+}
+
+\maketitle
+
+\begin{abstract}
+This paper investigates neural phase retrieval for coherent diffraction imaging
+through a controlled reproduction and model-replacement study. We first
+reproduce an AutoPhaseNN-style pipeline, then replace the original convolutional
+backbone with a UMamba-based model while keeping the data flow, Fourier-domain
+post-processing, training objective, checkpointing, and evaluation protocol
+aligned. The experiments reveal a practical failure mode: far-field fitting
+metrics can improve while the reconstructed real-space amplitude, phase, and
+support remain physically implausible. We use this gap to analyze which parts of
+the AutoPhaseNN pipeline provide effective spatial priors and what must be
+controlled before attributing performance differences to the backbone itself.
+\end{abstract}
+
+\begin{IEEEkeywords}
+phase retrieval, coherent diffraction imaging, AutoPhaseNN, UMamba, physics-informed deep learning
+\end{IEEEkeywords}
+
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_method}
+\input{sections/04_experiments}
+\input{sections/05_results}
+\input{sections/06_discussion}
+\input{sections/07_conclusion}
+
+\section*{Acknowledgment}
+\todo{Add funding, lab, compute, and collaborator acknowledgments if needed.}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

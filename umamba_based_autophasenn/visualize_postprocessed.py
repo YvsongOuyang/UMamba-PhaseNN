@@ -8,9 +8,14 @@ from scipy.ndimage import center_of_mass, shift
 from skimage.restoration import unwrap_phase
 from torch.utils.data import DataLoader, Subset
 
-from dataset import AutoPhaseDataset
-from losses import metric_dict, scale_align_sum
-from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+try:
+    from .dataset import AutoPhaseDataset
+    from .losses import metric_dict, scale_align_sum
+    from .umamba_model import UMambaAutoPhaseNN, load_weights
+except ImportError:
+    from dataset import AutoPhaseDataset
+    from losses import metric_dict, scale_align_sum
+    from umamba_model import UMambaAutoPhaseNN, load_weights
 
 
 H = W = D = 64
@@ -159,7 +164,7 @@ def main():
     dataset = Subset(dataset, range(sample_count))
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
-    model = TFCompatibleAutoPhaseNN(
+    model = UMambaAutoPhaseNN(
         threshold=args.threshold,
         shape=args.shape,
         batch_size=1,

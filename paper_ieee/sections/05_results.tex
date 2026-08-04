@@ -1,0 +1,62 @@
+\section{Results}
+
+\subsection{Visual Summary}
+The first result to present is visual rather than only numerical: compare the
+reconstructed diffraction modulus, amplitude, phase, and support for the same
+sample IDs across model variants. This directly shows whether a lower
+far-field metric corresponds to a plausible object-domain reconstruction.
+
+\placeholderfigure{fig_autophasenn_reproduction.png}{AutoPhaseNN reproduction visualization.}
+
+\placeholderfigure{fig_umamba_original.png}{UMamba original hard-threshold visualization.}
+
+\placeholderfigure{fig_umamba_soft_threshold.png}{UMamba soft-threshold visualization.}
+
+\placeholderfigure{fig_training_curves.png}{Training and validation loss curves from TensorBoard event files.}
+
+\begin{table}[!t]
+  \caption{Evaluation Metrics of Model Variants}
+  \label{tab:main_results}
+  \centering
+  \begin{tabular}{lcccc}
+    \toprule
+    Model & FT L1 $\downarrow$ & Amp L1 $\downarrow$ & Phase L1 $\downarrow$ & Support IoU $\uparrow$ \\
+    \midrule
+    AutoPhaseNN & \todo{} & \todo{} & \todo{} & \todo{} \\
+    UMamba & \todo{} & \todo{} & \todo{} & \todo{} \\
+    Diagnostic ablation & \todo{} & \todo{} & \todo{} & \todo{} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{AutoPhaseNN Reproduction}
+The AutoPhaseNN reproduction is the anchor experiment. The expected narrative is:
+the reproduced model should learn a compact object-domain amplitude/support
+pattern and a phase field that remains spatially tied to the object region. The
+paper should report both the far-field loss and the object-domain metrics, then
+use the visualization in Fig.~\ref{fig:fig_autophasenn_reproduction.png} as the
+qualitative baseline.
+
+\todo{Insert final AutoPhaseNN checkpoint path, training epoch count, FT L1,
+amplitude metrics, phase metrics, support metrics, and figure source.}
+
+\subsection{UMamba Replacement}
+The UMamba replacement is evaluated under the same data and physical
+post-processing pipeline. The key observation to document is whether the
+far-field metric improves without a corresponding improvement in amplitude,
+phase, and support. If so, the result should be framed as an under-constrained
+phase retrieval solution rather than simply as a failed optimizer run.
+
+\todo{Insert UMamba checkpoint path, training epoch count, FT metrics, real-space
+metrics, and representative visualization.}
+
+\subsection{Diagnostic Ablation}
+Only one ablation should be kept in the main paper: the one that most clearly
+supports the explanation of the UMamba failure mode. For example, if the
+soft-threshold experiment obtains acceptable numerical metrics but visibly
+incorrect amplitude and phase, it can be used to show that smoother support
+gradients alone do not solve the missing-prior problem. If a center-support
+constraint is more informative, use that instead.
+
+\todo{Choose one diagnostic ablation and report the same metric groups as the
+other rows. Do not include every attempted training variant.}

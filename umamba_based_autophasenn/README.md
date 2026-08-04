@@ -9,7 +9,8 @@ checkpointing, evaluation, and visualization logic.
 ```text
 dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
-model_tf_compatible.py      Compatibility wrapper around original UMambaEnc_3d.py
+umamba_model.py             Local wrapper around this folder's UMambaEnc_3d.py
+model_tf_compatible.py      Backward-compatible import shim for older commands
 UMambaEnc_3d.py             Original UMamba model copy
 utils.py                    Original UMamba helper layers
 train.py                    Full train / fine-tune entry point
