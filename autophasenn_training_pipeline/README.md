@@ -62,9 +62,20 @@ Recommended metrics reported by `evaluate.py`:
 ```text
 paper_modulus_mae    Paper Eq. (1), training loss for modulus tensors
 chi2_modulus         Paper Eq. (2), reciprocal-space chi2 metric
+real_amp_ssim        Paper Fig. 2, local-window 3D amplitude SSIM
+r_factor_free        Amplitude R-factor on held-out reciprocal voxels
+llk_free             Poisson deviance on held-out reciprocal voxels
+chi2_free            Paper Eq. (2) restricted to held-out reciprocal voxels
 relative_l1_modulus  Sum |pred-true| / sum |true|
 pearson_corr         Shape correlation in reciprocal space
 ```
+
+The free R-factor metrics accept an experiment-defined mask through
+`--free-mask`. When no mask is supplied, evaluation creates a deterministic 5%
+diagnostic mask using `--free-fraction` and `--free-seed`. The generated mask is
+clearly identified in the report because it is not automatically excluded from
+the model's training objective and therefore is not numerically comparable to
+the paper's original free-pixel experiment.
 
 Legacy names are still accepted for old command lines, but are no longer the
 recommended defaults:
@@ -171,6 +182,15 @@ very slow, so CPU is mostly useful for dry runs or small checks.
 By default `evaluate.py` loads the retraining output checkpoint
 `/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt`.
 Pass `--checkpoint` explicitly when evaluating an older converted checkpoint.
+Every generated artifact is written under
+`autophasenn_training_pipeline/output/evaluate/` by default:
+
+```text
+evaluation_results.json   Complete configuration, provenance, statistics, and per-sample metrics
+evaluation_samples.csv    One readable row per sample
+evaluation_summary.md     Paper-first human-readable summary
+evaluation.log            Resolved paths and execution log
+```
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
@@ -180,12 +200,23 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --data-diff "val_diff.npy" `
   --data-real "val_real.npy" `
   --num-samples 5000 `
-  --output-json "outputs\pt_pipeline_eval.json" `
   --device cpu `
   --limit 3
 ```
 
-Add `--scale-align-loss` if you want the scale-aligned metric report.
+Use the original experiment holdout mask when available:
+
+```powershell
+& $PY "autophasenn_training_pipeline\evaluate.py" `
+  --checkpoint "PyTorch\cohere-trained_model_tf_compatible.pth" `
+  --data-dir "data\aicdi_sample\memmap" `
+  --free-mask "data\aicdi_sample\free_mask.npy" `
+  --device cpu
+```
+
+Add `--scale-align-loss` if you want the scale-aligned metric report. Use
+`--data-real none` for experimental data without ground-truth amplitude and
+phase; reciprocal-space and free-mask metrics are still produced.
 
 ## Visualize
 

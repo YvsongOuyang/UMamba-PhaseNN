@@ -88,7 +88,8 @@ def pearson_corr(y_true, y_pred, reduction="mean"):
     pred = pred - torch.mean(pred, dim=1, keepdim=True)
     numerator = torch.sum(true * pred, dim=1)
     denominator = torch.sqrt(
-        torch.sum(torch.pow(true, 2), dim=1) * torch.sum(torch.pow(pred, 2), dim=1) + EPS
+        torch.sum(torch.pow(true, 2), dim=1) * torch.sum(torch.pow(pred, 2), dim=1)
+        + EPS
     )
     return reduce_per_sample(numerator / denominator, reduction)
 
@@ -133,6 +134,124 @@ def global_ssim(y_true, y_pred, data_range=1.0, reduction="mean"):
     return reduce_per_sample(score, reduction)
 
 
+def windowed_ssim_3d(
+    y_true,
+    y_pred,
+    data_range=1.0,
+    window_size=7,
+    reduction="mean",
+):
+    """Compute local-window 3D SSIM for normalized amplitude volumes.
+
+    This follows the standard SSIM formulation with a uniform cubic window
+    and sample covariance normalization. Inputs must be shaped ``(B, C, D,
+    H, W)``. AutoPhaseNN amplitude is normalized to ``[0, 1]``, so the
+    default data range matches the paper's simulated-object evaluation.
+    """
+
+    if y_true.shape != y_pred.shape:
+        raise ValueError("SSIM inputs must have identical shapes.")
+    if y_true.ndim != 5:
+        raise ValueError("3D SSIM expects tensors shaped (B, C, D, H, W).")
+    if window_size < 1 or window_size % 2 == 0:
+        raise ValueError("SSIM window_size must be a positive odd integer.")
+    if any(size < window_size for size in y_true.shape[-3:]):
+        raise ValueError(
+            f"SSIM window_size={window_size} exceeds spatial shape {tuple(y_true.shape[-3:])}."
+        )
+
+    true = y_true.float()
+    pred = y_pred.float()
+    kernel = (window_size, window_size, window_size)
+    mu_true = F.avg_pool3d(true, kernel_size=kernel, stride=1)
+    mu_pred = F.avg_pool3d(pred, kernel_size=kernel, stride=1)
+    covariance_norm = (window_size**3) / max(window_size**3 - 1, 1)
+    var_true = covariance_norm * (
+        F.avg_pool3d(true * true, kernel_size=kernel, stride=1) - mu_true * mu_true
+    )
+    var_pred = covariance_norm * (
+        F.avg_pool3d(pred * pred, kernel_size=kernel, stride=1) - mu_pred * mu_pred
+    )
+    covariance = covariance_norm * (
+        F.avg_pool3d(true * pred, kernel_size=kernel, stride=1) - mu_true * mu_pred
+    )
+    var_true = var_true.clamp_min(0.0)
+    var_pred = var_pred.clamp_min(0.0)
+    c1 = (0.01 * data_range) ** 2
+    c2 = (0.03 * data_range) ** 2
+    numerator = (2 * mu_true * mu_pred + c1) * (2 * covariance + c2)
+    denominator = (mu_true**2 + mu_pred**2 + c1) * (var_true + var_pred + c2)
+    score = numerator / denominator.clamp_min(EPS)
+    per_sample = torch.mean(flatten_sample(score), dim=1)
+    return reduce_per_sample(per_sample, reduction)
+
+
+def _broadcast_metric_mask(mask, reference):
+    mask = mask.to(device=reference.device, dtype=reference.dtype)
+    try:
+        return torch.broadcast_to(mask, reference.shape)
+    except RuntimeError as exc:
+        raise ValueError(
+            f"Metric mask shape {tuple(mask.shape)} cannot broadcast to {tuple(reference.shape)}."
+        ) from exc
+
+
+def _masked_sum_per_sample(values, mask):
+    broadcast_mask = _broadcast_metric_mask(mask, values)
+    return torch.sum(flatten_sample(values * broadcast_mask), dim=1)
+
+
+def r_factor_free(y_true, y_pred, free_mask, reduction="mean"):
+    """Amplitude R-factor evaluated only on held-out reciprocal voxels."""
+
+    numerator = _masked_sum_per_sample(torch.abs(y_pred - y_true), free_mask)
+    denominator = _masked_sum_per_sample(torch.abs(y_true), free_mask)
+    return reduce_per_sample(numerator / (denominator + EPS), reduction)
+
+
+def chi2_free(y_true, y_pred, free_mask, reduction="mean"):
+    """Paper Eq. (2) restricted to held-out reciprocal voxels."""
+
+    numerator = _masked_sum_per_sample(torch.pow(y_pred - y_true, 2), free_mask)
+    denominator = _masked_sum_per_sample(torch.pow(y_true, 2), free_mask)
+    return reduce_per_sample(numerator / (denominator + EPS), reduction)
+
+
+def llk_free(y_true, y_pred, free_mask, reduction="mean"):
+    """Mean Poisson deviance on held-out reciprocal-space intensities.
+
+    The tensors in this project contain diffraction modulus, so they are
+    squared before evaluating the Poisson statistic. The value is normalized
+    per free voxel for comparability across masks; lower is better and zero is
+    an exact match.
+    """
+
+    true_intensity = torch.pow(y_true.clamp_min(0.0), 2)
+    pred_intensity = torch.pow(y_pred.clamp_min(0.0), 2).clamp_min(EPS)
+    log_ratio = torch.where(
+        true_intensity > 0,
+        true_intensity * torch.log((true_intensity + EPS) / pred_intensity),
+        torch.zeros_like(true_intensity),
+    )
+    poisson_deviance = 2.0 * (pred_intensity - true_intensity + log_ratio)
+    numerator = _masked_sum_per_sample(poisson_deviance, free_mask)
+    mask_count = _masked_sum_per_sample(torch.ones_like(y_true), free_mask).clamp_min(
+        1.0
+    )
+    return reduce_per_sample(numerator / mask_count, reduction)
+
+
+@torch.no_grad()
+def free_metric_dict(y_true, y_pred, free_mask):
+    """Paper-referenced free R-factor diagnostics on a supplied holdout mask."""
+
+    return {
+        "r_factor_free": float(r_factor_free(y_true, y_pred, free_mask).detach().cpu()),
+        "llk_free": float(llk_free(y_true, y_pred, free_mask).detach().cpu()),
+        "chi2_free": float(chi2_free(y_true, y_pred, free_mask).detach().cpu()),
+    }
+
+
 def wrapped_phase_abs_error(y_true, y_pred):
     return torch.atan2(torch.sin(y_pred - y_true), torch.cos(y_pred - y_true)).abs()
 
@@ -159,7 +278,15 @@ def relative_abs_error(y_true, abs_error, mask=None, reduction="mean"):
 
 
 @torch.no_grad()
-def realspace_metric_dict(true_amp, true_phi, pred_amp, pred_phi, pred_support=None, threshold=0.1):
+def realspace_metric_dict(
+    true_amp,
+    true_phi,
+    pred_amp,
+    pred_phi,
+    pred_support=None,
+    threshold=0.1,
+    ssim_window_size=7,
+):
     """Metrics for the reconstructed real-space object."""
 
     true_support = (true_amp >= threshold).float()
@@ -188,24 +315,59 @@ def realspace_metric_dict(true_amp, true_phi, pred_amp, pred_phi, pred_support=N
     return {
         "real_amp_l1": float(F.l1_loss(pred_amp, true_amp).detach().cpu()),
         "real_amp_mse": float(F.mse_loss(pred_amp, true_amp).detach().cpu()),
-        "real_amp_rmse": float(torch.sqrt(F.mse_loss(pred_amp, true_amp) + EPS).detach().cpu()),
-        "real_amp_rel_l1": float(relative_abs_error(true_amp, torch.abs(pred_amp - true_amp)).detach().cpu()),
+        "real_amp_rmse": float(
+            torch.sqrt(F.mse_loss(pred_amp, true_amp) + EPS).detach().cpu()
+        ),
+        "real_amp_rel_l1": float(
+            relative_abs_error(true_amp, torch.abs(pred_amp - true_amp)).detach().cpu()
+        ),
+        "real_amp_ssim": float(
+            windowed_ssim_3d(
+                true_amp,
+                pred_amp,
+                window_size=ssim_window_size,
+            )
+            .detach()
+            .cpu()
+        ),
         "real_amp_global_ssim": float(global_ssim(true_amp, pred_amp).detach().cpu()),
         "real_support_l1": float(F.l1_loss(pred_support, true_support).detach().cpu()),
         "real_support_mse": float(support_mse.detach().cpu()),
         "real_support_rmse": float(torch.sqrt(support_mse + EPS).detach().cpu()),
-        "real_support_rel_l1": float(relative_abs_error(true_support, support_abs_error).detach().cpu()),
-        "real_support_iou": float(torch.mean(inter / (union_count + EPS)).detach().cpu()),
-        "real_support_dice": float(torch.mean((2 * inter) / (true_count + pred_count + EPS)).detach().cpu()),
-        "real_support_true_fraction": float(torch.mean(true_count / true_flat.shape[1]).detach().cpu()),
-        "real_support_pred_fraction": float(torch.mean(pred_count / pred_flat.shape[1]).detach().cpu()),
-        "real_support_volume_ratio": float(torch.mean(pred_count / (true_count + EPS)).detach().cpu()),
-        "real_phase_l1_true_support": float(masked_reduce(phase_err, true_support).detach().cpu()),
+        "real_support_rel_l1": float(
+            relative_abs_error(true_support, support_abs_error).detach().cpu()
+        ),
+        "real_support_iou": float(
+            torch.mean(inter / (union_count + EPS)).detach().cpu()
+        ),
+        "real_support_dice": float(
+            torch.mean((2 * inter) / (true_count + pred_count + EPS)).detach().cpu()
+        ),
+        "real_support_true_fraction": float(
+            torch.mean(true_count / true_flat.shape[1]).detach().cpu()
+        ),
+        "real_support_pred_fraction": float(
+            torch.mean(pred_count / pred_flat.shape[1]).detach().cpu()
+        ),
+        "real_support_volume_ratio": float(
+            torch.mean(pred_count / (true_count + EPS)).detach().cpu()
+        ),
+        "real_phase_l1_true_support": float(
+            masked_reduce(phase_err, true_support).detach().cpu()
+        ),
         "real_phase_mse_true_support": float(phase_mse_true_support.detach().cpu()),
-        "real_phase_rel_l1_true_support": float(relative_abs_error(true_phi, phase_err, true_support).detach().cpu()),
-        "real_phase_mae_true_support": float(masked_reduce(phase_err, true_support).detach().cpu()),
-        "real_phase_mae_intersection": float(masked_reduce(phase_err, intersection).detach().cpu()),
-        "real_phase_rmse_true_support": float(torch.sqrt(phase_mse_true_support + EPS).detach().cpu()),
+        "real_phase_rel_l1_true_support": float(
+            relative_abs_error(true_phi, phase_err, true_support).detach().cpu()
+        ),
+        "real_phase_mae_true_support": float(
+            masked_reduce(phase_err, true_support).detach().cpu()
+        ),
+        "real_phase_mae_intersection": float(
+            masked_reduce(phase_err, intersection).detach().cpu()
+        ),
+        "real_phase_rmse_true_support": float(
+            torch.sqrt(phase_mse_true_support + EPS).detach().cpu()
+        ),
     }
 
 
@@ -214,7 +376,9 @@ def chi2_pcc_loss(y_true, y_pred):
 
 
 def sqrt_chi2_pcc_loss(y_true, y_pred):
-    return 0.5 * (torch.sqrt(chi2_modulus(y_true, y_pred) + EPS) + pearson_loss(y_true, y_pred))
+    return 0.5 * (
+        torch.sqrt(chi2_modulus(y_true, y_pred) + EPS) + pearson_loss(y_true, y_pred)
+    )
 
 
 def chi2_pcc_log_loss(y_true, y_pred):
@@ -245,6 +409,7 @@ METRIC_GROUPS = {
     ],
     "realspace_primary": [
         "real_amp_l1",
+        "real_amp_ssim",
         "real_amp_global_ssim",
         "real_support_iou",
         "real_support_dice",
@@ -265,6 +430,11 @@ METRIC_GROUPS = {
         "real_phase_mae_intersection",
         "real_phase_rmse_true_support",
     ],
+    "paper_free": [
+        "r_factor_free",
+        "llk_free",
+        "chi2_free",
+    ],
 }
 
 
@@ -281,6 +451,7 @@ METRIC_DESCRIPTIONS = {
     "real_amp_mse": "Real-space full-volume amplitude MSE. Lower is better.",
     "real_amp_rmse": "Real-space full-volume amplitude RMSE. Lower is better.",
     "real_amp_rel_l1": "Real-space amplitude L1 normalized by true amplitude sum. Lower is better.",
+    "real_amp_ssim": "Local-window 3D amplitude SSIM reported by the paper. Higher is better.",
     "real_amp_global_ssim": "Global 3D amplitude SSIM-like score. Higher is better.",
     "real_support_l1": "Binary support mask L1. Lower is better.",
     "real_support_mse": "Binary support mask MSE. Lower is better.",
@@ -297,6 +468,9 @@ METRIC_DESCRIPTIONS = {
     "real_phase_mae_true_support": "Wrapped phase MAE on the true support. Lower is better.",
     "real_phase_mae_intersection": "Wrapped phase MAE on support intersection. Lower is better.",
     "real_phase_rmse_true_support": "Wrapped phase RMSE on the true support. Lower is better.",
+    "r_factor_free": "Amplitude R-factor on held-out reciprocal voxels. Lower is better.",
+    "llk_free": "Mean Poisson deviance on held-out reciprocal voxels. Lower is better.",
+    "chi2_free": "Paper Eq. (2) chi-square restricted to held-out reciprocal voxels. Lower is better.",
 }
 
 
@@ -394,6 +568,7 @@ def format_metric_groups(metrics, title=None):
         "realspace_primary": "Real-space primary metrics",
         "reciprocal_diagnostic": "Reciprocal-space diagnostics",
         "realspace_diagnostic": "Real-space diagnostics",
+        "paper_free": "Paper free R-factor diagnostics",
         "other": "Other metrics",
     }
     lines = []
@@ -446,7 +621,9 @@ def metric_dict(y_true, y_pred):
     return {
         "paper_modulus_mae": float(paper_modulus_mae(y_true, y_pred).detach().cpu()),
         "chi2_modulus": float(chi2_modulus(y_true, y_pred).detach().cpu()),
-        "relative_l1_modulus": float(relative_l1_modulus(y_true, y_pred).detach().cpu()),
+        "relative_l1_modulus": float(
+            relative_l1_modulus(y_true, y_pred).detach().cpu()
+        ),
         "relative_log_mse": float(relative_log_mse(y_true, y_pred).detach().cpu()),
         "pearson_corr": float(pearson_corr(y_true, y_pred).detach().cpu()),
         "pearson_loss": float(pearson_loss(y_true, y_pred).detach().cpu()),
