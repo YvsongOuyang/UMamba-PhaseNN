@@ -50,8 +50,7 @@ LOGGER = logging.getLogger("autophasenn.evaluate")
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
 DEFAULT_CHECKPOINT = (
-    "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/"
-    "autophasenn_retrain_l1/checkpoint_best.pt"
+    "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
 )
 
 PAPER_METRICS = {
@@ -144,7 +143,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--shape", type=int, default=64)
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
-    parser.add_argument("--batch-size", type=int, default=2)
+    parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--threshold", type=float, default=0.1)
