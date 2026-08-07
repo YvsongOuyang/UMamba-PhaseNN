@@ -26,6 +26,10 @@ def reduce_per_sample(values, reduction="mean"):
     raise ValueError(f"Unsupported reduction: {reduction}")
 
 
+def _mean_per_sample(values):
+    return torch.mean(flatten_sample(values), dim=1)
+
+
 def scale_align_sum(y_true, y_pred, eps=1e-10):
     """Scale each predicted sample to have the same total modulus as y_true."""
 
@@ -242,6 +246,17 @@ def llk_free(y_true, y_pred, free_mask, reduction="mean"):
 
 
 @torch.no_grad()
+def free_metric_tensor_dict(y_true, y_pred, free_mask):
+    """Return free metrics as one scalar tensor per sample."""
+
+    return {
+        "r_factor_free": r_factor_free(y_true, y_pred, free_mask, reduction="none"),
+        "llk_free": llk_free(y_true, y_pred, free_mask, reduction="none"),
+        "chi2_free": chi2_free(y_true, y_pred, free_mask, reduction="none"),
+    }
+
+
+@torch.no_grad()
 def free_metric_dict(y_true, y_pred, free_mask):
     """Paper-referenced free R-factor diagnostics on a supplied holdout mask."""
 
@@ -275,6 +290,101 @@ def relative_abs_error(y_true, abs_error, mask=None, reduction="mean"):
     numerator = torch.sum(err, dim=1)
     denominator = torch.sum(torch.abs(true), dim=1)
     return reduce_per_sample(numerator / (denominator + EPS), reduction)
+
+
+@torch.no_grad()
+def realspace_metric_tensor_dict(
+    true_amp,
+    true_phi,
+    pred_amp,
+    pred_phi,
+    pred_support=None,
+    threshold=0.1,
+    ssim_window_size=7,
+):
+    """Return real-space metrics as one scalar tensor per sample."""
+
+    true_support = (true_amp >= threshold).float()
+    if pred_support is None:
+        pred_support = (pred_amp >= threshold).float()
+    else:
+        pred_support = (pred_support >= 0.5).float()
+
+    intersection = true_support * pred_support
+    union = torch.clamp(true_support + pred_support, max=1.0)
+    true_flat = flatten_sample(true_support)
+    pred_flat = flatten_sample(pred_support)
+    inter = torch.sum(flatten_sample(intersection), dim=1)
+    true_count = torch.sum(true_flat, dim=1)
+    pred_count = torch.sum(pred_flat, dim=1)
+    union_count = torch.sum(flatten_sample(union), dim=1)
+
+    amp_abs_error = torch.abs(pred_amp - true_amp)
+    amp_sq_error = torch.pow(pred_amp - true_amp, 2)
+    amp_mse = _mean_per_sample(amp_sq_error)
+    phase_err = wrapped_phase_abs_error(true_phi, pred_phi)
+    phase_sq = phase_err**2
+    phase_mse_true_support = masked_reduce(phase_sq, true_support, reduction="none")
+    support_abs_error = torch.abs(pred_support - true_support)
+    support_mse = _mean_per_sample(torch.pow(support_abs_error, 2))
+
+    return {
+        "real_amp_l1": _mean_per_sample(amp_abs_error),
+        "real_amp_mse": amp_mse,
+        "real_amp_rmse": torch.sqrt(amp_mse + EPS),
+        "real_amp_rel_l1": relative_abs_error(
+            true_amp,
+            amp_abs_error,
+            reduction="none",
+        ),
+        "real_amp_ssim": windowed_ssim_3d(
+            true_amp,
+            pred_amp,
+            window_size=ssim_window_size,
+            reduction="none",
+        ),
+        "real_amp_global_ssim": global_ssim(
+            true_amp,
+            pred_amp,
+            reduction="none",
+        ),
+        "real_support_l1": _mean_per_sample(support_abs_error),
+        "real_support_mse": support_mse,
+        "real_support_rmse": torch.sqrt(support_mse + EPS),
+        "real_support_rel_l1": relative_abs_error(
+            true_support,
+            support_abs_error,
+            reduction="none",
+        ),
+        "real_support_iou": inter / (union_count + EPS),
+        "real_support_dice": (2 * inter) / (true_count + pred_count + EPS),
+        "real_support_true_fraction": true_count / true_flat.shape[1],
+        "real_support_pred_fraction": pred_count / pred_flat.shape[1],
+        "real_support_volume_ratio": pred_count / (true_count + EPS),
+        "real_phase_l1_true_support": masked_reduce(
+            phase_err,
+            true_support,
+            reduction="none",
+        ),
+        "real_phase_mse_true_support": phase_mse_true_support,
+        "real_phase_rel_l1_true_support": relative_abs_error(
+            true_phi,
+            phase_err,
+            true_support,
+            reduction="none",
+        ),
+        "real_phase_mae_true_support": masked_reduce(
+            phase_err,
+            true_support,
+            reduction="none",
+        ),
+        "real_phase_mae_intersection": masked_reduce(
+            phase_err,
+            intersection,
+            reduction="none",
+        ),
+        "real_phase_rmse_true_support": torch.sqrt(phase_mse_true_support + EPS),
+    }
 
 
 @torch.no_grad()
@@ -614,6 +724,32 @@ def get_loss(name):
         allowed = ", ".join(sorted(LOSS_REGISTRY))
         raise ValueError(f"Unknown loss {name!r}. Allowed: {allowed}")
     return LOSS_REGISTRY[key]
+
+
+@torch.no_grad()
+def metric_tensor_dict(y_true, y_pred):
+    """Return reciprocal-space metrics as one scalar tensor per sample."""
+
+    abs_error = torch.abs(y_pred - y_true)
+    sq_error = torch.pow(y_pred - y_true, 2)
+    return {
+        "paper_modulus_mae": _mean_per_sample(abs_error),
+        "chi2_modulus": chi2_modulus(y_true, y_pred, reduction="none"),
+        "relative_l1_modulus": relative_l1_modulus(
+            y_true,
+            y_pred,
+            reduction="none",
+        ),
+        "relative_log_mse": relative_log_mse(
+            y_true,
+            y_pred,
+            reduction="none",
+        ),
+        "pearson_corr": pearson_corr(y_true, y_pred, reduction="none"),
+        "pearson_loss": pearson_loss(y_true, y_pred, reduction="none"),
+        "voxel_mse": _mean_per_sample(sq_error),
+        "voxel_rmse": voxel_rmse(y_true, y_pred, reduction="none"),
+    }
 
 
 @torch.no_grad()

@@ -7,7 +7,9 @@ import csv
 import json
 import logging
 import math
+import os
 import time
+from concurrent.futures import Executor, ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,10 +25,10 @@ try:
         METRIC_DESCRIPTIONS,
         fixed_metric_groups,
         format_fixed_metric_groups,
-        free_metric_dict,
+        free_metric_tensor_dict,
         group_metrics,
-        metric_dict,
-        realspace_metric_dict,
+        metric_tensor_dict,
+        realspace_metric_tensor_dict,
     )
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -36,10 +38,10 @@ except ImportError:
         METRIC_DESCRIPTIONS,
         fixed_metric_groups,
         format_fixed_metric_groups,
-        free_metric_dict,
+        free_metric_tensor_dict,
         group_metrics,
-        metric_dict,
-        realspace_metric_dict,
+        metric_tensor_dict,
+        realspace_metric_tensor_dict,
     )
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -150,6 +152,15 @@ def parse_args() -> argparse.Namespace:
         help="Odd cubic window size for paper-style 3D amplitude SSIM.",
     )
     parser.add_argument(
+        "--postprocess-workers",
+        type=int,
+        default=0,
+        help=(
+            "Threads for the exact skimage phase unwrap; zero selects up to "
+            "eight workers automatically."
+        ),
+    )
+    parser.add_argument(
         "--free-mask",
         default="",
         help=(
@@ -203,6 +214,8 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("--batch-size must be positive.")
     if args.num_workers < 0:
         raise ValueError("--num-workers cannot be negative.")
+    if args.postprocess_workers < 0:
+        raise ValueError("--postprocess-workers cannot be negative.")
     if not 0.0 <= args.free_fraction < 1.0:
         raise ValueError("--free-fraction must be in [0, 1).")
     if args.ssim_window_size < 1 or args.ssim_window_size % 2 == 0:
@@ -427,6 +440,212 @@ def post_process_realspace_sample(
     )
 
 
+def resolve_postprocess_workers(configured: int, batch_size: int) -> int:
+    """Resolve a bounded worker count for independent phase-unwrapping jobs."""
+
+    if configured > 0:
+        return configured
+    return max(1, min(batch_size * 2, os.cpu_count() or 1, 8))
+
+
+def unwrap_phase_volumes(
+    phase_batch: np.ndarray,
+    executor: Executor | None = None,
+) -> np.ndarray:
+    """Apply the official skimage unwrap independently to a batch of volumes."""
+
+    from skimage.restoration import unwrap_phase
+
+    phase_batch = np.asarray(phase_batch, dtype=np.float32)
+    if phase_batch.ndim != 5 or phase_batch.shape[1] != 1:
+        raise ValueError("Phase batch must have shape (B, 1, D, H, W).")
+    volumes = [phase_batch[index, 0] for index in range(phase_batch.shape[0])]
+    if executor is None:
+        unwrapped = [unwrap_phase(volume) for volume in volumes]
+    else:
+        unwrapped = list(executor.map(unwrap_phase, volumes))
+    return np.ascontiguousarray(
+        np.stack(unwrapped, axis=0)[:, None],
+        dtype=np.float32,
+    )
+
+
+def center_of_mass_shifts(values: torch.Tensor) -> torch.Tensor:
+    """Calculate official integer center-of-mass shifts for a tensor batch."""
+
+    if values.ndim != 5:
+        raise ValueError("Center-of-mass input must have shape (B, C, D, H, W).")
+    reduction_dims = tuple(range(1, values.ndim))
+    mass = torch.sum(values, dim=reduction_dims)
+    shifts: list[torch.Tensor] = []
+    for axis, size in enumerate(values.shape[-3:]):
+        dim = values.ndim - 3 + axis
+        coordinate_shape = [1] * values.ndim
+        coordinate_shape[dim] = size
+        coordinates = torch.arange(
+            size,
+            device=values.device,
+            dtype=values.dtype,
+        ).reshape(coordinate_shape)
+        center = torch.sum(values * coordinates, dim=reduction_dims) / mass
+        valid = torch.isfinite(center) & torch.isfinite(mass) & (mass != 0)
+        shift = torch.round(size / 2.0 - center)
+        shifts.append(torch.where(valid, shift, torch.zeros_like(shift)).long())
+    return torch.stack(shifts, dim=1)
+
+
+def scipy_wrap_shift_batch(
+    values: torch.Tensor,
+    shifts: torch.Tensor,
+) -> torch.Tensor:
+    """Apply integer shifts with SciPy ``mode='wrap'`` boundary semantics."""
+
+    if values.ndim != 5:
+        raise ValueError("Shift input must have shape (B, C, D, H, W).")
+    if shifts.shape != (values.shape[0], 3):
+        raise ValueError("Shifts must have shape (B, 3).")
+    shifted = values
+    for axis, size in enumerate(shifted.shape[-3:]):
+        if size <= 1:
+            continue
+        dim = shifted.ndim - 3 + axis
+        source = torch.arange(size, device=shifted.device)[None, :]
+        source = source - shifts[:, axis, None]
+        outside = (source < 0) | (source > size - 1)
+        source = torch.where(outside, torch.remainder(source, size - 1), source)
+        index_shape = [1] * shifted.ndim
+        index_shape[0] = shifted.shape[0]
+        index_shape[dim] = size
+        gather_index = source.reshape(index_shape).expand_as(shifted)
+        shifted = torch.gather(shifted, dim=dim, index=gather_index)
+    return shifted
+
+
+def official_post_process_tensor_batch(
+    amp: torch.Tensor,
+    unwrapped_phi: torch.Tensor,
+    threshold: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Run the official mask, phase offset, and centering steps in a batch."""
+
+    if amp.shape != unwrapped_phi.shape or amp.ndim != 5:
+        raise ValueError("Amplitude and phase must share shape (B, C, D, H, W).")
+    mask = amp > threshold
+    amp_out = torch.where(mask, amp, torch.zeros_like(amp))
+    phi_out = torch.where(mask, unwrapped_phi, torch.zeros_like(unwrapped_phi))
+    selected = amp_out > threshold
+    selected_flat = selected.flatten(start_dim=1)
+    selected_count = torch.sum(selected_flat, dim=1)
+    phase_sum = torch.sum((phi_out * selected).flatten(start_dim=1), dim=1)
+    mean_phi = torch.where(
+        selected_count > 0,
+        phase_sum / selected_count.clamp_min(1),
+        torch.zeros_like(phase_sum),
+    )
+    phi_out = phi_out - mean_phi.reshape((-1,) + (1,) * (phi_out.ndim - 1))
+
+    shifts = center_of_mass_shifts(amp_out)
+    amp_out = scipy_wrap_shift_batch(amp_out, shifts)
+    phi_out = scipy_wrap_shift_batch(phi_out, shifts)
+    mask = amp_out > threshold
+    return (
+        torch.where(mask, amp_out, torch.zeros_like(amp_out)),
+        torch.where(mask, phi_out, torch.zeros_like(phi_out)),
+    )
+
+
+def post_process_realspace_batch(
+    true_amp: torch.Tensor,
+    true_phi: torch.Tensor,
+    pred_amp: torch.Tensor,
+    pred_phi: torch.Tensor,
+    pred_support: torch.Tensor,
+    threshold: float,
+    executor: Executor | None = None,
+) -> tuple[torch.Tensor, ...]:
+    """Batch official post-processing while keeping tensor operations on device."""
+
+    batch_size = pred_phi.shape[0]
+    true_phi_array = true_phi.detach().to(device="cpu", dtype=torch.float32).numpy()
+    pred_phi_array = pred_phi.detach().to(device="cpu", dtype=torch.float32).numpy()
+    phase_batch = np.concatenate((true_phi_array, pred_phi_array), axis=0)
+    unwrapped = unwrap_phase_volumes(phase_batch, executor=executor)
+    unwrapped_tensor = torch.from_numpy(unwrapped).to(
+        device=pred_phi.device,
+        dtype=pred_phi.dtype,
+    )
+    true_phi_unwrapped, pred_phi_unwrapped = torch.split(
+        unwrapped_tensor,
+        [batch_size, batch_size],
+        dim=0,
+    )
+    true_amp_device = true_amp.to(
+        device=pred_amp.device,
+        dtype=pred_amp.dtype,
+        non_blocking=pred_amp.device.type == "cuda",
+    )
+    true_amp_post, true_phi_post = official_post_process_tensor_batch(
+        true_amp_device,
+        true_phi_unwrapped,
+        threshold=threshold,
+    )
+    pred_amp_post, pred_phi_post = official_post_process_tensor_batch(
+        pred_amp,
+        pred_phi_unwrapped,
+        threshold=threshold,
+    )
+    support_shifts = center_of_mass_shifts(pred_support)
+    support_post = scipy_wrap_shift_batch(pred_support, support_shifts)
+    return (
+        true_amp_post,
+        true_phi_post,
+        pred_amp_post,
+        pred_phi_post,
+        support_post,
+    )
+
+
+def materialize_metric_rows(
+    metrics: dict[str, torch.Tensor],
+) -> list[dict[str, float]]:
+    """Transfer a complete batch of scalar metrics to CPU in one operation."""
+
+    if not metrics:
+        return []
+    keys = list(metrics)
+    columns = [metrics[key].reshape(-1) for key in keys]
+    batch_size = columns[0].shape[0]
+    if any(column.shape != (batch_size,) for column in columns):
+        raise ValueError("Every metric tensor must contain one scalar per sample.")
+    matrix = torch.stack(columns, dim=1).detach().cpu().numpy()
+    return [
+        {
+            key: float(matrix[row_index, column_index])
+            for column_index, key in enumerate(keys)
+        }
+        for row_index in range(batch_size)
+    ]
+
+
+def timed_model_forward(
+    model: torch.nn.Module,
+    inputs: torch.Tensor,
+    device: torch.device,
+) -> tuple[object, float]:
+    """Time one forward pass without a redundant pre-forward CUDA sync."""
+
+    if device.type != "cuda":
+        started = time.perf_counter()
+        return model(inputs), time.perf_counter() - started
+    started = torch.cuda.Event(enable_timing=True)
+    finished = torch.cuda.Event(enable_timing=True)
+    started.record()
+    outputs = model(inputs)
+    finished.record()
+    finished.synchronize()
+    return outputs, started.elapsed_time(finished) / 1000.0
+
+
 @torch.inference_mode()
 def warm_up_model(
     model: torch.nn.Module,
@@ -558,6 +777,8 @@ def render_markdown(report: dict[str, object]) -> str:
         f"| SSIM window | {run['ssim_window_size']} x {run['ssim_window_size']} x {run['ssim_window_size']} |",
         f"| Real-space ground truth | {run['realspace_metrics']} |",
         f"| Real-space post-process | `{run['realspace_post_process']}` |",
+        f"| Post-process tensor device | `{run['postprocess_tensor_device']}` |",
+        f"| Phase unwrap workers | {run['postprocess_workers']} |",
         f"| Total evaluation wall time | {format_number(timing['evaluation_wall_seconds'])} s |",
         f"| Mean model inference | {format_number(timing['mean_inference_ms_per_sample'])} ms/sample |",
         f"| Model throughput | {format_number(timing['throughput_samples_per_second'])} samples/s |",
@@ -629,6 +850,7 @@ def evaluate(
     dataset: AutoPhaseDataset,
     device: torch.device,
     free_mask: torch.Tensor | None,
+    postprocess_workers: int,
 ) -> tuple[list[dict[str, object]], dict[str, float]]:
     """Evaluate all samples with model.eval() and inference-only autograd state."""
 
@@ -638,28 +860,25 @@ def evaluate(
     has_realspace = dataset.mmap_real is not None
     device_free_mask = free_mask.to(device) if free_mask is not None else None
     progress = tqdm(loader, desc="AutoPhaseNN evaluation", unit="batch")
-    for batch in progress:
-        diff = batch["diff"].to(device, non_blocking=True).float()
-        amp = batch["amp"].to(device, non_blocking=True).float()
-        phi = batch["phi"].to(device, non_blocking=True).float()
-        synchronize(device)
-        inference_started = time.perf_counter()
-        outputs = model(diff)
-        synchronize(device)
-        batch_inference_seconds = time.perf_counter() - inference_started
-        pred_diff, _pred_obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
-        inference_ms_per_sample = 1000.0 * batch_inference_seconds / diff.shape[0]
+    unwrap_executor = (
+        ThreadPoolExecutor(
+            max_workers=postprocess_workers,
+            thread_name_prefix="phase-unwrap",
+        )
+        if has_realspace and postprocess_workers > 1
+        else None
+    )
+    try:
+        for batch in progress:
+            diff = batch["diff"].to(device, non_blocking=True).float()
+            outputs, batch_inference_seconds = timed_model_forward(model, diff, device)
+            pred_diff, _pred_obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
+            inference_ms_per_sample = 1000.0 * batch_inference_seconds / diff.shape[0]
 
-        for index, name in enumerate(batch["name"]):
-            sample_slice = slice(index, index + 1)
-            metrics = metric_dict(diff[sample_slice], pred_diff[sample_slice])
+            metric_tensors = metric_tensor_dict(diff, pred_diff)
             if device_free_mask is not None:
-                metrics.update(
-                    free_metric_dict(
-                        diff[sample_slice],
-                        pred_diff[sample_slice],
-                        device_free_mask,
-                    )
+                metric_tensors.update(
+                    free_metric_tensor_dict(diff, pred_diff, device_free_mask)
                 )
             if has_realspace:
                 (
@@ -668,16 +887,17 @@ def evaluate(
                     pred_amp_post,
                     pred_phi_post,
                     support_post,
-                ) = post_process_realspace_sample(
-                    amp[sample_slice],
-                    phi[sample_slice],
-                    pred_amp[sample_slice],
-                    pred_phi[sample_slice],
-                    support[sample_slice],
+                ) = post_process_realspace_batch(
+                    batch["amp"].float(),
+                    batch["phi"].float(),
+                    pred_amp,
+                    pred_phi,
+                    support,
                     threshold=args.threshold,
+                    executor=unwrap_executor,
                 )
-                metrics.update(
-                    realspace_metric_dict(
+                metric_tensors.update(
+                    realspace_metric_tensor_dict(
                         true_amp_post,
                         true_phi_post,
                         pred_amp_post,
@@ -687,9 +907,14 @@ def evaluate(
                         ssim_window_size=args.ssim_window_size,
                     )
                 )
-            metrics["inference_ms"] = inference_ms_per_sample
-            add_metrics(total, metrics)
-            per_sample.append({"name": name, **metrics})
+            batch_metrics = materialize_metric_rows(metric_tensors)
+            for name, metrics in zip(batch["name"], batch_metrics):
+                metrics["inference_ms"] = inference_ms_per_sample
+                add_metrics(total, metrics)
+                per_sample.append({"name": name, **metrics})
+    finally:
+        if unwrap_executor is not None:
+            unwrap_executor.shutdown(wait=True)
     return per_sample, total
 
 
@@ -737,6 +962,7 @@ def main() -> int:
         shuffle=False,
         num_workers=args.num_workers,
         pin_memory=device.type == "cuda",
+        persistent_workers=args.num_workers > 0,
     )
 
     model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
@@ -770,10 +996,28 @@ def main() -> int:
         free_mask_metadata["selected_voxels"],
         free_mask_metadata["actual_fraction"],
     )
+    postprocess_workers = (
+        resolve_postprocess_workers(args.postprocess_workers, args.batch_size)
+        if dataset.mmap_real is not None
+        else 0
+    )
+    LOGGER.info(
+        "Real-space post-process: tensor_device=%s, phase_unwrap_workers=%d",
+        device,
+        postprocess_workers,
+    )
 
     warm_up_model(model, loader, device, args.warmup_batches)
     evaluation_started = time.perf_counter()
-    per_sample, total = evaluate(args, model, loader, dataset, device, free_mask)
+    per_sample, total = evaluate(
+        args,
+        model,
+        loader,
+        dataset,
+        device,
+        free_mask,
+        postprocess_workers,
+    )
     evaluation_wall_seconds = time.perf_counter() - evaluation_started
     if not per_sample:
         raise RuntimeError("Evaluation produced no samples.")
@@ -820,7 +1064,9 @@ def main() -> int:
             "support_threshold": args.threshold,
             "ssim_window_size": args.ssim_window_size,
             "realspace_metrics": dataset.mmap_real is not None,
-            "realspace_post_process": "official_tf2",
+            "realspace_post_process": "official_skimage_unwrap_batched_torch",
+            "postprocess_tensor_device": str(device),
+            "postprocess_workers": postprocess_workers,
         },
         "checkpoint_metadata": {
             "epoch": checkpoint_epoch,
@@ -858,15 +1104,17 @@ def main() -> int:
             "phase": (
                 "Official post_process unwraps phase, subtracts its support mean, and centers "
                 "the object. Metric phase differences are then wrapped to [-pi, pi] and "
-                "evaluated on the post-processed true support."
+                "evaluated on the post-processed true support. The exact skimage phase "
+                "unwrap remains on CPU; masking, mean removal, center-of-mass shifts, and "
+                "metric tensors are batched on the selected torch device."
             ),
             "scaling": (
                 "No input normalization or prediction scale alignment is performed by this "
                 "evaluator. Reciprocal-space metrics use the raw model pred_diff output."
             ),
             "timing": (
-                "CUDA is synchronized around each forward pass. Per-sample values divide "
-                "batch latency evenly across the batch."
+                "CUDA events time each forward pass. Per-sample values divide batch latency "
+                "evenly across the batch."
             ),
         },
     }

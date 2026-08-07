@@ -199,6 +199,12 @@ Reciprocal-space metrics use the raw diffraction arrays without input or
 prediction rescaling. Real-space amplitude, phase, and support metrics use the
 same SciPy/scikit-image post-processing as `visualize_postprocessed.py`: phase
 unwrapping, support masking, mean-phase removal, and center-of-mass shifting.
+The evaluator batches masking, center-of-mass shifting, and all metric tensors
+on the selected PyTorch device. The exact `skimage.unwrap_phase` step remains on
+CPU because PyTorch has no equivalent CUDA operator; independent volumes are
+unwrapped concurrently. `--postprocess-workers 0` selects up to eight threads
+automatically, while `--postprocess-workers 1` limits CPU use. Set
+`--num-workers` above zero to overlap memmap loading with GPU inference.
 
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
