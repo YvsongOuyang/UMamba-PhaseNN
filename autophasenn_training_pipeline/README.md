@@ -89,7 +89,8 @@ pcc       -> pearson loss
 comb      -> 0.5 * (chi2_modulus + pearson_loss)
 ```
 
-To reproduce the scale-aligned evaluation you used:
+Training can optionally scale-align predicted diffraction before computing its
+loss:
 
 ```text
 --scale-align-loss
@@ -101,7 +102,9 @@ That applies:
 Y_pred = Y_pred * sum(Y_true) / sum(Y_pred)
 ```
 
-before computing the diffraction loss.
+before computing the diffraction loss. The standalone evaluator intentionally
+does not apply this transformation: reciprocal-space metrics use the raw model
+`pred_diff` output.
 
 ## Smoke Test
 
@@ -192,6 +195,11 @@ evaluation_summary.md     Paper-first human-readable summary
 evaluation.log            Resolved paths and execution log
 ```
 
+Reciprocal-space metrics use the raw diffraction arrays without input or
+prediction rescaling. Real-space amplitude, phase, and support metrics use the
+same SciPy/scikit-image post-processing as `visualize_postprocessed.py`: phase
+unwrapping, support masking, mean-phase removal, and center-of-mass shifting.
+
 ```powershell
 $PY = ".\.conda_autophase_tfpt\python.exe"
 & $PY "autophasenn_training_pipeline\evaluate.py" `
@@ -214,8 +222,7 @@ Use the original experiment holdout mask when available:
   --device cpu
 ```
 
-Add `--scale-align-loss` if you want the scale-aligned metric report. Use
-`--data-real none` for experimental data without ground-truth amplitude and
+Use `--data-real none` for experimental data without ground-truth amplitude and
 phase; reciprocal-space and free-mask metrics are still produced.
 
 ## Visualize

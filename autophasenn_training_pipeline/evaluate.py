@@ -1,4 +1,4 @@
-"""Evaluate an AutoPhaseNN checkpoint and write a readable artifact bundle."""
+"""Evaluate AutoPhaseNN with raw reciprocal and official post-processed real-space metrics."""
 
 from __future__ import annotations
 
@@ -27,7 +27,6 @@ try:
         group_metrics,
         metric_dict,
         realspace_metric_dict,
-        scale_align_sum,
     )
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -41,7 +40,6 @@ except ImportError:
         group_metrics,
         metric_dict,
         realspace_metric_dict,
-        scale_align_sum,
     )
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -49,9 +47,7 @@ except ImportError:
 LOGGER = logging.getLogger("autophasenn.evaluate")
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
-DEFAULT_CHECKPOINT = (
-    "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
-)
+DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
 
 PAPER_METRICS = {
     "paper_modulus_mae": {
@@ -147,8 +143,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--threshold", type=float, default=0.1)
-    parser.add_argument("--scale-i", type=float, default=0.0)
-    parser.add_argument("--scale-align-loss", action="store_true")
     parser.add_argument(
         "--ssim-window-size",
         type=int,
@@ -326,6 +320,113 @@ def unpack_outputs(outputs: object) -> tuple[torch.Tensor, ...]:
     return tuple(outputs[:5])
 
 
+def shift_center_of_mass(
+    amp: np.ndarray,
+    phi: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Center amplitude and phase together using the official TF2 convention."""
+
+    from scipy.ndimage import center_of_mass, shift
+
+    center = center_of_mass(amp)
+    if any(np.isnan(value) for value in center):
+        return amp, phi
+    deltas = tuple(
+        int(round(size / 2.0 - coordinate))
+        for size, coordinate in zip(amp.shape, center)
+    )
+    return (
+        shift(amp, shift=deltas, mode="wrap"),
+        shift(phi, shift=deltas, mode="wrap"),
+    )
+
+
+def shift_support(support: np.ndarray) -> np.ndarray:
+    """Center predicted support like the official TF2 ``shift_sup`` helper."""
+
+    from scipy.ndimage import center_of_mass, shift
+
+    center = center_of_mass(support)
+    if any(np.isnan(value) for value in center):
+        return support
+    deltas = tuple(
+        int(round(size / 2.0 - coordinate))
+        for size, coordinate in zip(support.shape, center)
+    )
+    return shift(support, shift=deltas, mode="wrap")
+
+
+def official_post_process(
+    amp: np.ndarray,
+    phi: np.ndarray,
+    threshold: float = 0.1,
+    unwrap: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Apply the official TF2 amplitude/phase test-time post-processing."""
+
+    from skimage.restoration import unwrap_phase
+
+    amp = np.asarray(amp, dtype=np.float32)
+    phi = np.asarray(phi, dtype=np.float32).reshape(amp.shape)
+    if unwrap:
+        phi = unwrap_phase(phi)
+
+    mask = amp > threshold
+    amp_out = np.where(mask, amp, 0.0)
+    phi_out = np.where(mask, phi, 0.0)
+    selected = amp_out > threshold
+    mean_phi = float(np.mean(phi_out[selected])) if np.any(selected) else 0.0
+    phi_out = phi_out - mean_phi
+    amp_out, phi_out = shift_center_of_mass(amp_out, phi_out)
+
+    mask = amp_out > threshold
+    amp_out = np.where(mask, amp_out, 0.0)
+    phi_out = np.where(mask, phi_out, 0.0)
+    return amp_out.astype(np.float32), phi_out.astype(np.float32)
+
+
+def post_process_realspace_sample(
+    true_amp: torch.Tensor,
+    true_phi: torch.Tensor,
+    pred_amp: torch.Tensor,
+    pred_phi: torch.Tensor,
+    pred_support: torch.Tensor,
+    threshold: float,
+) -> tuple[torch.Tensor, ...]:
+    """Post-process one ``(1, 1, D, H, W)`` sample and restore tensor layout."""
+
+    def as_volume(value: torch.Tensor) -> np.ndarray:
+        return value.detach().cpu().numpy()[0, 0]
+
+    def as_tensor(value: np.ndarray, reference: torch.Tensor) -> torch.Tensor:
+        contiguous = np.ascontiguousarray(value[None, None], dtype=np.float32)
+        return torch.from_numpy(contiguous).to(
+            device=reference.device,
+            dtype=reference.dtype,
+        )
+
+    true_amp_post, true_phi_post = official_post_process(
+        as_volume(true_amp),
+        as_volume(true_phi),
+        threshold=threshold,
+        unwrap=True,
+    )
+    pred_amp_post, pred_phi_post = official_post_process(
+        as_volume(pred_amp),
+        as_volume(pred_phi),
+        threshold=threshold,
+        unwrap=True,
+    )
+    support_post = shift_support(as_volume(pred_support)).astype(np.float32)
+    return (
+        as_tensor(true_amp_post, true_amp),
+        as_tensor(true_phi_post, true_phi),
+        as_tensor(pred_amp_post, pred_amp),
+        as_tensor(pred_phi_post, pred_phi),
+        as_tensor(support_post, pred_support),
+    )
+
+
 @torch.inference_mode()
 def warm_up_model(
     model: torch.nn.Module,
@@ -456,7 +557,7 @@ def render_markdown(report: dict[str, object]) -> str:
         f"| Support threshold | {format_number(run['support_threshold'])} |",
         f"| SSIM window | {run['ssim_window_size']} x {run['ssim_window_size']} x {run['ssim_window_size']} |",
         f"| Real-space ground truth | {run['realspace_metrics']} |",
-        f"| Scale-aligned diffraction | {run['scale_align_loss']} |",
+        f"| Real-space post-process | `{run['realspace_post_process']}` |",
         f"| Total evaluation wall time | {format_number(timing['evaluation_wall_seconds'])} s |",
         f"| Mean model inference | {format_number(timing['mean_inference_ms_per_sample'])} ms/sample |",
         f"| Model throughput | {format_number(timing['throughput_samples_per_second'])} samples/s |",
@@ -547,8 +648,6 @@ def evaluate(
         synchronize(device)
         batch_inference_seconds = time.perf_counter() - inference_started
         pred_diff, _pred_obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
-        if args.scale_align_loss:
-            pred_diff = scale_align_sum(diff, pred_diff)
         inference_ms_per_sample = 1000.0 * batch_inference_seconds / diff.shape[0]
 
         for index, name in enumerate(batch["name"]):
@@ -563,13 +662,27 @@ def evaluate(
                     )
                 )
             if has_realspace:
+                (
+                    true_amp_post,
+                    true_phi_post,
+                    pred_amp_post,
+                    pred_phi_post,
+                    support_post,
+                ) = post_process_realspace_sample(
+                    amp[sample_slice],
+                    phi[sample_slice],
+                    pred_amp[sample_slice],
+                    pred_phi[sample_slice],
+                    support[sample_slice],
+                    threshold=args.threshold,
+                )
                 metrics.update(
                     realspace_metric_dict(
-                        amp[sample_slice],
-                        phi[sample_slice],
-                        pred_amp[sample_slice],
-                        pred_phi[sample_slice],
-                        support[sample_slice],
+                        true_amp_post,
+                        true_phi_post,
+                        pred_amp_post,
+                        pred_phi_post,
+                        support_post,
                         threshold=args.threshold,
                         ssim_window_size=args.ssim_window_size,
                     )
@@ -616,7 +729,6 @@ def main() -> int:
         shape_real=spatial_shape,
         dtype_diff=args.dtype_diff,
         dtype_real=args.dtype_real,
-        scale_i=args.scale_i,
         shuffle=False,
     )
     loader = DataLoader(
@@ -692,7 +804,7 @@ def main() -> int:
         for key, metadata in PAPER_METRICS.items()
     }
     report: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run": {
             "checkpoint": str(checkpoint_path),
@@ -708,7 +820,7 @@ def main() -> int:
             "support_threshold": args.threshold,
             "ssim_window_size": args.ssim_window_size,
             "realspace_metrics": dataset.mmap_real is not None,
-            "scale_align_loss": args.scale_align_loss,
+            "realspace_post_process": "official_tf2",
         },
         "checkpoint_metadata": {
             "epoch": checkpoint_epoch,
@@ -738,10 +850,20 @@ def main() -> int:
                 "intensity is modulus squared."
             ),
             "ssim": (
-                "real_amp_ssim is local-window 3D SSIM with normalized amplitude data_range=1; "
-                "real_amp_global_ssim is retained as a lightweight diagnostic."
+                "Both target and predicted real-space amplitude/phase use the official TF2 "
+                "post_process before metrics. real_amp_ssim is local-window 3D SSIM with "
+                "normalized amplitude data_range=1; real_amp_global_ssim is retained as a "
+                "lightweight diagnostic."
             ),
-            "phase": "Phase errors are wrapped to [-pi, pi] and evaluated on the true support.",
+            "phase": (
+                "Official post_process unwraps phase, subtracts its support mean, and centers "
+                "the object. Metric phase differences are then wrapped to [-pi, pi] and "
+                "evaluated on the post-processed true support."
+            ),
+            "scaling": (
+                "No input normalization or prediction scale alignment is performed by this "
+                "evaluator. Reciprocal-space metrics use the raw model pred_diff output."
+            ),
             "timing": (
                 "CUDA is synchronized around each forward pass. Per-sample values divide "
                 "batch latency evenly across the batch."
