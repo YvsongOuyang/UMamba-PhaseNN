@@ -10,7 +10,8 @@ from torch.utils.data import DataLoader
 
 from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
-from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+from model_factory import MODEL_VARIANTS, create_model
+from model_tf_compatible import load_weights
 
 
 DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
@@ -319,6 +320,12 @@ def main():
     parser.add_argument("--num-samples-train", type=int, default=25000)
     parser.add_argument("--num-samples-val", type=int, default=5000)
     parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument(
+        "--model-variant",
+        choices=MODEL_VARIANTS,
+        default="baseline",
+        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+    )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
@@ -424,8 +431,9 @@ def main():
         f"val={train_samples if overfit_mode else args.num_samples_val}"
     )
     print(
-        "Training setup: {} | loss_scope={} | loss_type={} | cache_data={}".format(
+        "Training setup: {} | model={} | loss_scope={} | loss_type={} | cache_data={}".format(
             "from_scratch" if not args.pretrained and not args.resume else "checkpointed",
+            args.model_variant,
             args.loss_scope,
             args.loss_type,
             cache_data,
@@ -476,7 +484,7 @@ def main():
         pin_memory=pin_memory,
     )
 
-    model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
+    model = create_model(args.model_variant, threshold=args.threshold).to(device)
     if args.pretrained:
         load_weights(model, args.pretrained, map_location=device)
         print(f"Loaded pretrained weights: {args.pretrained}")

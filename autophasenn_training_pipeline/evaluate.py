@@ -30,7 +30,8 @@ try:
         metric_tensor_dict,
         realspace_metric_tensor_dict,
     )
-    from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+    from .model_factory import MODEL_VARIANTS, create_model
+    from .model_tf_compatible import load_weights
 except ImportError:
     from dataset import AutoPhaseDataset
     from losses import (
@@ -43,7 +44,8 @@ except ImportError:
         metric_tensor_dict,
         realspace_metric_tensor_dict,
     )
-    from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+    from model_factory import MODEL_VARIANTS, create_model
+    from model_tf_compatible import load_weights
 
 
 LOGGER = logging.getLogger("autophasenn.evaluate")
@@ -132,6 +134,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
     parser.add_argument("--num-samples", type=int, default=5000)
+    parser.add_argument(
+        "--model-variant",
+        choices=MODEL_VARIANTS,
+        default="baseline",
+        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+    )
     parser.add_argument(
         "--limit",
         type=int,
@@ -767,6 +775,7 @@ def render_markdown(report: dict[str, object]) -> str:
         "|---|---|",
         f"| Checkpoint | `{run['checkpoint']}` |",
         f"| Checkpoint epoch | {format_number(run['checkpoint_epoch'])} |",
+        f"| Model variant | `{run['model_variant']}` |",
         f"| Device | `{run['device']}` |",
         f"| PyTorch | `{run['torch_version']}` |",
         f"| CUDA runtime | {format_number(run['cuda_version'])} |",
@@ -965,7 +974,7 @@ def main() -> int:
         persistent_workers=args.num_workers > 0,
     )
 
-    model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
+    model = create_model(args.model_variant, threshold=args.threshold).to(device)
     checkpoint = load_weights(
         model,
         checkpoint_path,
@@ -1053,6 +1062,7 @@ def main() -> int:
         "run": {
             "checkpoint": str(checkpoint_path),
             "checkpoint_epoch": checkpoint_epoch,
+            "model_variant": args.model_variant,
             "device": str(device),
             "torch_version": torch.__version__,
             "cuda_version": torch.version.cuda,

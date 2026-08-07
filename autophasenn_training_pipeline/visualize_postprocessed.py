@@ -10,7 +10,8 @@ from torch.utils.data import DataLoader, Subset
 
 from dataset import AutoPhaseDataset
 from losses import metric_dict, scale_align_sum
-from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
+from model_factory import MODEL_VARIANTS, create_model
+from model_tf_compatible import load_weights
 
 
 H = W = D = 64
@@ -111,6 +112,12 @@ def main():
     parser.add_argument("--data-diff", default="val_diff.npy")
     parser.add_argument("--data-real", default="val_real.npy")
     parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument(
+        "--model-variant",
+        choices=MODEL_VARIANTS,
+        default="baseline",
+        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+    )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument("--output-png", default="./autophasenn_training_pipeline/output/visualization.png")
@@ -159,7 +166,7 @@ def main():
     dataset = Subset(dataset, range(sample_count))
     loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
-    model = TFCompatibleAutoPhaseNN(threshold=args.threshold).to(device)
+    model = create_model(args.model_variant, threshold=args.threshold).to(device)
     load_weights(model, args.checkpoint, map_location=device)
     model.eval()
 

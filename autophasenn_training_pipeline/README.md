@@ -13,9 +13,38 @@ PyTorch/cohere-trained_model_tf_compatible.pth
 dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
+model_residual.py           ResidualAutoPhaseNN architecture variant
+model_factory.py            Baseline/residual model selection
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
 visualize_postprocessed.py  TF test_network_unsup-style visualization
+```
+
+## ResidualAutoPhaseNN Variant
+
+`ResidualAutoPhaseNN` preserves the baseline six-output forward contract and
+the amplitude/phase decoder channel sequences. Every two-convolution encoder,
+bottleneck, and decoder module is replaced by a 3D residual block. The four
+encoder max-pooling operations are replaced by separate `3 x 3 x 3`, stride-2
+convolutions outside the residual blocks.
+
+Select it in the existing training, evaluation, and visualization workflows
+with:
+
+```text
+--model-variant residual
+```
+
+Residual checkpoints are structurally different from TF-compatible baseline
+checkpoints. Start a new residual run with `--from-scratch`, and pass
+`--model-variant residual` again when resuming, evaluating, or visualizing it.
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --model-variant residual \
+  --from-scratch \
+  --checkpoint-dir ./autophasenn_training_pipeline/output/residual/checkpoints \
+  --output-dir ./autophasenn_training_pipeline/output/residual
 ```
 
 ## Data Format
