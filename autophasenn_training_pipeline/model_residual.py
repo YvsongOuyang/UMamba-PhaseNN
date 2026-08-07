@@ -12,8 +12,8 @@ BN_MOMENTUM = 0.01
 LEAKY_RELU_SLOPE = 0.01
 
 
-class ResidualBlock3D(nn.Module):
-    """Two-convolution 3D residual block with optional channel projection."""
+class _ResidualBlock3D(nn.Module):
+    """Internal two-convolution residual block with channel projection."""
 
     def __init__(
         self,
@@ -79,10 +79,10 @@ class ResidualAutoPhaseNN(nn.Module):
 
         self.encoder_blocks = nn.ModuleList(
             [
-                ResidualBlock3D(1, 32),
-                ResidualBlock3D(32, 64),
-                ResidualBlock3D(64, 128),
-                ResidualBlock3D(128, 256),
+                _ResidualBlock3D(1, 32),
+                _ResidualBlock3D(32, 64),
+                _ResidualBlock3D(64, 128),
+                _ResidualBlock3D(128, 256),
             ]
         )
         self.downsample_layers = nn.ModuleList(
@@ -93,22 +93,22 @@ class ResidualAutoPhaseNN(nn.Module):
                 nn.Conv3d(256, 256, kernel_size=3, stride=2, padding=1),
             ]
         )
-        self.bottleneck = ResidualBlock3D(256, 512)
+        self.bottleneck = _ResidualBlock3D(256, 512)
 
         self.amplitude_blocks = nn.ModuleList(
             [
-                ResidualBlock3D(512, 256),
-                ResidualBlock3D(256, 128),
-                ResidualBlock3D(128, 64),
-                ResidualBlock3D(64, 32),
+                _ResidualBlock3D(512, 256),
+                _ResidualBlock3D(256, 128),
+                _ResidualBlock3D(128, 64),
+                _ResidualBlock3D(64, 32),
             ]
         )
         self.phase_blocks = nn.ModuleList(
             [
-                ResidualBlock3D(512, 128),
-                ResidualBlock3D(128, 128),
-                ResidualBlock3D(128, 64),
-                ResidualBlock3D(64, 32),
+                _ResidualBlock3D(512, 128),
+                _ResidualBlock3D(128, 128),
+                _ResidualBlock3D(128, 64),
+                _ResidualBlock3D(64, 32),
             ]
         )
         self.zero_pad = nn.ConstantPad3d(16, 0.0)
@@ -175,7 +175,3 @@ class ResidualAutoPhaseNN(nn.Module):
 
         masked_amp = torch.abs(masked_obj).to(torch.float32)
         return farfield, masked_obj, masked_amp, phi, support, amp
-
-
-def count_parameters(model: nn.Module) -> int:
-    return sum(parameter.numel() for parameter in model.parameters())
