@@ -14,7 +14,8 @@ checkpoints/
 *.safetensors
 *.onnx
 
-# Training logs, TensorBoard runs, and lightweight result files are intentionally trackable.
+# Keep project-local AutoPhaseNN runs out of git; other lightweight results remain trackable.
+autophasenn_training_pipeline/runs/
 
 __pycache__/
 *.pyc

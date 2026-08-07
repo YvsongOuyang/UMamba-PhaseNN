@@ -42,9 +42,29 @@ checkpoints. Start a new residual run with `--from-scratch`, and pass
 ```bash
 python autophasenn_training_pipeline/train.py \
   --model-variant residual \
-  --from-scratch \
-  --checkpoint-dir ./autophasenn_training_pipeline/output/residual/checkpoints \
-  --output-dir ./autophasenn_training_pipeline/output/residual
+  --from-scratch
+```
+
+Training runs are kept inside this subproject by default. If `--run-name` is
+omitted, the script builds one from the timestamp, model variant,
+initialization, loss, batch size, learning rate, optimizer, scheduler,
+threshold, and seed:
+
+```text
+autophasenn_training_pipeline/runs/<run-name>/
+  config.json
+  run_info.json
+  history.json
+  tensorboard/
+  checkpoints/
+```
+
+Use `--run-name NAME` for a stable experiment label. `--output-dir` and
+`--checkpoint-dir` remain available when artifacts must be stored elsewhere.
+To inspect all runs:
+
+```bash
+tensorboard --logdir autophasenn_training_pipeline/runs --port 6006
 ```
 
 ## Data Format

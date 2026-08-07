@@ -1,12 +1,13 @@
 import argparse
 import json
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
@@ -14,6 +15,8 @@ from model_factory import MODEL_VARIANTS, create_model
 from model_tf_compatible import load_weights
 
 
+PROJECT_DIR = Path(__file__).resolve().parent
+DEFAULT_RUNS_DIR = PROJECT_DIR / "runs"
 DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
 DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
 
@@ -34,6 +37,30 @@ def optional_data_path(data_dir, filename):
     if filename is None or filename.lower() in {"", "none", "null"}:
         return None
     return data_dir / filename
+
+
+def build_run_name(args):
+    """Build a readable, filesystem-safe experiment name from key settings."""
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    initialization = "scratch" if not args.pretrained and not args.resume else "checkpointed"
+    return (
+        f"{timestamp}_{args.model_variant}_{initialization}"
+        f"_loss-{args.loss_type}_{args.loss_scope}"
+        f"_bs-{args.batch_size}_lr-{args.lr:g}"
+        f"_{args.optimizer}_{args.lr_scheduler}"
+        f"_T-{args.threshold:g}_seed-{args.seed}"
+    )
+
+
+def write_tensorboard_epoch(writer, epoch, train_stats, val_stats, learning_rate):
+    """Record the epoch metrics already produced by the training loop."""
+
+    writer.add_scalar("learning_rate", learning_rate, epoch)
+    for key in ("loss", "loss_ft", "loss_amp", "loss_phase", "loss_support"):
+        writer.add_scalar(f"train/{key}", train_stats[key], epoch)
+        writer.add_scalar(f"val/{key}", val_stats[key], epoch)
+    writer.flush()
 
 
 def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, args):
@@ -328,11 +355,25 @@ def main():
     )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
-    parser.add_argument("--output-dir", default="./autophasenn_training_pipeline/output/")
+    parser.add_argument(
+        "--runs-dir",
+        default=str(DEFAULT_RUNS_DIR),
+        help="Parent directory for named training runs.",
+    )
+    parser.add_argument(
+        "--run-name",
+        default="",
+        help="Experiment directory name; empty builds one from key settings.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="",
+        help="Config/history directory; empty uses <runs-dir>/<run-name>.",
+    )
     parser.add_argument(
         "--checkpoint-dir",
-        default=DEFAULT_CHECKPOINT_DIR,
-        help="Directory for model checkpoint files. Logs/config/history stay in --output-dir.",
+        default="",
+        help="Checkpoint directory; empty uses <output-dir>/checkpoints.",
     )
     parser.add_argument("--train-size", type=int, default=0)
     parser.add_argument(
@@ -408,13 +449,63 @@ def main():
 
     torch.manual_seed(args.seed)
     device = choose_device(args.device)
-    output_dir = Path(args.output_dir)
+    args.run_name = args.run_name.strip() or build_run_name(args)
+    run_dir = Path(args.runs_dir).expanduser() / args.run_name
+    output_dir = Path(args.output_dir).expanduser() if args.output_dir else run_dir
+    checkpoint_dir = (
+        Path(args.checkpoint_dir).expanduser()
+        if args.checkpoint_dir
+        else output_dir / "checkpoints"
+    )
+    tensorboard_dir = output_dir / "tensorboard"
+    args.runs_dir = str(Path(args.runs_dir).expanduser())
+    args.run_dir = str(run_dir)
+    args.output_dir = str(output_dir)
+    args.checkpoint_dir = str(checkpoint_dir)
+    args.tensorboard_dir = str(tensorboard_dir)
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint_dir = Path(args.checkpoint_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    tensorboard_dir.mkdir(parents=True, exist_ok=True)
     save_json(output_dir / "config.json", vars(args))
-    print(f"Small output dir: {output_dir}")
+    run_info = {
+        "run_name": args.run_name,
+        "created_at": datetime.now().astimezone().isoformat(),
+        "model_variant": args.model_variant,
+        "initialization": (
+            "from_scratch" if not args.pretrained and not args.resume else "checkpointed"
+        ),
+        "loss": {"type": args.loss_type, "scope": args.loss_scope},
+        "optimization": {
+            "optimizer": args.optimizer,
+            "learning_rate": args.lr,
+            "scheduler": args.lr_scheduler,
+            "batch_size": args.batch_size,
+            "epochs": args.epochs,
+            "fp16": args.fp16,
+        },
+        "data": {
+            "directory": args.data_dir,
+            "train_samples": args.num_samples_train,
+            "validation_samples": args.num_samples_val,
+        },
+        "paths": {
+            "run": str(run_dir),
+            "output": str(output_dir),
+            "checkpoints": str(checkpoint_dir),
+            "tensorboard": str(tensorboard_dir),
+        },
+    }
+    save_json(output_dir / "run_info.json", run_info)
+    writer = SummaryWriter(log_dir=str(tensorboard_dir))
+    writer.add_text("run/info", json.dumps(run_info, indent=2), 0)
+    writer.flush()
+
+    print(f"Run name: {args.run_name}")
+    print(f"Run dir: {run_dir}")
+    print(f"Output dir: {output_dir}")
     print(f"Checkpoint dir: {checkpoint_dir}")
+    print(f"TensorBoard dir: {tensorboard_dir}")
 
     data_dir = Path(args.data_dir)
     shape = (args.shape, args.shape, args.shape)
@@ -537,6 +628,9 @@ def main():
         model.eval()
         metrics = one_batch_metrics(args, model, val_loader, device)
         save_json(output_dir / "dry_run_metrics.json", metrics)
+        for key, value in metrics.items():
+            writer.add_scalar(f"dry_run/{key}", value, 0)
+        writer.close()
         print(json.dumps(metrics, indent=2))
         print("Dry run complete; no training was performed.")
         return
@@ -562,6 +656,13 @@ def main():
         history["train"].append({"epoch": epoch, **train_stats})
         history["val"].append({"epoch": epoch, **val_stats})
         save_json(output_dir / "history.json", history)
+        write_tensorboard_epoch(
+            writer,
+            epoch,
+            train_stats,
+            val_stats,
+            optimizer.param_groups[0]["lr"],
+        )
 
         print(
             f"epoch {epoch}/{args.epochs} "
@@ -611,6 +712,7 @@ def main():
                 args,
             )
 
+    writer.close()
     print(f"Training complete in {time.time() - t0:.1f}s. Best val_loss={best_val:.6g}")
 
 
