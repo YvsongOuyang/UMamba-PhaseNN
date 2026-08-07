@@ -56,7 +56,15 @@ autophasenn_training_pipeline/runs/<run-name>/
   run_info.json
   history.json
   tensorboard/
-  checkpoints/
+```
+
+Large checkpoint files are stored separately on the SSD by default:
+
+```text
+/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/<run-name>/
+  checkpoint_last.pt
+  checkpoint_best.pt
+  checkpoint_epoch_XXXX.pt
 ```
 
 Use `--run-name NAME` for a stable experiment label. `--output-dir` and

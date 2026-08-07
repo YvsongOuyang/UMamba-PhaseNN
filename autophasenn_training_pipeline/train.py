@@ -19,8 +19,12 @@ from model_tf_compatible import load_weights
 
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_RUNS_DIR = PROJECT_DIR / "runs"
-DEFAULT_CHECKPOINT_DIR = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1"
-DEFAULT_RESUME_PATH = f"{DEFAULT_CHECKPOINT_DIR}/checkpoint_last.pt"
+DEFAULT_CHECKPOINT_ROOT = Path(
+    "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output"
+)
+DEFAULT_RESUME_PATH = str(
+    DEFAULT_CHECKPOINT_ROOT / "autophasenn_retrain_l1" / "checkpoint_last.pt"
+)
 LOG_WIDTH = 96
 LOGGER = logging.getLogger("autophasenn.train")
 
@@ -452,7 +456,7 @@ def main():
     parser.add_argument(
         "--checkpoint-dir",
         default="",
-        help="Checkpoint directory; empty uses <output-dir>/checkpoints.",
+        help="Checkpoint directory; empty uses <checkpoint-root>/<run-name>.",
     )
     parser.add_argument("--train-size", type=int, default=0)
     parser.add_argument(
@@ -536,7 +540,7 @@ def main():
     checkpoint_dir = (
         Path(args.checkpoint_dir).expanduser()
         if args.checkpoint_dir
-        else output_dir / "checkpoints"
+        else DEFAULT_CHECKPOINT_ROOT / args.run_name
     )
     tensorboard_dir = output_dir / "tensorboard"
     args.runs_dir = str(Path(args.runs_dir).expanduser())
