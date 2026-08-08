@@ -22,11 +22,11 @@ visualize_postprocessed.py  TF test_network_unsup-style visualization
 
 ## ResidualAutoPhaseNN Variant
 
-`ResidualAutoPhaseNN` preserves the baseline six-output forward contract and
-the amplitude/phase decoder channel sequences. Every two-convolution encoder,
-bottleneck, and decoder module is replaced by a 3D residual block. The four
-encoder max-pooling operations are replaced by separate `3 x 3 x 3`, stride-2
-convolutions outside the residual blocks.
+`ResidualAutoPhaseNN` preserves the baseline six-output forward contract,
+amplitude/phase decoder channel sequences, and four encoder max-pooling
+operations. Every two-convolution encoder, bottleneck, and decoder module is
+replaced by a 3D residual block; a `1 x 1 x 1` projection is used on the shortcut
+when its input and output channel counts differ.
 
 Select it in the existing training, evaluation, and visualization workflows
 with:

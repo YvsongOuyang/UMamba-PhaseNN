@@ -1,4 +1,4 @@
-"""Residual AutoPhaseNN variant with strided-convolution downsampling."""
+"""Residual AutoPhaseNN variant preserving the baseline sampling operations."""
 
 import math
 
@@ -19,8 +19,14 @@ class _ResidualBlock3D(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
+        *,
+        activation: str = "leaky_relu",
     ) -> None:
         super().__init__()
+        if activation not in {"leaky_relu", "relu"}:
+            raise ValueError(f"Unsupported activation: {activation}")
+
+        self.activation = activation
         self.conv1 = nn.Conv3d(
             in_channels,
             out_channels,
@@ -56,6 +62,8 @@ class _ResidualBlock3D(nn.Module):
         )
 
     def _activate(self, x: torch.Tensor) -> torch.Tensor:
+        if self.activation == "relu":
+            return F.relu(x)
         return F.leaky_relu(x, negative_slope=LEAKY_RELU_SLOPE)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -71,7 +79,7 @@ class _ResidualBlock3D(nn.Module):
 
 
 class ResidualAutoPhaseNN(nn.Module):
-    """AutoPhaseNN with residual convolution blocks and learned downsampling."""
+    """AutoPhaseNN with residual connections in double-convolution blocks."""
 
     def __init__(self, threshold: float = 0.1) -> None:
         super().__init__()
@@ -85,14 +93,6 @@ class ResidualAutoPhaseNN(nn.Module):
                 _ResidualBlock3D(128, 256),
             ]
         )
-        self.downsample_layers = nn.ModuleList(
-            [
-                nn.Conv3d(32, 32, kernel_size=3, stride=2, padding=1),
-                nn.Conv3d(64, 64, kernel_size=3, stride=2, padding=1),
-                nn.Conv3d(128, 128, kernel_size=3, stride=2, padding=1),
-                nn.Conv3d(256, 256, kernel_size=3, stride=2, padding=1),
-            ]
-        )
         self.bottleneck = _ResidualBlock3D(256, 512)
 
         self.amplitude_blocks = nn.ModuleList(
@@ -100,7 +100,7 @@ class ResidualAutoPhaseNN(nn.Module):
                 _ResidualBlock3D(512, 256),
                 _ResidualBlock3D(256, 128),
                 _ResidualBlock3D(128, 64),
-                _ResidualBlock3D(64, 32),
+                _ResidualBlock3D(64, 32, activation="relu"),
             ]
         )
         self.phase_blocks = nn.ModuleList(
@@ -108,7 +108,7 @@ class ResidualAutoPhaseNN(nn.Module):
                 _ResidualBlock3D(512, 128),
                 _ResidualBlock3D(128, 128),
                 _ResidualBlock3D(128, 64),
-                _ResidualBlock3D(64, 32),
+                _ResidualBlock3D(64, 32, activation="relu"),
             ]
         )
         self.zero_pad = nn.ConstantPad3d(16, 0.0)
@@ -118,9 +118,9 @@ class ResidualAutoPhaseNN(nn.Module):
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """Encode ``(B, 1, 64, 64, 64)`` into ``(B, 512, 4, 4, 4)``."""
 
-        for block, downsample in zip(self.encoder_blocks, self.downsample_layers):
+        for block in self.encoder_blocks:
             x = block(x)
-            x = downsample(x)
+            x = F.max_pool3d(x, kernel_size=2, stride=2)
         return self.bottleneck(x)
 
     @staticmethod
