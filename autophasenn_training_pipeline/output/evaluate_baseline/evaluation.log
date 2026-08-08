@@ -1,0 +1,33 @@
+2026-08-07 18:50:57,824 | INFO | Output directory: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/output/evaluate
+2026-08-07 18:50:57,825 | INFO | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt
+2026-08-07 18:50:57,825 | INFO | Diffraction data: /data_ssd/oyys/autophasenn/val_diff.npy
+2026-08-07 18:50:57,825 | INFO | Real-space data: /data_ssd/oyys/autophasenn/val_real.npy
+2026-08-07 18:50:57,825 | INFO | Resolved sample count: 5000
+2026-08-07 18:50:58,087 | INFO | Free metrics: source=generated_diagnostic_mask, selected_voxels=12906, fraction=0.049232
+2026-08-07 18:50:58,087 | INFO | Real-space post-process: tensor_device=cuda, phase_unwrap_workers=8
+2026-08-07 18:50:58,306 | INFO | Completed 1 warmup batch(es).
+2026-08-07 18:56:04,323 | INFO | 
+Evaluation mean metrics
+FT:
+  L1: 3.69721
+  MSE: 62.1575
+  RMSE: 7.27723
+  RelL1: 0.314188
+Amplitude:
+  L1: 0.00578829
+  MSE: 0.00362251
+  RMSE: 0.052491
+  RelL1: 0.32807
+Phase:
+  L1: 0.239835
+  MSE: 0.240881
+  RMSE: 0.419603
+  RelL1: 0.347821
+Support:
+  L1: 0.00697791
+  MSE: 0.00697791
+  RMSE: 0.0761934
+  RelL1: 0.311616
+2026-08-07 18:56:04,323 | INFO | Wrote JSON report: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/output/evaluate/evaluation_results.json
+2026-08-07 18:56:04,323 | INFO | Wrote sample CSV: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/output/evaluate/evaluation_samples.csv
+2026-08-07 18:56:04,323 | INFO | Wrote Markdown summary: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/output/evaluate/evaluation_summary.md

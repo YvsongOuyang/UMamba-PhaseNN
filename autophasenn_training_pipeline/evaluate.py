@@ -51,7 +51,7 @@ except ImportError:
 LOGGER = logging.getLogger("autophasenn.evaluate")
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
-DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
+DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/residual_fp32_scratch_paper-mae_bs2_lr1e-3_20260807_231716/checkpoint_best.pt"
 
 PAPER_METRICS = {
     "paper_modulus_mae": {
@@ -137,7 +137,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
-        default="baseline",
+        default="residual",
         help="Network architecture; residual selects ResidualAutoPhaseNN.",
     )
     parser.add_argument(

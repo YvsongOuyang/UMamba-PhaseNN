@@ -433,7 +433,7 @@ def main():
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
-        default="baseline",
+        default="residual",
         help="Network architecture; residual selects ResidualAutoPhaseNN.",
     )
     parser.add_argument("--dtype-diff", default="float32")
