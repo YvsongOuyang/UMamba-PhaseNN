@@ -418,7 +418,6 @@ def one_batch_metrics(args, model, loader, device):
         pred_diff = scale_align_sum(diff, pred_diff)
     return metric_dict(diff, pred_diff)
 
-
 def main():
     configure_logging()
     parser = argparse.ArgumentParser(description="Standalone AutoPhaseNN PyTorch training.")
