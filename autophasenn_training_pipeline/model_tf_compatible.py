@@ -168,6 +168,11 @@ class TFCompatibleAutoPhaseNN(nn.Module):
         amp = self.decode_amplitude(encoded)
         phi = self.decode_phase(encoded)
 
+        return self._apply_forward_physics(amp, phi)
+
+    def _apply_forward_physics(self, amp, phi):
+        """Build the six standard outputs from amplitude and phase predictions."""
+
         support = torch.where(
             amp >= self.threshold, torch.ones_like(amp), torch.zeros_like(amp)
         )

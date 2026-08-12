@@ -138,7 +138,7 @@ def parse_args() -> argparse.Namespace:
         "--model-variant",
         choices=MODEL_VARIANTS,
         default="residual",
-        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+        help="Network architecture variant.",
     )
     parser.add_argument(
         "--limit",

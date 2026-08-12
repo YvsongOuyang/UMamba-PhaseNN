@@ -14,7 +14,8 @@ dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
 model_residual.py           ResidualAutoPhaseNN architecture variant
-model_factory.py            Baseline/residual model selection
+model_dual_skip.py          DualPairwiseSkipAutoPhaseNN architecture variant
+model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
 visualize_postprocessed.py  TF test_network_unsup-style visualization
@@ -44,6 +45,32 @@ python autophasenn_training_pipeline/train.py \
   --model-variant residual \
   --from-scratch
 ```
+
+## Dual Pairwise Skip Variant
+
+`DualPairwiseSkipAutoPhaseNN` adds standard U-Net concatenation skips only at
+`8 x 8 x 8` and `16 x 16 x 16`. Each pre-pooling encoder feature is passed
+separately to the amplitude and phase decoder at the matching scale. The two
+decoder branches have no direct connection, and all output activations, support
+construction, forward physics, and losses remain unchanged.
+
+Initialize it from a baseline checkpoint with:
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --model-variant dual_skip \
+  --pretrained /path/to/baseline/checkpoint_best.pt
+```
+
+The four expanded decoder convolutions copy their baseline channels exactly and
+initialize only the added skip-channel kernels to zero. `--pretrained` starts a
+fresh optimizer for fine-tuning. Use `--resume` only with a checkpoint already
+created by the `dual_skip` variant.
+
+For a fair quick comparison, fine-tune both `baseline` and `dual_skip` from the
+same baseline checkpoint with identical data order, seed, optimizer, learning
+rate, scheduler, and epoch count. Evaluate each resulting best checkpoint with
+the same settings and its matching `--model-variant`.
 
 Training runs are kept inside this subproject by default. If `--run-name` is
 omitted, the script builds one from the timestamp, model variant,

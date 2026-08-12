@@ -116,7 +116,7 @@ def main():
         "--model-variant",
         choices=MODEL_VARIANTS,
         default="baseline",
-        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+        help="Network architecture variant.",
     )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")

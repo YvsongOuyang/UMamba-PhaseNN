@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
-from model_factory import MODEL_VARIANTS, create_model
+from model_factory import MODEL_VARIANTS, create_model, load_pretrained_weights
 from model_tf_compatible import load_weights
 
 
@@ -433,7 +433,7 @@ def main():
         "--model-variant",
         choices=MODEL_VARIANTS,
         default="residual",
-        help="Network architecture; residual selects ResidualAutoPhaseNN.",
+        help="Network architecture variant.",
     )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
@@ -528,6 +528,10 @@ def main():
         args.loss_scope = "diff"
     if args.from_scratch and args.resume == DEFAULT_RESUME_PATH:
         args.resume = ""
+    if args.pretrained and args.resume == DEFAULT_RESUME_PATH:
+        args.resume = ""
+    if args.pretrained and args.resume:
+        raise ValueError("--pretrained and --resume cannot be used together.")
     if args.from_scratch and (args.pretrained or args.resume):
         raise ValueError("--from-scratch cannot be combined with --pretrained or --resume.")
 
@@ -658,8 +662,19 @@ def main():
         model,
     )
     if args.pretrained:
-        load_weights(model, args.pretrained, map_location=device)
-        LOGGER.info("Loaded pretrained weights: %s", args.pretrained)
+        load_pretrained_weights(
+            model,
+            args.model_variant,
+            args.pretrained,
+            map_location="cpu",
+        )
+        if args.model_variant == "dual_skip":
+            LOGGER.info(
+                "Loaded baseline weights with zero-initialized skip kernels: %s",
+                args.pretrained,
+            )
+        else:
+            LOGGER.info("Loaded pretrained weights: %s", args.pretrained)
 
     if args.optimizer == "adamw":
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
