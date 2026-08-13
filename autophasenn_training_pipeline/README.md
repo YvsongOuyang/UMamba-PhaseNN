@@ -335,3 +335,26 @@ The visualization intentionally mirrors `TF2/test_network_unsup.py`: phase
 unwrap, support masking, subtracting mean phase inside support, center-of-mass
 shifting, and center-slice plotting. These display operations are not part of
 training backprop.
+
+
+cd /home/oyys/code/UMamba-AutoPhaseNN
+
+RUN_NAME="dual_skip_ft10_bs4_lr1e-3_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/autophasenn_training_pipeline/runs/${RUN_NAME}"
+
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u \
+  autophasenn_training_pipeline/train.py \
+  --model-variant dual_skip \
+  --run-name "${RUN_NAME}" \
+  --epochs 100 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+
+echo "训练已启动"
+echo "PID        : ${PID}"
+echo "日志       : ${RUN_DIR}/console.log"
+echo "运行目录   : ${RUN_DIR}"
