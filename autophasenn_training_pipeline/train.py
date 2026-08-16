@@ -668,9 +668,9 @@ def main():
             args.pretrained,
             map_location="cpu",
         )
-        if args.model_variant == "dual_skip":
+        if args.model_variant == "amplitude_skip":
             LOGGER.info(
-                "Loaded baseline weights with zero-initialized skip kernels: %s",
+                "Loaded baseline weights with zero-initialized amplitude skip kernels: %s",
                 args.pretrained,
             )
         else:

@@ -4,16 +4,16 @@ import torch
 from torch import nn
 
 try:
-    from .model_dual_skip import DualPairwiseSkipAutoPhaseNN, load_baseline_weights
+    from .model_amplitude_skip import AmplitudeSkipAutoPhaseNN, load_baseline_weights
     from .model_residual import ResidualAutoPhaseNN
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
-    from model_dual_skip import DualPairwiseSkipAutoPhaseNN, load_baseline_weights
+    from model_amplitude_skip import AmplitudeSkipAutoPhaseNN, load_baseline_weights
     from model_residual import ResidualAutoPhaseNN
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
-MODEL_VARIANTS = ("baseline", "residual", "dual_skip")
+MODEL_VARIANTS = ("baseline", "residual", "amplitude_skip")
 
 
 def create_model(model_variant: str, threshold: float) -> nn.Module:
@@ -23,8 +23,8 @@ def create_model(model_variant: str, threshold: float) -> nn.Module:
         return TFCompatibleAutoPhaseNN(threshold=threshold)
     if model_variant == "residual":
         return ResidualAutoPhaseNN(threshold=threshold)
-    if model_variant == "dual_skip":
-        return DualPairwiseSkipAutoPhaseNN(threshold=threshold)
+    if model_variant == "amplitude_skip":
+        return AmplitudeSkipAutoPhaseNN(threshold=threshold)
     raise ValueError(f"Unknown model variant: {model_variant}")
 
 
@@ -34,10 +34,10 @@ def load_pretrained_weights(
     checkpoint_path: str,
     map_location: str | torch.device = "cpu",
 ) -> object:
-    """Load standard weights or migrate a baseline checkpoint into dual-skip."""
+    """Load standard weights or migrate a baseline checkpoint into amplitude-skip."""
 
-    if model_variant == "dual_skip":
-        if not isinstance(model, DualPairwiseSkipAutoPhaseNN):
-            raise TypeError("dual_skip requires DualPairwiseSkipAutoPhaseNN.")
+    if model_variant == "amplitude_skip":
+        if not isinstance(model, AmplitudeSkipAutoPhaseNN):
+            raise TypeError("amplitude_skip requires AmplitudeSkipAutoPhaseNN.")
         return load_baseline_weights(model, checkpoint_path, map_location=map_location)
     return load_weights(model, checkpoint_path, map_location=map_location)
