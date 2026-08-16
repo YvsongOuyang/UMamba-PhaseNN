@@ -1,8 +1,7 @@
-"""AutoPhaseNN with 8^3 and 16^3 pairwise U-Net skip connections."""
+"""AutoPhaseNN with 8^3 and 16^3 encoder skips in the amplitude decoder."""
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Mapping
 
@@ -19,17 +18,15 @@ except ImportError:
 EXPANDED_INPUT_CHANNELS = {
     "conv3d_10": (512, 256),
     "conv3d_12": (256, 128),
-    "conv3d_19": (512, 256),
-    "conv3d_21": (128, 128),
 }
 
 
-class DualPairwiseSkipAutoPhaseNN(TFCompatibleAutoPhaseNN):
-    """Baseline AutoPhaseNN with separate encoder skips for both decoders.
+class AmplitudeSkipAutoPhaseNN(TFCompatibleAutoPhaseNN):
+    """Baseline AutoPhaseNN with encoder skips only in the amplitude decoder.
 
-    The pre-pooling 8^3 and 16^3 encoder features are concatenated into the
-    amplitude and phase branches independently. The two decoder branches never
-    exchange features directly.
+    Pre-pooling 8^3 and 16^3 encoder features are concatenated into the
+    amplitude branch at matching scales. The phase decoder remains identical
+    to the baseline and receives only the shared bottleneck feature.
     """
 
     def __init__(self, threshold: float = 0.1) -> None:
@@ -131,7 +128,7 @@ class DualPairwiseSkipAutoPhaseNN(TFCompatibleAutoPhaseNN):
         skip_8: torch.Tensor,
         skip_16: torch.Tensor,
     ) -> torch.Tensor:
-        """Decode amplitude with independent 8^3 and 16^3 encoder skips."""
+        """Decode amplitude with 8^3 and 16^3 encoder skips."""
 
         x = self._up_skip_lrelu_block(
             encoded,
@@ -165,67 +162,27 @@ class DualPairwiseSkipAutoPhaseNN(TFCompatibleAutoPhaseNN):
         )
         return torch.sigmoid(self.layers["conv3d_18"](x))
 
-    def decode_phase(
-        self,
-        encoded: torch.Tensor,
-        skip_8: torch.Tensor,
-        skip_16: torch.Tensor,
-    ) -> torch.Tensor:
-        """Decode phase with independent 8^3 and 16^3 encoder skips."""
-
-        x = self._up_skip_lrelu_block(
-            encoded,
-            skip_8,
-            "conv3d_19",
-            "batch_normalization_18",
-            "conv3d_20",
-            "batch_normalization_19",
-        )
-        x = self._up_skip_lrelu_block(
-            x,
-            skip_16,
-            "conv3d_21",
-            "batch_normalization_20",
-            "conv3d_22",
-            "batch_normalization_21",
-        )
-        x = self._up_lrelu_block(
-            x,
-            "conv3d_23",
-            "batch_normalization_22",
-            "conv3d_24",
-            "batch_normalization_23",
-        )
-        x = self._pad_relu_block(
-            x,
-            "conv3d_25",
-            "batch_normalization_24",
-            "conv3d_26",
-            "batch_normalization_25",
-        )
-        return math.pi * torch.tanh(self.layers["conv3d_27"](x))
-
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, ...]:
         """Return the baseline six-output contract for a diffraction volume."""
 
         encoded, skip_8, skip_16 = self.encode(x)
         amp = self.decode_amplitude(encoded, skip_8, skip_16)
-        phi = self.decode_phase(encoded, skip_8, skip_16)
+        phi = self.decode_phase(encoded)
         return self._apply_forward_physics(amp, phi)
 
 
 def initialize_from_baseline_state_dict(
-    model: DualPairwiseSkipAutoPhaseNN,
+    model: AmplitudeSkipAutoPhaseNN,
     baseline_state_dict: Mapping[str, torch.Tensor],
 ) -> None:
-    """Copy baseline weights and zero only the four newly added skip kernels."""
+    """Copy baseline weights and zero only the two added amplitude skip kernels."""
 
     target_state = model.state_dict()
     missing = sorted(set(target_state).difference(baseline_state_dict))
     unexpected = sorted(set(baseline_state_dict).difference(target_state))
     if missing or unexpected:
         raise RuntimeError(
-            "Baseline checkpoint keys do not match DualPairwiseSkipAutoPhaseNN: "
+            "Baseline checkpoint keys do not match AmplitudeSkipAutoPhaseNN: "
             f"missing={missing}, unexpected={unexpected}."
         )
 
@@ -248,12 +205,12 @@ def initialize_from_baseline_state_dict(
                 raise RuntimeError(
                     f"Expected baseline convolution {key} with shape "
                     f"{expected_source_shape}, got {tuple(source.shape)}. Use --resume "
-                    "for an existing dual_skip checkpoint."
+                    "for an existing amplitude_skip checkpoint."
                 )
             if target.shape[1] != expected_target_channels:
                 raise RuntimeError(
-                    f"Dual-skip convolution {key} has {target.shape[1]} input channels; "
-                    f"expected {expected_target_channels}."
+                    f"Amplitude-skip convolution {key} has {target.shape[1]} input "
+                    f"channels; expected {expected_target_channels}."
                 )
             expanded = source.new_zeros(target.shape)
             expanded[:, :decoder_channels] = source
@@ -271,11 +228,11 @@ def initialize_from_baseline_state_dict(
 
 
 def load_baseline_weights(
-    model: DualPairwiseSkipAutoPhaseNN,
+    model: AmplitudeSkipAutoPhaseNN,
     checkpoint_path: str | Path,
     map_location: str | torch.device = "cpu",
 ) -> object:
-    """Initialize a dual-skip model from a baseline AutoPhaseNN checkpoint."""
+    """Initialize an amplitude-skip model from a baseline checkpoint."""
 
     checkpoint = torch.load(checkpoint_path, map_location=map_location)
     state_dict = checkpoint.get("model_state_dict", checkpoint)

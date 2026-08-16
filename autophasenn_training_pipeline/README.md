@@ -14,7 +14,7 @@ dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
 model_residual.py           ResidualAutoPhaseNN architecture variant
-model_dual_skip.py          DualPairwiseSkipAutoPhaseNN architecture variant
+model_amplitude_skip.py     AmplitudeSkipAutoPhaseNN architecture variant
 model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
@@ -46,31 +46,32 @@ python autophasenn_training_pipeline/train.py \
   --from-scratch
 ```
 
-## Dual Pairwise Skip Variant
+## Amplitude Skip Variant
 
-`DualPairwiseSkipAutoPhaseNN` adds standard U-Net concatenation skips only at
-`8 x 8 x 8` and `16 x 16 x 16`. Each pre-pooling encoder feature is passed
-separately to the amplitude and phase decoder at the matching scale. The two
-decoder branches have no direct connection, and all output activations, support
-construction, forward physics, and losses remain unchanged.
+`AmplitudeSkipAutoPhaseNN` adds standard U-Net concatenation skips only at
+`8 x 8 x 8` and `16 x 16 x 16`. Each pre-pooling encoder feature is passed to
+the amplitude decoder at the matching scale. The phase decoder remains exactly
+the baseline path and receives only the shared bottleneck. All output
+activations, support construction, forward physics, and losses remain unchanged.
 
 Initialize it from a baseline checkpoint with:
 
 ```bash
 python autophasenn_training_pipeline/train.py \
-  --model-variant dual_skip \
+  --model-variant amplitude_skip \
   --pretrained /path/to/baseline/checkpoint_best.pt
 ```
 
-The four expanded decoder convolutions copy their baseline channels exactly and
-initialize only the added skip-channel kernels to zero. `--pretrained` starts a
-fresh optimizer for fine-tuning. Use `--resume` only with a checkpoint already
-created by the `dual_skip` variant.
+The two expanded amplitude convolutions copy their baseline channels exactly
+and initialize only the added skip-channel kernels to zero. The phase decoder
+parameters are copied without any shape change. `--pretrained` starts a fresh
+optimizer for fine-tuning. Use `--resume` only with a checkpoint already created
+by the `amplitude_skip` variant.
 
-For a fair quick comparison, fine-tune both `baseline` and `dual_skip` from the
-same baseline checkpoint with identical data order, seed, optimizer, learning
-rate, scheduler, and epoch count. Evaluate each resulting best checkpoint with
-the same settings and its matching `--model-variant`.
+For a fair quick comparison, fine-tune both `baseline` and `amplitude_skip` from
+the same baseline checkpoint with identical data order, seed, optimizer,
+learning rate, scheduler, and epoch count. Evaluate each resulting best
+checkpoint with the same settings and its matching `--model-variant`.
 
 Training runs are kept inside this subproject by default. If `--run-name` is
 omitted, the script builds one from the timestamp, model variant,
@@ -339,14 +340,16 @@ training backprop.
 
 cd /home/oyys/code/UMamba-AutoPhaseNN
 
-RUN_NAME="dual_skip_ft10_bs4_lr1e-3_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="amplitude_skip_ft_bs4_lr1e-3_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/autophasenn_training_pipeline/runs/${RUN_NAME}"
+BASELINE_CKPT="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
 
 mkdir -p "${RUN_DIR}"
 
 nohup env CUDA_VISIBLE_DEVICES=0 python -u \
   autophasenn_training_pipeline/train.py \
-  --model-variant dual_skip \
+  --model-variant amplitude_skip \
+  --pretrained "${BASELINE_CKPT}" \
   --run-name "${RUN_NAME}" \
   --epochs 100 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
