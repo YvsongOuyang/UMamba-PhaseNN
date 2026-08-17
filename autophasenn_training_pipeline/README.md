@@ -15,6 +15,7 @@ losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
 model_residual.py           ResidualAutoPhaseNN architecture variant
 model_amplitude_skip.py     AmplitudeSkipAutoPhaseNN architecture variant
+model_decoder_cross_skip.py DecoderCrossSkipAutoPhaseNN architecture variant
 model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
@@ -72,6 +73,41 @@ For a fair quick comparison, fine-tune both `baseline` and `amplitude_skip` from
 the same baseline checkpoint with identical data order, seed, optimizer,
 learning rate, scheduler, and epoch count. Evaluate each resulting best
 checkpoint with the same settings and its matching `--model-variant`.
+
+## Decoder Cross-Skip Variant
+
+`DecoderCrossSkipAutoPhaseNN` keeps the baseline encoder and both decoder
+blocks unchanged, then exchanges amplitude and phase decoder features after the
+`8 x 8 x 8` and `16 x 16 x 16` blocks. Each exchange uses independent
+`1 x 1 x 1` convolutions and simultaneous bidirectional residual updates:
+
+```text
+A'   = A   + alpha_amp   * phase_to_amp(Phi)
+Phi' = Phi + alpha_phase * amp_to_phase(A)
+```
+
+Both updates use the pre-update `A` and `Phi`. All four scalar `alpha`
+parameters start at zero, so loading a baseline checkpoint initially reproduces
+the baseline outputs exactly. No gate, attention, activation, additional loss,
+or intermediate physics supervision is added.
+
+The optional staged fine-tuning schedule is controlled by two epoch counts:
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --model-variant decoder_cross_skip \
+  --pretrained /path/to/baseline/checkpoint_best.pt \
+  --cross-skip-only-epochs 5 \
+  --decoder-finetune-epochs 10 \
+  --epochs 100 \
+  --lr 1e-4
+```
+
+This trains only the two cross-skip modules in epochs 1-5, both decoders plus
+the cross-skips in epochs 6-15, and the full network from epoch 16 onward.
+Frozen BatchNorm running statistics remain fixed. Set both stage counts to zero
+to fine-tune the full network immediately. The four learned `alpha` values are
+written to the console and TensorBoard after every epoch.
 
 Training runs are kept inside this subproject by default. If `--run-name` is
 omitted, the script builds one from the timestamp, model variant,
@@ -337,10 +373,12 @@ unwrap, support masking, subtracting mean phase inside support, center-of-mass
 shifting, and center-slice plotting. These display operations are not part of
 training backprop.
 
+## Server Background Training
 
+```bash
 cd /home/oyys/code/UMamba-AutoPhaseNN
 
-RUN_NAME="amplitude_skip_ft_bs4_lr1e-3_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="decoder_cross_skip_ft_bs4_lr1e-4_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/autophasenn_training_pipeline/runs/${RUN_NAME}"
 BASELINE_CKPT="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
 
@@ -348,10 +386,30 @@ mkdir -p "${RUN_DIR}"
 
 nohup env CUDA_VISIBLE_DEVICES=0 python -u \
   autophasenn_training_pipeline/train.py \
-  --model-variant amplitude_skip \
+  --model-variant decoder_cross_skip \
   --pretrained "${BASELINE_CKPT}" \
   --run-name "${RUN_NAME}" \
+  --data-dir /data_ssd/oyys/autophasenn \
+  --data-train-diff train_diff.npy \
+  --data-train-real train_real.npy \
+  --data-val-diff val_diff.npy \
+  --data-val-real val_real.npy \
+  --num-samples-train 25000 \
+  --num-samples-val 5000 \
+  --cross-skip-only-epochs 5 \
+  --decoder-finetune-epochs 10 \
   --epochs 100 \
+  --batch-size 4 \
+  --num-workers 4 \
+  --device cuda \
+  --loss-type paper_mae \
+  --loss-scope diff \
+  --optimizer adam \
+  --lr 1e-4 \
+  --lr-scheduler plateau \
+  --threshold 0.1 \
+  --save-every 10 \
+  --print-freq 50 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
 PID=$!
@@ -361,3 +419,4 @@ echo "训练已启动"
 echo "PID        : ${PID}"
 echo "日志       : ${RUN_DIR}/console.log"
 echo "运行目录   : ${RUN_DIR}"
+```

@@ -95,6 +95,55 @@ def write_tensorboard_epoch(writer, epoch, train_stats, val_stats, learning_rate
     writer.flush()
 
 
+def training_stage_for_epoch(args, epoch):
+    """Return the decoder-cross-skip fine-tuning stage for an epoch."""
+
+    if args.model_variant != "decoder_cross_skip":
+        return "all"
+    if epoch <= args.cross_skip_only_epochs:
+        return "cross_skip"
+    decoder_stage_end = args.cross_skip_only_epochs + args.decoder_finetune_epochs
+    if epoch <= decoder_stage_end:
+        return "decoders"
+    return "all"
+
+
+def configure_training_stage(args, model, epoch, previous_stage):
+    """Apply staged freezing and log changes in trainable parameter scope."""
+
+    stage = training_stage_for_epoch(args, epoch)
+    if args.model_variant == "decoder_cross_skip":
+        model.set_trainable_stage(stage)
+    if stage != previous_stage:
+        trainable = sum(
+            parameter.numel() for parameter in model.parameters() if parameter.requires_grad
+        )
+        total = sum(parameter.numel() for parameter in model.parameters())
+        LOGGER.info(
+            "Trainable stage | epoch=%d | scope=%s | parameters=%s / %s",
+            epoch,
+            stage,
+            f"{trainable:,}",
+            f"{total:,}",
+        )
+    return stage
+
+
+def record_cross_skip_strengths(writer, model, epoch):
+    """Write learned cross-skip residual strengths when the model provides them."""
+
+    if not hasattr(model, "cross_skip_strengths"):
+        return
+    strengths = model.cross_skip_strengths()
+    for name, value in strengths.items():
+        writer.add_scalar(f"cross_skip/{name}", value, epoch)
+    writer.flush()
+    LOGGER.info(
+        "Cross-skip strengths | %s",
+        " | ".join(f"{name}={value:+.4e}" for name, value in strengths.items()),
+    )
+
+
 def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, history, args):
     path.parent.mkdir(parents=True, exist_ok=True)
     best_val = min((item.get("loss", float("inf")) for item in history.get("val", [])), default=float("inf"))
@@ -183,6 +232,14 @@ def log_training_setup(
         f"  tensorboard       : {tensorboard_dir}",
         "=" * LOG_WIDTH,
     ]
+    if args.model_variant == "decoder_cross_skip":
+        artifacts_index = lines.index("[Artifacts]")
+        lines.insert(
+            artifacts_index,
+            "  training stages   : "
+            f"cross-skip={args.cross_skip_only_epochs}, "
+            f"decoders={args.decoder_finetune_epochs}, then all",
+        )
     LOGGER.info("\n%s", "\n".join(lines))
 
 
@@ -435,6 +492,18 @@ def main():
         default="residual",
         help="Network architecture variant.",
     )
+    parser.add_argument(
+        "--cross-skip-only-epochs",
+        type=int,
+        default=0,
+        help="Initial epochs training only decoder cross-skip modules.",
+    )
+    parser.add_argument(
+        "--decoder-finetune-epochs",
+        type=int,
+        default=0,
+        help="Additional epochs training both decoders and cross-skip modules.",
+    )
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument(
@@ -524,6 +593,14 @@ def main():
         LOGGER.warning(
             "--batch-average-loss is deprecated and ignored; losses already use batch means."
         )
+    if args.cross_skip_only_epochs < 0 or args.decoder_finetune_epochs < 0:
+        raise ValueError("Cross-skip training-stage epoch counts cannot be negative.")
+    if args.model_variant != "decoder_cross_skip" and (
+        args.cross_skip_only_epochs or args.decoder_finetune_epochs
+    ):
+        raise ValueError(
+            "Cross-skip training stages require --model-variant decoder_cross_skip."
+        )
     if args.unsupervised:
         args.loss_scope = "diff"
     if args.from_scratch and args.resume == DEFAULT_RESUME_PATH:
@@ -571,6 +648,8 @@ def main():
             "batch_size": args.batch_size,
             "epochs": args.epochs,
             "fp16": args.fp16,
+            "cross_skip_only_epochs": args.cross_skip_only_epochs,
+            "decoder_finetune_epochs": args.decoder_finetune_epochs,
         },
         "data": {
             "directory": args.data_dir,
@@ -673,6 +752,11 @@ def main():
                 "Loaded baseline weights with zero-initialized amplitude skip kernels: %s",
                 args.pretrained,
             )
+        elif args.model_variant == "decoder_cross_skip":
+            LOGGER.info(
+                "Loaded baseline weights with zero-initialized cross-skip strengths: %s",
+                args.pretrained,
+            )
         else:
             LOGGER.info("Loaded pretrained weights: %s", args.pretrained)
 
@@ -737,7 +821,14 @@ def main():
     if best_val < float("inf"):
         LOGGER.info("Loaded best validation loss: %.6g", best_val)
     t0 = time.time()
+    active_stage = None
     for epoch in range(start_epoch, args.epochs + 1):
+        active_stage = configure_training_stage(
+            args,
+            model,
+            epoch,
+            previous_stage=active_stage,
+        )
         train_stats = run_epoch(
             args, model, train_loader, loss_fn, device, epoch=epoch, optimizer=optimizer, scaler=scaler, train=True
         )
@@ -749,7 +840,9 @@ def main():
             else:
                 scheduler.step()
 
-        history["train"].append({"epoch": epoch, **train_stats})
+        history["train"].append(
+            {"epoch": epoch, "trainable_stage": active_stage, **train_stats}
+        )
         history["val"].append({"epoch": epoch, **val_stats})
         save_json(output_dir / "history.json", history)
         write_tensorboard_epoch(
@@ -759,6 +852,7 @@ def main():
             val_stats,
             optimizer.param_groups[0]["lr"],
         )
+        record_cross_skip_strengths(writer, model, epoch)
 
         save_checkpoint(
             checkpoint_dir / "checkpoint_last.pt",
