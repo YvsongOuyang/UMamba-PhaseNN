@@ -12,6 +12,10 @@ try:
         DecoderCrossSkipAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_skip_baseline_weights,
     )
+    from .model_decoder_cross_concat import (
+        DecoderCrossConcatAutoPhaseNN,
+        load_baseline_weights as load_decoder_cross_concat_baseline_weights,
+    )
     from .model_residual import ResidualAutoPhaseNN
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -23,11 +27,21 @@ except ImportError:
         DecoderCrossSkipAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_skip_baseline_weights,
     )
+    from model_decoder_cross_concat import (
+        DecoderCrossConcatAutoPhaseNN,
+        load_baseline_weights as load_decoder_cross_concat_baseline_weights,
+    )
     from model_residual import ResidualAutoPhaseNN
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
-MODEL_VARIANTS = ("baseline", "residual", "amplitude_skip", "decoder_cross_skip")
+MODEL_VARIANTS = (
+    "baseline",
+    "residual",
+    "amplitude_skip",
+    "decoder_cross_skip",
+    "decoder_cross_concat",
+)
 
 
 def create_model(model_variant: str, threshold: float) -> nn.Module:
@@ -41,6 +55,8 @@ def create_model(model_variant: str, threshold: float) -> nn.Module:
         return AmplitudeSkipAutoPhaseNN(threshold=threshold)
     if model_variant == "decoder_cross_skip":
         return DecoderCrossSkipAutoPhaseNN(threshold=threshold)
+    if model_variant == "decoder_cross_concat":
+        return DecoderCrossConcatAutoPhaseNN(threshold=threshold)
     raise ValueError(f"Unknown model variant: {model_variant}")
 
 
@@ -66,6 +82,16 @@ def load_pretrained_weights(
                 "decoder_cross_skip requires DecoderCrossSkipAutoPhaseNN."
             )
         return load_decoder_cross_skip_baseline_weights(
+            model,
+            checkpoint_path,
+            map_location=map_location,
+        )
+    if model_variant == "decoder_cross_concat":
+        if not isinstance(model, DecoderCrossConcatAutoPhaseNN):
+            raise TypeError(
+                "decoder_cross_concat requires DecoderCrossConcatAutoPhaseNN."
+            )
+        return load_decoder_cross_concat_baseline_weights(
             model,
             checkpoint_path,
             map_location=map_location,

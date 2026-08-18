@@ -16,6 +16,7 @@ model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
 model_residual.py           ResidualAutoPhaseNN architecture variant
 model_amplitude_skip.py     AmplitudeSkipAutoPhaseNN architecture variant
 model_decoder_cross_skip.py DecoderCrossSkipAutoPhaseNN architecture variant
+model_decoder_cross_concat.py DecoderCrossConcatAutoPhaseNN architecture variant
 model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
@@ -108,6 +109,25 @@ the cross-skips in epochs 6-15, and the full network from epoch 16 onward.
 Frozen BatchNorm running statistics remain fixed. Set both stage counts to zero
 to fine-tune the full network immediately. The four learned `alpha` values are
 written to the console and TensorBoard after every epoch.
+
+## Decoder Cross-Concat Variant
+
+`DecoderCrossConcatAutoPhaseNN` is built directly from the baseline and adds
+conventional channel concatenation only between the amplitude and phase
+decoders at `8 x 8 x 8` and `16 x 16 x 16`. The encoder has no skip connection.
+At each scale, both branch inputs are built simultaneously:
+
+```text
+amplitude path: concat(A, Phi)
+phase path:     concat(Phi, A)
+```
+
+The concatenated tensors enter the next original decoder block. Only that
+block's first `3 x 3 x 3` convolution is widened; baseline branch kernels are
+copied exactly and new cross-channel kernels start at zero. The initialized
+model therefore reproduces baseline outputs without `alpha`, extra fusion
+blocks, attention, gates, or new losses. Fine-tune the full model directly at a
+low learning rate.
 
 Training runs are kept inside this subproject by default. If `--run-name` is
 omitted, the script builds one from the timestamp, model variant,
@@ -378,7 +398,7 @@ training backprop.
 ```bash
 cd /home/oyys/code/UMamba-AutoPhaseNN
 
-RUN_NAME="decoder_cross_skip_ft_bs4_lr1e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="decoder_cross_concat_ft_bs4_lr1e-4_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/autophasenn_training_pipeline/runs/${RUN_NAME}"
 BASELINE_CKPT="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt"
 
@@ -386,7 +406,7 @@ mkdir -p "${RUN_DIR}"
 
 nohup env CUDA_VISIBLE_DEVICES=0 python -u \
   autophasenn_training_pipeline/train.py \
-  --model-variant decoder_cross_skip \
+  --model-variant decoder_cross_concat \
   --pretrained "${BASELINE_CKPT}" \
   --run-name "${RUN_NAME}" \
   --data-dir /data_ssd/oyys/autophasenn \
@@ -396,8 +416,6 @@ nohup env CUDA_VISIBLE_DEVICES=0 python -u \
   --data-val-real val_real.npy \
   --num-samples-train 25000 \
   --num-samples-val 5000 \
-  --cross-skip-only-epochs 5 \
-  --decoder-finetune-epochs 10 \
   --epochs 100 \
   --batch-size 4 \
   --num-workers 4 \

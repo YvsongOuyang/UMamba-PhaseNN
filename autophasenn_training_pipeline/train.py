@@ -757,6 +757,11 @@ def main():
                 "Loaded baseline weights with zero-initialized cross-skip strengths: %s",
                 args.pretrained,
             )
+        elif args.model_variant == "decoder_cross_concat":
+            LOGGER.info(
+                "Loaded baseline weights with zero-initialized cross-concat kernels: %s",
+                args.pretrained,
+            )
         else:
             LOGGER.info("Loaded pretrained weights: %s", args.pretrained)
 
