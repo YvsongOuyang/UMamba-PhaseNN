@@ -385,6 +385,13 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --output-png "autophasenn_training_pipeline\output\evaluate\visualization_2d.png" `
   --output-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_3d.png" `
   --output-shift-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_shift_comparison_3d.png" `
+  --output-error-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_error_3d.png" `
+  --output-reciprocal-2d-png "autophasenn_training_pipeline\output\evaluate\visualization_reciprocal_2d.png" `
+  --output-reciprocal-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_reciprocal_3d.png" `
+  --output-amplitude-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_amplitude_3d.png" `
+  --output-phase-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_phase_3d.png" `
+  --output-diffraction-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_diffraction_3d.png" `
+  --output-diffraction-phase-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_diffraction_phase_3d.png" `
   --device cpu `
   --num-samples 5 `
   --seed 42
@@ -395,9 +402,61 @@ The visualizer directly reuses the official post-processing functions from
 support, and center-of-mass shifting. It writes a normalized 2D center-slice
 grid, a true/predicted 3D amplitude-isosurface comparison, and a prediction 3D
 comparison before/after the center shift. The 3D surface color is wrapped phase
-in radians and the red guides mark the volume center. Adjust surface detail with
-`--surface-step-size` and the camera with `--view-elevation` and
-`--view-azimuth`; pass `none` to either 3D output option to disable that image.
+in radians and the red guides mark the volume center. A separate real-space 3D
+error figure shows signed amplitude error (`true - prediction`) and wrapped
+phase error on the true/predicted support intersection. Its amplitude-error
+surface is controlled by `--amplitude-error-level`.
+
+Four independent sampled-volume 3D figures make amplitude and phase values
+explicit instead of combining them on one surface:
+
+```text
+visualization_amplitude_3d.png          Real-space amplitude
+visualization_phase_3d.png              Real-space wrapped phase
+visualization_diffraction_3d.png        Diffraction modulus (log10 normalized)
+visualization_diffraction_phase_3d.png  Derived wrapped diffraction phase
+```
+
+Every figure uses the same five columns and sign convention:
+
+```text
+1. Target
+2. Prediction before center shift
+3. Prediction after center shift
+4. Difference: before - after
+5. Difference: after - target
+```
+
+The first three columns share one color scale; the two signed-difference columns
+share a symmetric scale. Phase differences are wrapped to `[-pi, pi]`. Phase is
+shown only inside valid real-space support, and diffraction phase is shown only
+where normalized diffraction modulus exceeds `--reciprocal-phase-threshold`.
+Phase-difference panels use the intersection of the two valid supports being
+compared. The target amplitude/phase is evaluator-centered, while the two
+prediction columns intentionally expose the state before and after prediction
+centering.
+`--max-volume-points`, `--volume-point-size`, and `--volume-alpha` control the
+sampled-voxel volume rendering without changing any calculated volume.
+
+The reciprocal-space outputs distinguish diffraction modulus from phase. The
+stored `*_diff.npy` tensors and model `pred_diff` output are diffraction modulus
+(`abs(FFT)`, or square root of intensity), not diffraction phase. When
+real-space ground truth is available, the visualizer derives its Fourier phase
+using the same `ifftshift -> fftn -> fftshift` convention as the model and
+compares it with the phase derived from the predicted complex object. These are
+derived phases: experimental modulus-only input does not contain a measured
+diffraction phase. Both complex objects first undergo the evaluator's mean-phase
+removal and center-of-mass registration to reduce global and linear phase
+ambiguities. Low-modulus voxels are hidden because phase is undefined
+there; configure this with `--reciprocal-phase-threshold`, and control the 3D
+reciprocal modulus surface with `--reciprocal-surface-level`.
+Because a real-space translation changes Fourier phase but not Fourier modulus,
+the diffraction-modulus `before - after` panel should be numerically near zero;
+the corresponding diffraction-phase panel exposes the expected phase ramp.
+
+Adjust general surface detail with `--surface-step-size` and the camera with
+`--view-elevation` and `--view-azimuth`; pass `none` to any optional output path
+to disable that image.
 All default outputs are written under `autophasenn_training_pipeline/output/evaluate`.
 These display operations are not part of training backprop.
 
