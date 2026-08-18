@@ -385,6 +385,23 @@ def official_post_process(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Apply the official TF2 amplitude/phase test-time post-processing."""
 
+    amp_out, phi_out = official_post_process_before_shift(
+        amp,
+        phi,
+        threshold=threshold,
+        unwrap=unwrap,
+    )
+    return center_post_processed_object(amp_out, phi_out, threshold=threshold)
+
+
+def official_post_process_before_shift(
+    amp: np.ndarray,
+    phi: np.ndarray,
+    threshold: float = 0.1,
+    unwrap: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Apply official real-space post-processing up to the center shift."""
+
     from skimage.restoration import unwrap_phase
 
     amp = np.asarray(amp, dtype=np.float32)
@@ -398,8 +415,17 @@ def official_post_process(
     selected = amp_out > threshold
     mean_phi = float(np.mean(phi_out[selected])) if np.any(selected) else 0.0
     phi_out = phi_out - mean_phi
-    amp_out, phi_out = shift_center_of_mass(amp_out, phi_out)
+    return amp_out.astype(np.float32), phi_out.astype(np.float32)
 
+
+def center_post_processed_object(
+    amp: np.ndarray,
+    phi: np.ndarray,
+    threshold: float = 0.1,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Center an already post-processed object and restore its support mask."""
+
+    amp_out, phi_out = shift_center_of_mass(amp, phi)
     mask = amp_out > threshold
     amp_out = np.where(mask, amp_out, 0.0)
     phi_out = np.where(mask, phi_out, 0.0)

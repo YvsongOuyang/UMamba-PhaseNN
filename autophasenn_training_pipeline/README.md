@@ -382,16 +382,24 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --data-diff "val_diff.npy" `
   --data-real "val_real.npy" `
   --dataset-size 5000 `
-  --output-png "outputs\pt_pipeline_visualization.png" `
+  --output-png "autophasenn_training_pipeline\output\evaluate\visualization_2d.png" `
+  --output-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_3d.png" `
+  --output-shift-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_shift_comparison_3d.png" `
   --device cpu `
   --num-samples 5 `
   --seed 42
 ```
 
-The visualization intentionally mirrors `TF2/test_network_unsup.py`: phase
-unwrap, support masking, subtracting mean phase inside support, center-of-mass
-shifting, and center-slice plotting. These display operations are not part of
-training backprop.
+The visualizer directly reuses the official post-processing functions from
+`evaluate.py`: phase unwrapping, support masking, subtracting mean phase inside
+support, and center-of-mass shifting. It writes a normalized 2D center-slice
+grid, a true/predicted 3D amplitude-isosurface comparison, and a prediction 3D
+comparison before/after the center shift. The 3D surface color is wrapped phase
+in radians and the red guides mark the volume center. Adjust surface detail with
+`--surface-step-size` and the camera with `--view-elevation` and
+`--view-azimuth`; pass `none` to either 3D output option to disable that image.
+All default outputs are written under `autophasenn_training_pipeline/output/evaluate`.
+These display operations are not part of training backprop.
 
 ## Server Background Training
 
