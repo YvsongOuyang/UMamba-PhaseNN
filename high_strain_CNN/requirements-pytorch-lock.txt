@@ -1,0 +1,8 @@
+# Numerically validated reference environment (Python 3.10).
+h5py==3.8.0
+numpy==1.23.5
+scikit-image==0.20.0
+scipy==1.10.1
+tensorboard==2.10.1
+torch==2.2.2
+tqdm==4.67.1

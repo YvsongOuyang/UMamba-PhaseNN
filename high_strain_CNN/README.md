@@ -53,12 +53,60 @@ The training port supports Python 3.10 and PyTorch 2.x:
 python -m pip install -r requirements-pytorch.txt
 ```
 
+For the exact environment used by the numerical parity and end-to-end smoke
+tests, install the lock file in a clean Python 3.10 environment:
+
+```bash
+python -m pip install -r requirements-pytorch-lock.txt
+```
+
 TensorFlow is needed only to regenerate the numerical reference. Because the
 published model uses TensorFlow 2.10.1, use a separate Python 3.10 environment:
 
 ```bash
 python -m pip install -r requirements-tensorflow-parity.txt
 ```
+
+## Version and data management
+
+`VERSION` contains the PyTorch port version. The shared
+`configs/autophasenn_data.json` file is the source of truth for:
+
+- dataset and schema version;
+- root directory and split filenames;
+- sample counts, volume shape, and dtypes;
+- diffraction/real-space semantics;
+- input and target preprocessing.
+
+Training and evaluation load their defaults from this file while still
+allowing explicit command-line overrides. Validate the external data before a
+new training run:
+
+```bash
+python -u validate_data.py \
+  --output runs/data_validation.json
+```
+
+This checks the exact expected byte size of all four raw memmaps and samples
+the first, middle, and last regions for finite values. Diffraction samples are
+also checked for nonnegative modulus. Add `--sha256` only when a full content
+fingerprint is required; hashing roughly 90 GB of data can take several
+minutes.
+
+Every training run writes:
+
+```text
+runs/<run-name>/config.json
+runs/<run-name>/run_manifest.json
+runs/<run-name>/history.json
+runs/<run-name>/tensorboard/
+```
+
+`run_manifest.json` records the project version, Git commit/dirty state, Python, NumPy,
+PyTorch, CUDA, cuDNN, GPU, resolved data paths, expected and actual file sizes,
+data version, and all training arguments. The same manifest is embedded in
+every checkpoint. Evaluation results record both the checkpoint version and
+the current evaluator version and warn when they differ.
 
 ## Convert the published weights
 
@@ -142,6 +190,21 @@ The defaults already point to the paths and sample counts above. From scratch:
 
 ```bash
 python -u train_pytorch.py --run-name high_strain_autophase_scratch
+```
+
+Background training with a timestamped, self-describing run directory:
+
+```bash
+RUN_NAME="high_strain_scratch_bs1_lr1e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/runs/${RUN_NAME}"
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
+  --run-name "${RUN_NAME}" \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
 ```
 
 Fine-tune the converted published weights:

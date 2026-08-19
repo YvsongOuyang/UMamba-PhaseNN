@@ -19,6 +19,13 @@ from tqdm import tqdm
 
 from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
 from pytorch_port.losses import phase_retrieval_wca_components
+from pytorch_port.management import (
+    DEFAULT_DATA_CONFIG,
+    build_data_manifest,
+    load_data_config,
+    require_data_files,
+    runtime_manifest,
+)
 from pytorch_port.model import HighStrainPhaseUNet, count_parameters
 from pytorch_port.reconstruction import (
     farfield_modulus_from_realspace,
@@ -49,25 +56,38 @@ from autophasenn_training_pipeline.losses import (  # noqa: E402
 
 
 LOGGER = logging.getLogger("high_strain.evaluate_autophase")
-DEFAULT_DATA_DIR = Path("/data_ssd/oyys/autophasenn")
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate_autophase"
 
 
 def parse_args() -> argparse.Namespace:
+    bootstrap = argparse.ArgumentParser(add_help=False)
+    bootstrap.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    bootstrap_args, _ = bootstrap.parse_known_args()
+    data_config = load_data_config(bootstrap_args.data_config)
+    val_config = data_config["splits"]["val"]
+    configured_shape = tuple(int(size) for size in data_config["shape"])
+    if len(set(configured_shape)) != 1:
+        raise ValueError("HighStrainPhaseUNet requires a cubic data shape.")
+
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
     parser.add_argument("--checkpoint", default=str(PROJECT_DIR / "model_paper_pytorch.pt"))
-    parser.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR))
-    parser.add_argument("--data-diff", default="val_diff.npy")
-    parser.add_argument("--data-real", default="val_real.npy")
-    parser.add_argument("--num-samples", type=int, default=5000)
+    parser.add_argument("--data-dir", default=data_config["root"])
+    parser.add_argument("--data-diff", default=val_config["diffraction"])
+    parser.add_argument("--data-real", default=val_config["realspace"])
+    parser.add_argument(
+        "--num-samples",
+        type=int,
+        default=int(val_config["num_samples"]),
+    )
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--shape", type=int, default=64)
-    parser.add_argument("--dtype-diff", default="float32")
-    parser.add_argument("--dtype-real", default="complex64")
+    parser.add_argument("--shape", type=int, default=configured_shape[0])
+    parser.add_argument("--dtype-diff", default=data_config["dtypes"]["diffraction"])
+    parser.add_argument("--dtype-real", default=data_config["dtypes"]["realspace"])
     parser.add_argument(
         "--input-log-data",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=data_config.get("input_preprocessing", {}).get("transform") == "log1p",
     )
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -101,7 +121,9 @@ def parse_args() -> argparse.Namespace:
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
         default="INFO",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.data_config = str(Path(args.data_config).expanduser().resolve())
+    return args
 
 
 def validate_args(args: argparse.Namespace) -> None:
@@ -199,6 +221,8 @@ def render_markdown(report: dict[str, object]) -> str:
         "| Item | Value |",
         "|---|---|",
         f"| Checkpoint | `{run['checkpoint']}` |",
+        f"| Project version | `{run['project_version']}` |",
+        f"| Git commit | `{run['git_commit']}` |",
         f"| Samples | {run['num_samples']} |",
         f"| Device | `{run['device']}` |",
         f"| Ambiguity mode | `{run['ambiguity_mode']}` |",
@@ -409,8 +433,25 @@ def main() -> int:
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
     sample_count = min(args.num_samples, args.limit) if args.limit > 0 else args.num_samples
+    data_config = load_data_config(args.data_config)
     data_dir = Path(args.data_dir).expanduser().resolve()
     shape = (args.shape, args.shape, args.shape)
+    data_manifest = build_data_manifest(
+        config=data_config,
+        root=data_dir,
+        shape=shape,
+        diffraction_dtype=args.dtype_diff,
+        realspace_dtype=args.dtype_real,
+        splits={
+            "val": {
+                "diffraction": args.data_diff,
+                "realspace": args.data_real,
+                "num_samples": sample_count,
+            }
+        },
+        input_log_data=args.input_log_data,
+    )
+    data_manifest["file_status"] = require_data_files(data_manifest)
     dataset = AutoPhaseNNPhaseDataset(
         data_dir / args.data_diff,
         data_dir / args.data_real,
@@ -431,6 +472,14 @@ def main() -> int:
         persistent_workers=args.num_workers > 0,
     )
     model, checkpoint_metadata = load_model(checkpoint_path, device)
+    runtime = runtime_manifest(device)
+    checkpoint_version = checkpoint_metadata.get("project_version")
+    if checkpoint_version and checkpoint_version != runtime["project_version"]:
+        LOGGER.warning(
+            "Checkpoint project version %s differs from evaluator version %s.",
+            checkpoint_version,
+            runtime["project_version"],
+        )
     LOGGER.info("Checkpoint: %s", checkpoint_path)
     LOGGER.info("Data: %s samples from %s", sample_count, data_dir)
     LOGGER.info(
@@ -454,6 +503,10 @@ def main() -> int:
         "run": {
             "checkpoint": str(checkpoint_path),
             "checkpoint_epoch": checkpoint_metadata.get("epoch"),
+            "checkpoint_project_version": checkpoint_version,
+            "checkpoint_git_commit": checkpoint_metadata.get("git_commit"),
+            "project_version": runtime["project_version"],
+            "git_commit": runtime["git_commit"],
             "device": str(device),
             "torch_version": torch.__version__,
             "num_samples": len(rows),
@@ -464,13 +517,8 @@ def main() -> int:
             "wall_seconds": wall_seconds,
         },
         "configuration": vars(args),
-        "data": {
-            "diffraction": str(data_dir / args.data_diff),
-            "realspace": str(data_dir / args.data_real),
-            "shape": list(shape),
-            "diffraction_storage": "raw float32 modulus memmap",
-            "realspace_storage": "raw complex64 memmap",
-        },
+        "runtime": runtime,
+        "data": data_manifest,
         "reconstruction": {
             "spectrum": "measured_modulus * exp(1j * selected_reciprocal_phase)",
             "inverse": "fftshift(ifftn(ifftshift(spectrum)))",

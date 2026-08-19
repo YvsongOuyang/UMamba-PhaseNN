@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "dataset_name": "AutoPhaseNN",
+  "dataset_version": "autophasenn_64_memmap_v1",
+  "storage": "raw_numpy_memmap_without_npy_header",
+  "root": "/data_ssd/oyys/autophasenn",
+  "shape": [64, 64, 64],
+  "dtypes": {
+    "diffraction": "float32",
+    "realspace": "complex64"
+  },
+  "splits": {
+    "train": {
+      "diffraction": "train_diff.npy",
+      "realspace": "train_real.npy",
+      "num_samples": 25000
+    },
+    "val": {
+      "diffraction": "val_diff.npy",
+      "realspace": "val_real.npy",
+      "num_samples": 5000
+    }
+  },
+  "semantics": {
+    "diffraction": "centered reciprocal-space modulus abs(FFT)",
+    "realspace": "centered complex-valued object"
+  },
+  "input_preprocessing": {
+    "modulus_to_intensity": "square",
+    "transform": "log1p",
+    "normalization": "per_volume_minmax_0_1"
+  },
+  "target_preprocessing": {
+    "transform": "fftshift(fftn(ifftshift(realspace)))",
+    "target": "reciprocal_phase_minus_center_phase"
+  }
+}

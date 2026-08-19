@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from pytorch_port.model import HighStrainPhaseUNet, count_parameters
+from pytorch_port.management import runtime_manifest
 
 
 LOGGER = logging.getLogger("high_strain.convert")
@@ -66,6 +67,7 @@ def convert_weights(keras_h5: str | Path, output: str | Path) -> Path:
             LOGGER.info("Converted %-22s %s", name, tuple(module.weight.shape))
 
     output.parent.mkdir(parents=True, exist_ok=True)
+    runtime = runtime_manifest()
     torch.save(
         {
             "model_state_dict": model.state_dict(),
@@ -74,6 +76,9 @@ def convert_weights(keras_h5: str | Path, output: str | Path) -> Path:
             "parameter_count": count_parameters(model),
             "input_layout": "NCDHW",
             "output": "reciprocal_space_phase",
+            "project_version": runtime["project_version"],
+            "git_commit": runtime["git_commit"],
+            "runtime": runtime,
         },
         output,
     )

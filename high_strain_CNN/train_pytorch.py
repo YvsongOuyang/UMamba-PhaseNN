@@ -8,7 +8,7 @@ import logging
 import random
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +18,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
 from pytorch_port.losses import phase_retrieval_wca_loss
+from pytorch_port.management import (
+    DEFAULT_DATA_CONFIG,
+    build_data_manifest,
+    load_data_config,
+    require_data_files,
+    runtime_manifest,
+)
 from pytorch_port.model import HighStrainPhaseUNet, count_parameters
 
 
@@ -44,21 +51,46 @@ def configure_logging() -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    bootstrap = argparse.ArgumentParser(add_help=False)
+    bootstrap.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    bootstrap_args, _ = bootstrap.parse_known_args()
+    data_config = load_data_config(bootstrap_args.data_config)
+    train_config = data_config["splits"]["train"]
+    val_config = data_config["splits"]["val"]
+    configured_shape = tuple(int(size) for size in data_config["shape"])
+    if len(set(configured_shape)) != 1:
+        raise ValueError("HighStrainPhaseUNet requires a cubic data shape.")
+
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn")
-    parser.add_argument("--train-diff", default="train_diff.npy")
-    parser.add_argument("--train-real", default="train_real.npy")
-    parser.add_argument("--val-diff", default="val_diff.npy")
-    parser.add_argument("--val-real", default="val_real.npy")
-    parser.add_argument("--num-samples-train", type=int, default=25000)
-    parser.add_argument("--num-samples-val", type=int, default=5000)
-    parser.add_argument("--shape", type=int, default=64)
-    parser.add_argument("--diffraction-dtype", default="float32")
-    parser.add_argument("--realspace-dtype", default="complex64")
+    parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    parser.add_argument("--data-dir", default=data_config["root"])
+    parser.add_argument("--train-diff", default=train_config["diffraction"])
+    parser.add_argument("--train-real", default=train_config["realspace"])
+    parser.add_argument("--val-diff", default=val_config["diffraction"])
+    parser.add_argument("--val-real", default=val_config["realspace"])
+    parser.add_argument(
+        "--num-samples-train",
+        type=int,
+        default=int(train_config["num_samples"]),
+    )
+    parser.add_argument(
+        "--num-samples-val",
+        type=int,
+        default=int(val_config["num_samples"]),
+    )
+    parser.add_argument("--shape", type=int, default=configured_shape[0])
+    parser.add_argument(
+        "--diffraction-dtype",
+        default=data_config["dtypes"]["diffraction"],
+    )
+    parser.add_argument(
+        "--realspace-dtype",
+        default=data_config["dtypes"]["realspace"],
+    )
     parser.add_argument(
         "--input-log-data",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=data_config.get("input_preprocessing", {}).get("transform") == "log1p",
         help="Use normalized log1p(intensity), matching the published model.",
     )
     parser.add_argument("--epochs", type=int, default=60)
@@ -82,7 +114,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--print-freq", type=int, default=50)
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--fp16", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.data_config = str(Path(args.data_config).expanduser().resolve())
+    return args
 
 
 def set_seed(seed: int) -> None:
@@ -121,6 +155,7 @@ def save_checkpoint(
     best_val_loss: float,
     history: dict[str, list[dict]],
     args: argparse.Namespace,
+    run_manifest: dict[str, object],
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
@@ -135,6 +170,9 @@ def save_checkpoint(
             "best_val_loss": best_val_loss,
             "history": history,
             "args": vars(args),
+            "project_version": run_manifest["runtime"]["project_version"],
+            "git_commit": run_manifest["runtime"]["git_commit"],
+            "run_manifest": run_manifest,
         },
         path,
     )
@@ -222,6 +260,36 @@ def main() -> None:
         raise ValueError("--pretrained and --resume cannot be used together.")
     set_seed(args.seed)
     device = choose_device(args.device)
+    data_config = load_data_config(args.data_config)
+    shape = (args.shape, args.shape, args.shape)
+    data_manifest = build_data_manifest(
+        config=data_config,
+        root=args.data_dir,
+        shape=shape,
+        diffraction_dtype=args.diffraction_dtype,
+        realspace_dtype=args.realspace_dtype,
+        splits={
+            "train": {
+                "diffraction": args.train_diff,
+                "realspace": args.train_real,
+                "num_samples": args.num_samples_train,
+            },
+            "val": {
+                "diffraction": args.val_diff,
+                "realspace": args.val_real,
+                "num_samples": args.num_samples_val,
+            },
+        },
+        input_log_data=args.input_log_data,
+    )
+    data_manifest["file_status"] = require_data_files(data_manifest)
+    run_manifest: dict[str, object] = {
+        "schema_version": 1,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "runtime": runtime_manifest(device),
+        "data": data_manifest,
+        "training": vars(args),
+    }
     initialization = "pretrained" if args.pretrained else "resume" if args.resume else "scratch"
     if not args.run_name:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -242,9 +310,12 @@ def main() -> None:
         json.dumps(vars(args), indent=2),
         encoding="utf-8",
     )
+    (run_dir / "run_manifest.json").write_text(
+        json.dumps(run_manifest, indent=2),
+        encoding="utf-8",
+    )
 
     data_dir = Path(args.data_dir)
-    shape = (args.shape, args.shape, args.shape)
     dataset_kwargs = {
         "shape": shape,
         "diffraction_dtype": args.diffraction_dtype,
@@ -298,6 +369,14 @@ def main() -> None:
         LOGGER.info("Loaded converted/pretrained weights: %s", args.pretrained)
     elif args.resume:
         checkpoint = load_model_state(model, args.resume, device)
+        checkpoint_version = checkpoint.get("project_version")
+        current_version = run_manifest["runtime"]["project_version"]
+        if checkpoint_version and checkpoint_version != current_version:
+            LOGGER.warning(
+                "Checkpoint project version %s differs from current version %s.",
+                checkpoint_version,
+                current_version,
+            )
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         scheduler_state = checkpoint.get("scheduler_state_dict")
         if scheduler is not None and scheduler_state is not None:
@@ -310,8 +389,10 @@ def main() -> None:
         LOGGER.info("Resumed checkpoint %s at epoch %d", args.resume, start_epoch)
 
     LOGGER.info(
-        "Run=%s | device=%s | parameters=%s | train/val=%s/%s | checkpoints=%s",
+        "Run=%s | version=%s | commit=%s | device=%s | parameters=%s | train/val=%s/%s | checkpoints=%s",
         args.run_name,
+        run_manifest["runtime"]["project_version"],
+        run_manifest["runtime"]["git_commit"],
         device,
         f"{count_parameters(model):,}",
         f"{len(train_dataset):,}",
@@ -368,6 +449,7 @@ def main() -> None:
             best_val_loss,
             history,
             args,
+            run_manifest,
         )
         if improved:
             save_checkpoint(
@@ -380,6 +462,7 @@ def main() -> None:
                 best_val_loss,
                 history,
                 args,
+                run_manifest,
             )
         if epoch % args.save_every == 0:
             save_checkpoint(
@@ -392,6 +475,7 @@ def main() -> None:
                 best_val_loss,
                 history,
                 args,
+                run_manifest,
             )
         LOGGER.info(
             "Epoch %03d complete | train=%.6e | val=%.6e | best=%.6e | lr=%.3e",
