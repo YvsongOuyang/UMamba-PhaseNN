@@ -51,7 +51,7 @@ except ImportError:
 LOGGER = logging.getLogger("autophasenn.evaluate")
 PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
-DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/dual_skip_scratch_paper-mae_bs4_lr1e-3_20260813_173826/checkpoint_best.pt"
+DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115/checkpoint_best.pt"
 
 PAPER_METRICS = {
     "paper_modulus_mae": {
@@ -137,7 +137,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
-        default="dual_skip",
+        default="decoder_cross_concat",
         help="Network architecture variant.",
     )
     parser.add_argument(
