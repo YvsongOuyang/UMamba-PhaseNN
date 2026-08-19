@@ -333,7 +333,7 @@ RUN_DIR="$PWD/runs/${RUN_NAME}"
 
 mkdir -p "${RUN_DIR}"
 
-nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
+nohup env CUDA_VISIBLE_DEVICES=1 python -u train_pytorch.py \
   --run-name "${RUN_NAME}" \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
