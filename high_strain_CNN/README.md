@@ -321,3 +321,23 @@ Git LFS data and model files are intentionally excluded from the parent
 UMamba-PhaseNN repository and can be downloaded from the upstream project when
 needed.
 
+
+cd high_strain_CNN
+
+RUN_NAME="high_strain_reduced_scratch_bs16_lr1e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/runs/${RUN_NAME}"
+
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
+  --run-name "${RUN_NAME}" \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+
+echo "训练已启动"
+echo "PID         : ${PID}"
+echo "日志        : ${RUN_DIR}/console.log"
+echo "运行记录    : ${RUN_DIR}"
+echo "Checkpoints : /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/${RUN_NAME}"
