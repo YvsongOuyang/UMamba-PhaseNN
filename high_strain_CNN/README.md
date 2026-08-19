@@ -240,6 +240,10 @@ Large checkpoints are written under:
 /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/<run-name>
 ```
 
+Batch progress logs report elapsed time and ETA for the current train or
+validation stage. Epoch summaries report epoch time, total run time, remaining
+training ETA, and the estimated local completion timestamp.
+
 Use `--resume <checkpoint>` to restore the model, optimizer, scaler, history,
 and epoch state.
 

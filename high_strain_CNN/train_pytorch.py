@@ -8,7 +8,7 @@ import logging
 import random
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -146,6 +146,17 @@ def choose_device(requested: str) -> torch.device:
     return torch.device(requested)
 
 
+def format_duration(seconds: float) -> str:
+    """Format a nonnegative duration as ``HH:MM:SS`` or ``Dd HH:MM:SS``."""
+
+    total_seconds = max(int(round(seconds)), 0)
+    days, remainder = divmod(total_seconds, 24 * 60 * 60)
+    hours, remainder = divmod(remainder, 60 * 60)
+    minutes, seconds = divmod(remainder, 60)
+    clock = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return f"{days}d {clock}" if days else clock
+
+
 def load_model_state(
     model: HighStrainPhaseUNet,
     checkpoint_path: str | Path,
@@ -219,7 +230,7 @@ def run_epoch(
     total_loss = 0.0
     total_samples = 0
     processed_batches = 0
-    started = time.time()
+    started = time.monotonic()
     grad_context = torch.enable_grad() if training else torch.no_grad()
 
     with grad_context:
@@ -255,21 +266,31 @@ def run_epoch(
             total_samples += batch_size
             processed_batches += 1
             if batch_index % max(print_freq, 1) == 0 or batch_index == batch_limit:
+                elapsed_seconds = time.monotonic() - started
+                seconds_per_batch = elapsed_seconds / max(processed_batches, 1)
+                remaining_seconds = seconds_per_batch * max(
+                    batch_limit - processed_batches,
+                    0,
+                )
                 LOGGER.info(
-                    "%s | epoch=%03d/%03d | batch=%05d/%05d | loss=%.6e",
+                    "%s | epoch=%03d/%03d | batch=%05d/%05d | loss=%.6e | "
+                    "stage_elapsed=%s | stage_eta=%s",
                     split,
                     epoch,
                     epochs,
                     batch_index,
                     batch_limit,
                     float(loss.detach()),
+                    format_duration(elapsed_seconds),
+                    format_duration(remaining_seconds),
                 )
 
+    elapsed_seconds = time.monotonic() - started
     return {
         "loss": total_loss / max(total_samples, 1),
         "samples": total_samples,
         "batches": processed_batches,
-        "elapsed_seconds": time.time() - started,
+        "elapsed_seconds": elapsed_seconds,
     }
 
 
@@ -422,8 +443,10 @@ def main() -> None:
         checkpoint_dir,
     )
     writer = SummaryWriter(log_dir=str(tensorboard_dir))
+    run_started = time.monotonic()
 
     for epoch in range(start_epoch, args.epochs + 1):
+        epoch_started = time.monotonic()
         train_stats = run_epoch(
             model,
             train_loader,
@@ -499,13 +522,26 @@ def main() -> None:
                 args,
                 run_manifest,
             )
+        epoch_seconds = time.monotonic() - epoch_started
+        run_seconds = time.monotonic() - run_started
+        completed_epochs = epoch - start_epoch + 1
+        average_epoch_seconds = run_seconds / max(completed_epochs, 1)
+        remaining_seconds = average_epoch_seconds * max(args.epochs - epoch, 0)
+        estimated_finish = datetime.now().astimezone() + timedelta(
+            seconds=remaining_seconds
+        )
         LOGGER.info(
-            "Epoch %03d complete | train=%.6e | val=%.6e | best=%.6e | lr=%.3e",
+            "Epoch %03d complete | train=%.6e | val=%.6e | best=%.6e | "
+            "lr=%.3e | epoch_time=%s | run_elapsed=%s | eta=%s | finish=%s",
             epoch,
             train_stats["loss"],
             val_stats["loss"],
             best_val_loss,
             optimizer.param_groups[0]["lr"],
+            format_duration(epoch_seconds),
+            format_duration(run_seconds),
+            format_duration(remaining_seconds),
+            estimated_finish.strftime("%Y-%m-%d %H:%M:%S %Z"),
         )
 
     writer.close()
