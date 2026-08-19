@@ -25,7 +25,13 @@ from pytorch_port.management import (
     require_data_files,
     runtime_manifest,
 )
-from pytorch_port.model import HighStrainPhaseUNet, count_parameters
+from pytorch_port.model import (
+    DEFAULT_MODEL_VARIANT,
+    MODEL_VARIANTS,
+    HighStrainPhaseUNet,
+    count_parameters,
+    infer_model_variant,
+)
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -98,6 +104,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument(
+        "--model-variant",
+        choices=MODEL_VARIANTS,
+        default=DEFAULT_MODEL_VARIANT,
+        help="Use the five-level reduced model by default; published retains 2048 channels.",
+    )
+    parser.add_argument(
         "--lr-scheduler",
         choices=("none", "plateau"),
         default="none",
@@ -141,6 +153,12 @@ def load_model_state(
 ) -> dict:
     checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint.get("model_state_dict", checkpoint)
+    checkpoint_variant = infer_model_variant(state_dict)
+    if checkpoint_variant != model.model_variant:
+        raise ValueError(
+            f"Checkpoint uses model variant {checkpoint_variant!r}, but the requested "
+            f"model is {model.model_variant!r}. Select the matching --model-variant."
+        )
     model.load_state_dict(state_dict, strict=True)
     return checkpoint
 
@@ -162,6 +180,8 @@ def save_checkpoint(
         {
             "epoch": epoch,
             "model_state_dict": model.state_dict(),
+            "model_variant": model.model_variant,
+            "parameter_count": count_parameters(model),
             "optimizer_state_dict": optimizer.state_dict(),
             "scheduler_state_dict": (
                 scheduler.state_dict() if scheduler is not None else None
@@ -294,7 +314,8 @@ def main() -> None:
     if not args.run_name:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.run_name = (
-            f"{timestamp}_high_strain_{initialization}_bs-{args.batch_size}"
+            f"{timestamp}_high_strain_{args.model_variant}_{initialization}"
+            f"_bs-{args.batch_size}"
             f"_lr-{args.learning_rate:g}_seed-{args.seed}"
         )
 
@@ -344,7 +365,7 @@ def main() -> None:
     train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
     val_loader = DataLoader(val_dataset, shuffle=False, **loader_kwargs)
 
-    model = HighStrainPhaseUNet().to(device)
+    model = HighStrainPhaseUNet(model_variant=args.model_variant).to(device)
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=args.learning_rate,
@@ -389,8 +410,9 @@ def main() -> None:
         LOGGER.info("Resumed checkpoint %s at epoch %d", args.resume, start_epoch)
 
     LOGGER.info(
-        "Run=%s | version=%s | commit=%s | device=%s | parameters=%s | train/val=%s/%s | checkpoints=%s",
+        "Run=%s | model=%s | version=%s | commit=%s | device=%s | parameters=%s | train/val=%s/%s | checkpoints=%s",
         args.run_name,
+        model.model_variant,
         run_manifest["runtime"]["project_version"],
         run_manifest["runtime"]["git_commit"],
         device,

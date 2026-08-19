@@ -26,7 +26,12 @@ from pytorch_port.management import (
     require_data_files,
     runtime_manifest,
 )
-from pytorch_port.model import HighStrainPhaseUNet, count_parameters
+from pytorch_port.model import (
+    MODEL_VARIANTS,
+    HighStrainPhaseUNet,
+    count_parameters,
+    infer_model_variant,
+)
 from pytorch_port.reconstruction import (
     farfield_modulus_from_realspace,
     realspace_from_modulus_phase,
@@ -93,6 +98,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--postprocess-workers", type=int, default=0)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
+    parser.add_argument(
+        "--model-variant",
+        choices=("auto", *MODEL_VARIANTS),
+        default="auto",
+        help="Infer the architecture from the checkpoint by default.",
+    )
     parser.add_argument("--threshold", type=float, default=0.1)
     parser.add_argument("--ssim-window-size", type=int, default=7)
     parser.add_argument("--warmup-batches", type=int, default=1)
@@ -170,10 +181,20 @@ def synchronize(device: torch.device) -> None:
         torch.cuda.synchronize(device)
 
 
-def load_model(checkpoint_path: Path, device: torch.device) -> tuple[HighStrainPhaseUNet, dict]:
-    model = HighStrainPhaseUNet().to(device)
+def load_model(
+    checkpoint_path: Path,
+    device: torch.device,
+    requested_variant: str = "auto",
+) -> tuple[HighStrainPhaseUNet, dict]:
     checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint.get("model_state_dict", checkpoint)
+    checkpoint_variant = infer_model_variant(state_dict)
+    if requested_variant != "auto" and requested_variant != checkpoint_variant:
+        raise ValueError(
+            f"Checkpoint uses model variant {checkpoint_variant!r}, but "
+            f"{requested_variant!r} was requested."
+        )
+    model = HighStrainPhaseUNet(model_variant=checkpoint_variant).to(device)
     model.load_state_dict(state_dict, strict=True)
     model.eval()
     metadata = checkpoint if isinstance(checkpoint, dict) else {}
@@ -221,6 +242,8 @@ def render_markdown(report: dict[str, object]) -> str:
         "| Item | Value |",
         "|---|---|",
         f"| Checkpoint | `{run['checkpoint']}` |",
+        f"| Model variant | `{run['model_variant']}` |",
+        f"| Model parameters | {run['model_parameters']:,} |",
         f"| Project version | `{run['project_version']}` |",
         f"| Git commit | `{run['git_commit']}` |",
         f"| Samples | {run['num_samples']} |",
@@ -471,7 +494,11 @@ def main() -> int:
         pin_memory=device.type == "cuda",
         persistent_workers=args.num_workers > 0,
     )
-    model, checkpoint_metadata = load_model(checkpoint_path, device)
+    model, checkpoint_metadata = load_model(
+        checkpoint_path,
+        device,
+        args.model_variant,
+    )
     runtime = runtime_manifest(device)
     checkpoint_version = checkpoint_metadata.get("project_version")
     if checkpoint_version and checkpoint_version != runtime["project_version"]:
@@ -483,7 +510,8 @@ def main() -> int:
     LOGGER.info("Checkpoint: %s", checkpoint_path)
     LOGGER.info("Data: %s samples from %s", sample_count, data_dir)
     LOGGER.info(
-        "Model: %s parameters | device=%s | ambiguity=%s",
+        "Model: %s | %s parameters | device=%s | ambiguity=%s",
+        model.model_variant,
         f"{count_parameters(model):,}",
         device,
         args.ambiguity_mode,
@@ -505,6 +533,8 @@ def main() -> int:
             "checkpoint_epoch": checkpoint_metadata.get("epoch"),
             "checkpoint_project_version": checkpoint_version,
             "checkpoint_git_commit": checkpoint_metadata.get("git_commit"),
+            "model_variant": model.model_variant,
+            "model_parameters": count_parameters(model),
             "project_version": runtime["project_version"],
             "git_commit": runtime["git_commit"],
             "device": str(device),

@@ -9,7 +9,11 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from pytorch_port.model import HighStrainPhaseUNet, count_parameters
+from pytorch_port.model import (
+    PUBLISHED_MODEL_VARIANT,
+    HighStrainPhaseUNet,
+    count_parameters,
+)
 from pytorch_port.management import runtime_manifest
 
 
@@ -33,7 +37,7 @@ def convert_weights(keras_h5: str | Path, output: str | Path) -> Path:
 
     keras_h5 = Path(keras_h5).resolve()
     output = Path(output).resolve()
-    model = HighStrainPhaseUNet()
+    model = HighStrainPhaseUNet(model_variant=PUBLISHED_MODEL_VARIANT)
     weighted_layers = model.weighted_layers()
 
     with h5py.File(keras_h5, "r") as handle, torch.no_grad():
@@ -71,6 +75,7 @@ def convert_weights(keras_h5: str | Path, output: str | Path) -> Path:
     torch.save(
         {
             "model_state_dict": model.state_dict(),
+            "model_variant": model.model_variant,
             "source_format": "Keras H5 / TensorFlow 2.10.1",
             "source_checkpoint": str(keras_h5),
             "parameter_count": count_parameters(model),

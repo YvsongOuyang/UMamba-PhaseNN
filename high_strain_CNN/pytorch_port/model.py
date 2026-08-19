@@ -10,6 +10,12 @@ import torch.nn.functional as F
 from torch.nn.modules.utils import _triple
 
 
+PUBLISHED_MODEL_VARIANT = "published"
+REDUCED_MODEL_VARIANT = "reduced"
+MODEL_VARIANTS = (REDUCED_MODEL_VARIANT, PUBLISHED_MODEL_VARIANT)
+DEFAULT_MODEL_VARIANT = REDUCED_MODEL_VARIANT
+
+
 class TensorFlowSameConv3d(nn.Module):
     """Conv3D with TensorFlow SAME padding for stride one."""
 
@@ -73,38 +79,70 @@ class TensorFlowSameConvTranspose3d(nn.Module):
 
 
 class HighStrainPhaseUNet(nn.Module):
-    """Six-level 3D U-Net that predicts reciprocal-space phase.
+    """3D U-Net that predicts reciprocal-space phase.
 
     Input and output use PyTorch's ``[batch, channel, depth, height, width]``
-    layout. The original Keras model uses channels-last tensors; only the
-    memory layout differs.
+    layout. ``reduced`` removes the deepest encoder-decoder scale and caps the
+    bottleneck at 1024 channels. ``published`` retains the numerically matched
+    six-level Keras architecture with a 2048-channel bottleneck.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, model_variant: str = DEFAULT_MODEL_VARIANT) -> None:
         super().__init__()
-        self.layers = nn.ModuleDict(
+        if model_variant not in MODEL_VARIANTS:
+            raise ValueError(
+                f"Unknown model variant {model_variant!r}; expected one of {MODEL_VARIANTS}."
+            )
+        self.model_variant = model_variant
+
+        layers: dict[str, nn.Module] = {
+            "conv3d": TensorFlowSameConv3d(1, 8, 5, dilation=8),
+            "conv3d_1": TensorFlowSameConv3d(1, 8, 5, dilation=5),
+            "conv3d_2": TensorFlowSameConv3d(1, 8, 5, dilation=3),
+            "conv3d_3": TensorFlowSameConv3d(1, 8, 5, dilation=1),
+            "conv3d_4": TensorFlowSameConv3d(33, 16, 5, dilation=6),
+            "conv3d_5": TensorFlowSameConv3d(33, 16, 5, dilation=4),
+            "conv3d_6": TensorFlowSameConv3d(33, 16, 5, dilation=2),
+            "conv3d_7": TensorFlowSameConv3d(33, 16, 5, dilation=1),
+            "conv3d_8": TensorFlowSameConv3d(97, 128, 4),
+            "conv3d_9": TensorFlowSameConv3d(128, 256, 3),
+            "conv3d_10": TensorFlowSameConv3d(256, 512, 3),
+        }
+        if model_variant == PUBLISHED_MODEL_VARIANT:
+            layers["conv3d_11"] = TensorFlowSameConv3d(512, 1024, 3)
+        layers.update(
             {
-                "conv3d": TensorFlowSameConv3d(1, 8, 5, dilation=8),
-                "conv3d_1": TensorFlowSameConv3d(1, 8, 5, dilation=5),
-                "conv3d_2": TensorFlowSameConv3d(1, 8, 5, dilation=3),
-                "conv3d_3": TensorFlowSameConv3d(1, 8, 5, dilation=1),
-                "conv3d_4": TensorFlowSameConv3d(33, 16, 5, dilation=6),
-                "conv3d_5": TensorFlowSameConv3d(33, 16, 5, dilation=4),
-                "conv3d_6": TensorFlowSameConv3d(33, 16, 5, dilation=2),
-                "conv3d_7": TensorFlowSameConv3d(33, 16, 5, dilation=1),
-                "conv3d_8": TensorFlowSameConv3d(97, 128, 4),
-                "conv3d_9": TensorFlowSameConv3d(128, 256, 3),
-                "conv3d_10": TensorFlowSameConv3d(256, 512, 3),
-                "conv3d_11": TensorFlowSameConv3d(512, 1024, 3),
                 "conv3d_12": TensorFlowSameConv3d(33, 16, 3),
                 "conv3d_13": TensorFlowSameConv3d(97, 48, 3),
                 "conv3d_14": TensorFlowSameConv3d(128, 64, 3),
                 "conv3d_15": TensorFlowSameConv3d(256, 128, 3),
                 "conv3d_16": TensorFlowSameConv3d(512, 256, 3),
-                "conv3d_17": TensorFlowSameConv3d(1024, 512, 3),
-                "conv3d_18": TensorFlowSameConv3d(1024, 2048, 2),
-                "conv3d_transpose": TensorFlowSameConvTranspose3d(2048, 1024, 3),
-                "conv3d_transpose_1": TensorFlowSameConvTranspose3d(1536, 512, 3),
+            }
+        )
+        if model_variant == PUBLISHED_MODEL_VARIANT:
+            layers.update(
+                {
+                    "conv3d_17": TensorFlowSameConv3d(1024, 512, 3),
+                    "conv3d_18": TensorFlowSameConv3d(1024, 2048, 2),
+                    "conv3d_transpose": TensorFlowSameConvTranspose3d(
+                        2048, 1024, 3
+                    ),
+                    "conv3d_transpose_1": TensorFlowSameConvTranspose3d(
+                        1536, 512, 3
+                    ),
+                }
+            )
+        else:
+            layers.update(
+                {
+                    "conv3d_18": TensorFlowSameConv3d(512, 1024, 2),
+                    "conv3d_transpose": TensorFlowSameConvTranspose3d(
+                        1024, 512, 3
+                    ),
+                }
+            )
+        layers.update(
+            {
                 "conv3d_transpose_2": TensorFlowSameConvTranspose3d(768, 256, 3),
                 "conv3d_transpose_3": TensorFlowSameConvTranspose3d(384, 128, 4),
                 "conv3d_transpose_4": TensorFlowSameConvTranspose3d(192, 64, 5),
@@ -113,6 +151,7 @@ class HighStrainPhaseUNet(nn.Module):
                 "conv3d_20": TensorFlowSameConv3d(16, 1, 5),
             }
         )
+        self.layers = nn.ModuleDict(layers)
         self.activation = nn.LeakyReLU(negative_slope=0.2)
         self.reset_parameters()
 
@@ -163,7 +202,7 @@ class HighStrainPhaseUNet(nn.Module):
         return weighted
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Predict reciprocal-space phase for a normalized 64-cubed volume."""
+        """Map ``[B, 1, 64, 64, 64]`` input to an equal-shaped phase volume."""
 
         x, s1 = self._modified_encoder(
             x,
@@ -176,18 +215,20 @@ class HighStrainPhaseUNet(nn.Module):
         x, s3 = self._encoder(x, "conv3d_8")
         x, s4 = self._encoder(x, "conv3d_9")
         x, s5 = self._encoder(x, "conv3d_10")
-        x, s6 = self._encoder(x, "conv3d_11")
+        if self.model_variant == PUBLISHED_MODEL_VARIANT:
+            x, s6 = self._encoder(x, "conv3d_11")
 
         s1 = self._skip(s1, "conv3d_12")
         s2 = self._skip(s2, "conv3d_13")
         s3 = self._skip(s3, "conv3d_14")
         s4 = self._skip(s4, "conv3d_15")
         s5 = self._skip(s5, "conv3d_16")
-        s6 = self._skip(s6, "conv3d_17")
 
         x = self.activation(self.layers["conv3d_18"](x))
         x = self._decoder(x, "conv3d_transpose")
-        x = self._decoder(x, "conv3d_transpose_1", s6)
+        if self.model_variant == PUBLISHED_MODEL_VARIANT:
+            s6 = self._skip(s6, "conv3d_17")
+            x = self._decoder(x, "conv3d_transpose_1", s6)
         x = self._decoder(x, "conv3d_transpose_2", s5)
         x = self._decoder(x, "conv3d_transpose_3", s4)
         x = self._decoder(x, "conv3d_transpose_4", s3)
@@ -200,3 +241,19 @@ class HighStrainPhaseUNet(nn.Module):
 
 def count_parameters(model: nn.Module) -> int:
     return sum(parameter.numel() for parameter in model.parameters())
+
+
+def infer_model_variant(state_dict: Mapping[str, torch.Tensor]) -> str:
+    """Infer the architecture from the bottleneck kernel in a state dict."""
+
+    key = "layers.conv3d_18.conv.weight"
+    if key not in state_dict:
+        raise ValueError(f"Checkpoint does not contain the required tensor {key!r}.")
+    channels = tuple(int(size) for size in state_dict[key].shape[:2])
+    if channels == (1024, 512):
+        return REDUCED_MODEL_VARIANT
+    if channels == (2048, 1024):
+        return PUBLISHED_MODEL_VARIANT
+    raise ValueError(
+        f"Cannot infer model variant from {key} with channel shape {channels}."
+    )

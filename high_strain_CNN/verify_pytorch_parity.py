@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from pytorch_port.model import HighStrainPhaseUNet
+from pytorch_port.model import PUBLISHED_MODEL_VARIANT, HighStrainPhaseUNet
 
 
 def error_metrics(pytorch_value: np.ndarray, tensorflow_value: np.ndarray) -> dict:
@@ -46,7 +46,7 @@ def main() -> None:
     pytorch_input = torch.from_numpy(tensorflow_input).permute(0, 4, 1, 2, 3)
 
     device = torch.device(args.device)
-    model = HighStrainPhaseUNet().to(device)
+    model = HighStrainPhaseUNet(model_variant=PUBLISHED_MODEL_VARIANT).to(device)
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model.load_state_dict(checkpoint.get("model_state_dict", checkpoint), strict=True)
     model.eval()
