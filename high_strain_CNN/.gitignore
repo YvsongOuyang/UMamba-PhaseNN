@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv*/
+runs/
+parity_output/
+*.pt
+*.pth
+/exp_data/
+/model_paper.h5
