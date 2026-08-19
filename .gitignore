@@ -17,6 +17,9 @@ checkpoints/
 # Keep project-local AutoPhaseNN runs out of git; other lightweight results remain trackable.
 autophasenn_training_pipeline/runs/
 
+# Generated visualization artifacts are local-only.
+autophasenn_training_pipeline/vision/
+
 __pycache__/
 *.pyc
 .DS_Store
