@@ -323,11 +323,18 @@ very slow, so CPU is mostly useful for dry runs or small checks.
 
 ## Evaluate
 
-By default `evaluate.py` loads the retraining output checkpoint
-`/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt`.
-Pass `--checkpoint` explicitly when evaluating an older converted checkpoint.
-Every generated artifact is written under
-`autophasenn_training_pipeline/output/evaluate/` by default:
+By default `evaluate.py` loads the configured `decoder_cross_concat` checkpoint.
+Pass `--checkpoint` and its matching `--model-variant` explicitly when
+evaluating another model.
+Every generated artifact is written under a model-specific directory by
+default:
+
+```text
+autophasenn_training_pipeline/evaluate/evaluate_<model-variant>/
+```
+
+For example, `--model-variant decoder_cross_concat` writes to
+`evaluate/evaluate_decoder_cross_concat/`.
 
 ```text
 evaluation_results.json   Complete configuration, provenance, statistics, and per-sample metrics
@@ -382,16 +389,6 @@ $PY = ".\.conda_autophase_tfpt\python.exe"
   --data-diff "val_diff.npy" `
   --data-real "val_real.npy" `
   --dataset-size 5000 `
-  --output-png "autophasenn_training_pipeline\output\evaluate\visualization_2d.png" `
-  --output-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_3d.png" `
-  --output-shift-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_shift_comparison_3d.png" `
-  --output-error-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_error_3d.png" `
-  --output-reciprocal-2d-png "autophasenn_training_pipeline\output\evaluate\visualization_reciprocal_2d.png" `
-  --output-reciprocal-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_reciprocal_3d.png" `
-  --output-amplitude-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_amplitude_3d.png" `
-  --output-phase-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_phase_3d.png" `
-  --output-diffraction-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_diffraction_3d.png" `
-  --output-diffraction-phase-3d-png "autophasenn_training_pipeline\output\evaluate\visualization_diffraction_phase_3d.png" `
   --device cpu `
   --num-samples 5 `
   --seed 42
@@ -457,7 +454,16 @@ the corresponding diffraction-phase panel exposes the expected phase ramp.
 Adjust general surface detail with `--surface-step-size` and the camera with
 `--view-elevation` and `--view-azimuth`; pass `none` to any optional output path
 to disable that image.
-All default outputs are written under `autophasenn_training_pipeline/output/evaluate`.
+All default visualization outputs are written under a model-specific directory
+next to `evaluate`:
+
+```text
+autophasenn_training_pipeline/vision/vision_<model-variant>/
+```
+
+Use `--output-dir` to override the directory for all default image names, or
+pass an explicit image path to override only that output. The directory is
+created automatically when the first image is saved.
 These display operations are not part of training backprop.
 
 ## Server Background Training

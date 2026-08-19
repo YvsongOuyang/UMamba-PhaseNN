@@ -18,7 +18,7 @@ SUPPORT_WEIGHT="${SUPPORT_WEIGHT:-0.0}"
 LR_SCHEDULER="${LR_SCHEDULER:-plateau}"
 DEVICE="${DEVICE:-cuda}"
 RUN_NAME="${RUN_NAME:-autophasenn_overfit${SAMPLES}_${LOSS_TYPE}_$(date +%Y%m%d_%H%M%S)}"
-OUT_DIR="${OUT_DIR:-./autophasenn_training_pipeline/output/${RUN_NAME}}"
+OUT_DIR="${OUT_DIR:-./autophasenn_training_pipeline/runs/${RUN_NAME}}"
 
 echo "AutoPhaseNN overfit test"
 echo "  data_dir:        ${DATA_DIR}"

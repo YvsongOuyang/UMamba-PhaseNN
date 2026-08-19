@@ -42,7 +42,19 @@ except ImportError:
 
 LOGGER = logging.getLogger("autophasenn.visualize")
 PROJECT_DIR = Path(__file__).resolve().parent
-DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
+DEFAULT_VISION_ROOT = PROJECT_DIR / "vision"
+DEFAULT_OUTPUT_FILENAMES = {
+    "output_png": "visualization_2d.png",
+    "output_3d_png": "visualization_3d.png",
+    "output_shift_3d_png": "visualization_shift_comparison_3d.png",
+    "output_error_3d_png": "visualization_error_3d.png",
+    "output_reciprocal_2d_png": "visualization_reciprocal_2d.png",
+    "output_reciprocal_3d_png": "visualization_reciprocal_3d.png",
+    "output_amplitude_3d_png": "visualization_amplitude_3d.png",
+    "output_phase_3d_png": "visualization_phase_3d.png",
+    "output_diffraction_3d_png": "visualization_diffraction_3d.png",
+    "output_diffraction_phase_3d_png": "visualization_diffraction_phase_3d.png",
+}
 
 
 def configure_logging(level: str) -> None:
@@ -61,6 +73,19 @@ def optional_output_path(value: str | None) -> Path | None:
     if value is None or value.lower() in {"", "none", "null"}:
         return None
     return Path(value).expanduser().resolve()
+
+
+def apply_default_output_paths(args: argparse.Namespace) -> None:
+    """Fill unspecified image paths inside the model-specific vision directory."""
+
+    output_dir = (
+        Path(args.output_dir).expanduser()
+        if args.output_dir
+        else DEFAULT_VISION_ROOT / f"vision_{args.model_variant}"
+    )
+    for argument, filename in DEFAULT_OUTPUT_FILENAMES.items():
+        if not getattr(args, argument):
+            setattr(args, argument, str(output_dir / filename))
 
 
 def wrap_phase(phase: np.ndarray) -> np.ndarray:
@@ -950,53 +975,61 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dtype-diff", default="float32")
     parser.add_argument("--dtype-real", default="complex64")
     parser.add_argument(
+        "--output-dir",
+        default="",
+        help=(
+            "Visualization directory; empty uses "
+            "<project>/vision/vision_<model-variant>."
+        ),
+    )
+    parser.add_argument(
         "--output-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_2d.png"),
+        default="",
         help="Center-slice PNG path.",
     )
     parser.add_argument(
         "--output-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_3d.png"),
+        default="",
         help="True/predicted 3D comparison path; pass none to disable.",
     )
     parser.add_argument(
         "--output-shift-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_shift_comparison_3d.png"),
+        default="",
         help="Prediction before/after center-shift 3D comparison; pass none to disable.",
     )
     parser.add_argument(
         "--output-error-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_error_3d.png"),
+        default="",
         help="Real-space amplitude/phase 3D error path; pass none to disable.",
     )
     parser.add_argument(
         "--output-reciprocal-2d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_reciprocal_2d.png"),
+        default="",
         help="Reciprocal modulus/Fourier-phase slice path; pass none to disable.",
     )
     parser.add_argument(
         "--output-reciprocal-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_reciprocal_3d.png"),
+        default="",
         help="Reciprocal modulus surfaces colored by Fourier phase; pass none to disable.",
     )
     parser.add_argument(
         "--output-amplitude-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_amplitude_3d.png"),
+        default="",
         help="Five-panel real-space amplitude volume path; pass none to disable.",
     )
     parser.add_argument(
         "--output-phase-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_phase_3d.png"),
+        default="",
         help="Five-panel real-space phase volume path; pass none to disable.",
     )
     parser.add_argument(
         "--output-diffraction-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_diffraction_3d.png"),
+        default="",
         help="Five-panel diffraction-modulus volume path; pass none to disable.",
     )
     parser.add_argument(
         "--output-diffraction-phase-3d-png",
-        default=str(DEFAULT_OUTPUT_DIR / "visualization_diffraction_phase_3d.png"),
+        default="",
         help="Five-panel derived diffraction-phase volume path; pass none to disable.",
     )
     parser.add_argument("--dataset-size", type=int, default=5000)
@@ -1060,6 +1093,8 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
     )
     args = parser.parse_args()
+
+    apply_default_output_paths(args)
 
     if args.shape <= 0:
         parser.error("--shape must be positive.")

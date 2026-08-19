@@ -50,7 +50,7 @@ except ImportError:
 
 LOGGER = logging.getLogger("autophasenn.evaluate")
 PROJECT_DIR = Path(__file__).resolve().parent
-DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate"
+DEFAULT_EVALUATE_ROOT = PROJECT_DIR / "evaluate"
 DEFAULT_CHECKPOINT = "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115/checkpoint_best.pt"
 
 PAPER_METRICS = {
@@ -118,6 +118,17 @@ def configure_logging(output_dir: Path, level: str) -> None:
     file_handler.setFormatter(formatter)
     LOGGER.addHandler(console_handler)
     LOGGER.addHandler(file_handler)
+
+
+def resolve_output_dir(args: argparse.Namespace) -> Path:
+    """Resolve an explicit directory or the model-specific evaluation default."""
+
+    output_dir = (
+        Path(args.output_dir).expanduser()
+        if args.output_dir
+        else DEFAULT_EVALUATE_ROOT / f"evaluate_{args.model_variant}"
+    )
+    return output_dir.resolve()
 
 
 def parse_args() -> argparse.Namespace:
@@ -195,7 +206,14 @@ def parse_args() -> argparse.Namespace:
         default=0.0,
         help="Optional per-sample baseline used to calculate a machine-specific speedup.",
     )
-    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument(
+        "--output-dir",
+        default="",
+        help=(
+            "Artifact directory; empty uses "
+            "<project>/evaluate/evaluate_<model-variant>."
+        ),
+    )
     parser.add_argument(
         "--non-strict-checkpoint",
         action="store_true",
@@ -958,7 +976,7 @@ def main() -> int:
 
     args = parse_args()
     validate_args(args)
-    output_dir = Path(args.output_dir).expanduser().resolve()
+    output_dir = resolve_output_dir(args)
     configure_logging(output_dir, args.log_level)
     device = choose_device(args.device)
     checkpoint_path = Path(args.checkpoint).expanduser().resolve()
