@@ -205,7 +205,7 @@ python -u train_pytorch.py --run-name high_strain_autophase_scratch
 Background training with a timestamped, self-describing run directory:
 
 ```bash
-RUN_NAME="high_strain_reduced_centered_scratch_bs16_lr5e-4_plateau_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="high_strain_reduced_centered_scratch_bs16_lr1e-4_plateau_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/runs/${RUN_NAME}"
 mkdir -p "${RUN_DIR}"
 
@@ -233,11 +233,11 @@ from the checkpoint.
 
 Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
 `epsilon=1e-7`), float32, batch size 16, and the WCA objective. The current
-AutoPhaseNN reproduction starts at `5e-4` and uses the AutoPhaseNN
+AutoPhaseNN reproduction starts at the paper's `1e-4` and uses the AutoPhaseNN
 `ReduceLROnPlateau` defaults: factor `0.5`, patience `5`, and minimum learning
-rate `1e-6`. The paper used a constant `1e-4`, so the higher initial rate and
-scheduler are intentional convergence diagnostics. Reduce the batch size if
-the target GPU runs out of memory.
+rate `1e-6`. The scheduler is the only learning-rate-policy departure from the
+paper's constant rate. Reduce the batch size if the target GPU runs out of
+memory.
 
 Small run records and TensorBoard events are written under `runs/<run-name>`.
 Large checkpoints are written under:
