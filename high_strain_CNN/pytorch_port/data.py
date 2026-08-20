@@ -72,14 +72,70 @@ class AutoPhaseNNPhaseDataset(Dataset):
         return sample
 
 
+def _amplitude_center_offset(realspace: torch.Tensor) -> torch.Tensor:
+    """Return each object's amplitude center-of-mass offset in voxel units."""
+
+    amplitude = realspace.abs()
+    spatial_dims = (-3, -2, -1)
+    mass = amplitude.sum(dim=spatial_dims)
+    safe_mass = mass.clamp_min(torch.finfo(amplitude.dtype).eps)
+    offsets = []
+    for axis, size in enumerate(amplitude.shape[-3:]):
+        shape = [1] * amplitude.ndim
+        shape[axis + amplitude.ndim - 3] = size
+        coordinates = torch.arange(
+            size,
+            dtype=amplitude.dtype,
+            device=amplitude.device,
+        ).reshape(shape)
+        center_of_mass = (amplitude * coordinates).sum(dim=spatial_dims) / safe_mass
+        center = amplitude.new_tensor(size // 2)
+        center_of_mass = torch.where(mass > 0, center_of_mass, center)
+        offsets.append(center_of_mass - center)
+    return torch.stack(offsets, dim=-1)
+
+
+def _remove_translation_phase_ramp(
+    reciprocal: torch.Tensor,
+    center_offset: torch.Tensor,
+) -> torch.Tensor:
+    """Cancel the Fourier phase ramp caused by a real-space translation."""
+
+    ramp_cycles = reciprocal.real.new_zeros(reciprocal.shape)
+    for axis, size in enumerate(reciprocal.shape[-3:]):
+        shape = [1] * reciprocal.ndim
+        shape[axis + reciprocal.ndim - 3] = size
+        frequencies = torch.fft.fftshift(
+            torch.fft.fftfreq(
+                size,
+                dtype=reciprocal.real.dtype,
+                device=reciprocal.device,
+            )
+        ).reshape(shape)
+        offset_shape = [center_offset.shape[0]] + [1] * (reciprocal.ndim - 1)
+        offset = center_offset[:, axis].reshape(offset_shape)
+        ramp_cycles = ramp_cycles + offset * frequencies
+
+    ramp_phase = 2.0 * torch.pi * ramp_cycles
+    correction = torch.complex(torch.cos(ramp_phase), torch.sin(ramp_phase))
+    return reciprocal * correction
+
+
 def reciprocal_phase_from_realspace(realspace: torch.Tensor) -> torch.Tensor:
-    """Generate the centered reciprocal phase used by the original dataset."""
+    """Generate the reciprocal phase for amplitude-centered particles.
+
+    Diffraction modulus does not encode object translation. The source paper
+    removes that ambiguity by centering every particle; here the equivalent
+    fractional-voxel linear phase ramp is removed before phase supervision.
+    """
 
     if realspace.ndim != 4 or not torch.is_complex(realspace):
         raise ValueError("realspace must be a complex tensor with shape [B, D, H, W].")
+    center_offset = _amplitude_center_offset(realspace)
     shifted = torch.fft.ifftshift(realspace, dim=(-3, -2, -1))
     reciprocal = torch.fft.fftn(shifted, dim=(-3, -2, -1))
     reciprocal = torch.fft.fftshift(reciprocal, dim=(-3, -2, -1))
+    reciprocal = _remove_translation_phase_ramp(reciprocal, center_offset)
     phase = torch.angle(reciprocal)
     center = tuple(size // 2 for size in phase.shape[-3:])
     center_phase = phase[(slice(None),) + center]

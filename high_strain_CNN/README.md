@@ -182,10 +182,12 @@ matching the existing AutoPhaseNN loader. For each sample the adapter performs:
 1. square the stored diffraction modulus to recover intensity;
 2. apply `log1p` by default;
 3. min-max normalize the volume to `[0, 1]`;
-4. Fourier-transform the complex real-space object with the AutoPhaseNN shift
+4. measure the real-space amplitude center of mass and remove its corresponding
+   linear reciprocal-space phase ramp;
+5. Fourier-transform the complex real-space object with the AutoPhaseNN shift
    convention;
-5. use the centered reciprocal phase as the target;
-6. optimize the original WCA loss with the normalized input as its weights.
+6. subtract the reciprocal center phase and use the result as the target;
+7. optimize the original WCA loss with the normalized input as its weights.
 
 This is the direct semantic mapping between the two datasets: the original
 repository stores intensity and reciprocal phase, while AutoPhaseNN stores
@@ -203,12 +205,13 @@ python -u train_pytorch.py --run-name high_strain_autophase_scratch
 Background training with a timestamped, self-describing run directory:
 
 ```bash
-RUN_NAME="high_strain_reduced_scratch_bs16_lr1e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="high_strain_reduced_centered_scratch_bs16_lr5e-4_plateau_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/runs/${RUN_NAME}"
 mkdir -p "${RUN_DIR}"
 
 nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
   --run-name "${RUN_NAME}" \
+  --epochs 120 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
 PID=$!
@@ -228,11 +231,13 @@ Published checkpoints cannot be loaded into the reduced model because the
 deepest tensor shapes differ. Evaluation detects the variant automatically
 from the checkpoint.
 
-Important defaults matching the original recipe are 60 epochs, Adam with
-learning rate `1e-4`, `beta1=0.9`, `beta2=0.999`, `epsilon=1e-7`, constant
-learning rate, float32, batch size 16, and the WCA objective. Reduce the batch
-size if the target GPU runs out of memory. Use `--lr-scheduler plateau` only for
-an intentional departure from the original recipe.
+Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
+`epsilon=1e-7`), float32, batch size 16, and the WCA objective. The current
+AutoPhaseNN reproduction starts at `5e-4` and uses the AutoPhaseNN
+`ReduceLROnPlateau` defaults: factor `0.5`, patience `5`, and minimum learning
+rate `1e-6`. The paper used a constant `1e-4`, so the higher initial rate and
+scheduler are intentional convergence diagnostics. Reduce the batch size if
+the target GPU runs out of memory.
 
 Small run records and TensorBoard events are written under `runs/<run-name>`.
 Large checkpoints are written under:

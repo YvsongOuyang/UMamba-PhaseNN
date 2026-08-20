@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "dataset_name": "AutoPhaseNN",
-  "dataset_version": "autophasenn_64_memmap_v1",
+  "dataset_version": "autophasenn_64_memmap_v2_centered_phase",
   "storage": "raw_numpy_memmap_without_npy_header",
   "root": "/data_ssd/oyys/autophasenn",
   "shape": [64, 64, 64],
@@ -32,6 +32,7 @@
   },
   "target_preprocessing": {
     "transform": "fftshift(fftn(ifftshift(realspace)))",
-    "target": "reciprocal_phase_minus_center_phase"
+    "translation_canonicalization": "remove_linear_phase_ramp_from_amplitude_center_of_mass",
+    "target": "centered_particle_reciprocal_phase_minus_center_phase"
   }
 }

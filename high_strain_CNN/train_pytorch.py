@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=60)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--learning-rate", type=float, default=5e-4)
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
@@ -112,8 +112,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--lr-scheduler",
         choices=("none", "plateau"),
-        default="none",
-        help="Keep a constant LR by default, matching the original TensorFlow script.",
+        default="plateau",
+        help="Reduce LR when validation WCA plateaus, matching AutoPhaseNN training.",
     )
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--seed", type=int, default=42)
@@ -399,7 +399,7 @@ def main() -> None:
             optimizer,
             factor=0.5,
             patience=5,
-            min_lr=1e-7,
+            min_lr=1e-6,
         )
     scaler = torch.cuda.amp.GradScaler(enabled=args.fp16 and device.type == "cuda")
     history: dict[str, list[dict]] = {"train": [], "val": []}
