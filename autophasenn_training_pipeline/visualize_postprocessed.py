@@ -958,8 +958,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--checkpoint",
         default=(
-            "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/"
-            "autophasenn_retrain_l1/checkpoint_best.pt"
+            "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115/checkpoint_best.pt"
         ),
     )
     parser.add_argument("--data-dir", default="/data_ssd/oyys/autophasenn/")
@@ -969,7 +968,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
-        default="baseline",
+        default="decoder_cross_concat",
         help="Network architecture variant.",
     )
     parser.add_argument("--dtype-diff", default="float32")

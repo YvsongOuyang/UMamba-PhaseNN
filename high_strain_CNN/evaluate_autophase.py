@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
-    parser.add_argument("--checkpoint", default=str(PROJECT_DIR / "model_paper_pytorch.pt"))
+    parser.add_argument("--checkpoint", default=str("/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_scratch_bs16_lr1e-4_20260819_171256/checkpoint_best.pt"))
     parser.add_argument("--data-dir", default=data_config["root"])
     parser.add_argument("--data-diff", default=val_config["diffraction"])
     parser.add_argument("--data-real", default=val_config["realspace"])
@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=data_config.get("input_preprocessing", {}).get("transform") == "log1p",
     )
-    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--postprocess-workers", type=int, default=0)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")

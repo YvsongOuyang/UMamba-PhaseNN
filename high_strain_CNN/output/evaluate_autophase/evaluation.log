@@ -1,0 +1,28 @@
+2026-08-20 17:24:15 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_scratch_bs16_lr1e-4_20260819_171256/checkpoint_best.pt
+2026-08-20 17:24:15 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-20 17:24:15 | INFO    | Model: reduced | 39,160,897 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-20 17:24:16 | INFO    | Completed 1 warmup batch(es).
+2026-08-20 17:30:05 | INFO    | 
+Mean metrics
+FT:
+  L1: 7.07273e-06
+  MSE: 3.26623e-10
+  RMSE: 0.000101618
+  RelL1: 5.95828e-07
+Amplitude:
+  L1: 0.0107959
+  MSE: 0.00286559
+  RMSE: 0.0514436
+  RelL1: 0.606284
+Phase:
+  L1: 0.864446
+  MSE: 1.14231
+  RMSE: 0.942882
+  RelL1: 1.58014
+Support:
+  L1: 0.0389045
+  MSE: 0.0389045
+  RMSE: 0.190152
+  RelL1: 1.70823
+2026-08-20 17:30:05 | INFO    | WCA: 0.766761 | twin selection fraction: 0.3486
+2026-08-20 17:30:05 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/output/evaluate_autophase
