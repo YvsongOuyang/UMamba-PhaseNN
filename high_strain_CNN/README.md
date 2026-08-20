@@ -335,6 +335,26 @@ phase quality from real-space reconstruction quality. The reprojected modulus
 panels are labeled explicitly because they reuse the measured modulus and are
 only an FFT consistency check.
 
+The default run writes the same complete ten-image bundle as AutoPhaseNN:
+
+```text
+visualization_2d.png
+visualization_3d.png
+visualization_shift_comparison_3d.png
+visualization_error_3d.png
+visualization_reciprocal_2d.png
+visualization_reciprocal_3d.png
+visualization_amplitude_3d.png
+visualization_phase_3d.png
+visualization_diffraction_3d.png
+visualization_diffraction_phase_3d.png
+```
+
+The four five-panel 3D volumes compare target, reconstruction before center
+shift, reconstruction after center shift, the shift difference, and the final
+target difference. Each output can still be disabled explicitly by passing
+`none` to its corresponding `--output-...` option.
+
 ## Original project
 
 The upstream project and pretrained model are available at

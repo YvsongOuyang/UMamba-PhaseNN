@@ -38,8 +38,10 @@ from autophasenn_training_pipeline.losses import (  # noqa: E402
     realspace_metric_dict,
 )
 from autophasenn_training_pipeline.visualize_postprocessed import (  # noqa: E402
+    object_farfield,
     plot_3d_comparison,
     plot_3d_error_comparison,
+    plot_five_panel_volume,
     volume_tensor,
     wrap_phase,
 )
@@ -61,6 +63,10 @@ DEFAULT_OUTPUT_FILENAMES = {
     "output_error_3d_png": "visualization_error_3d.png",
     "output_reciprocal_2d_png": "visualization_reciprocal_2d.png",
     "output_reciprocal_3d_png": "visualization_reciprocal_3d.png",
+    "output_amplitude_3d_png": "visualization_amplitude_3d.png",
+    "output_phase_3d_png": "visualization_phase_3d.png",
+    "output_diffraction_3d_png": "visualization_diffraction_3d.png",
+    "output_diffraction_phase_3d_png": "visualization_diffraction_phase_3d.png",
 }
 
 
@@ -259,6 +265,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reciprocal-phase-threshold", type=float, default=0.02)
     parser.add_argument("--reciprocal-surface-level", type=float, default=0.02)
     parser.add_argument("--amplitude-error-level", type=float, default=0.05)
+    parser.add_argument("--diffraction-difference-threshold", type=float, default=1e-6)
+    parser.add_argument("--max-volume-points", type=int, default=12000)
+    parser.add_argument("--volume-point-size", type=float, default=3.0)
+    parser.add_argument("--volume-alpha", type=float, default=0.4)
     parser.add_argument("--surface-step-size", type=int, default=2)
     parser.add_argument("--view-elevation", type=float, default=25.0)
     parser.add_argument("--view-azimuth", type=float, default=35.0)
@@ -287,6 +297,16 @@ def parse_args() -> argparse.Namespace:
         parser.error("--slice-index must lie inside the configured volume.")
     if args.surface_step_size < 1:
         parser.error("--surface-step-size must be positive.")
+    if args.amplitude_error_level <= 0:
+        parser.error("--amplitude-error-level must be positive.")
+    if args.diffraction_difference_threshold <= 0:
+        parser.error("--diffraction-difference-threshold must be positive.")
+    if args.max_volume_points < 1:
+        parser.error("--max-volume-points must be positive.")
+    if args.volume_point_size <= 0:
+        parser.error("--volume-point-size must be positive.")
+    if not 0 < args.volume_alpha <= 1:
+        parser.error("--volume-alpha must be in (0, 1].")
     return args
 
 
@@ -338,6 +358,18 @@ def main() -> int:
     error_rows: list[list[tuple[np.ndarray | None, np.ndarray | None, str, float]]] = []
     reciprocal_3d_rows: list[
         list[tuple[np.ndarray | None, np.ndarray | None, str]]
+    ] = []
+    amplitude_volume_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
+    ] = []
+    phase_volume_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
+    ] = []
+    diffraction_volume_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
+    ] = []
+    diffraction_phase_volume_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
     ] = []
     metrics: list[dict[str, Any]] = []
     names: list[str] = []
@@ -407,10 +439,25 @@ def main() -> int:
         measured_np = measured_modulus.cpu().numpy()[0, 0]
         reprojected_np = reprojected_modulus.cpu().numpy()[0, 0]
         measured_norm = normalized_modulus(measured_np)
-        reprojected_norm = reprojected_np / max(
-            float(np.max(measured_np)),
-            np.finfo(np.float32).eps,
+        measured_scale = max(float(np.max(measured_np)), np.finfo(np.float32).eps)
+        reprojected_norm = reprojected_np / measured_scale
+        pred_before_modulus, pred_before_farfield_phase = object_farfield(
+            pred_amp_before,
+            pred_phi_before,
+            device=device,
         )
+        pred_post_modulus, pred_post_farfield_phase = object_farfield(
+            pred_amp_post,
+            pred_phi_post,
+            device=device,
+        )
+        _true_post_modulus, true_post_farfield_phase = object_farfield(
+            true_amp_post,
+            true_phi_post,
+            device=device,
+        )
+        pred_before_modulus_norm = pred_before_modulus / measured_scale
+        pred_post_modulus_norm = pred_post_modulus / measured_scale
         target_phase_np = target_phase.cpu().numpy()[0]
         selected_phase_np = selected_phase.cpu().numpy()[0, 0]
         target_phase_display = masked_phase(
@@ -504,6 +551,157 @@ def main() -> int:
                     measured_norm,
                     selected_phase_np,
                     "Measured modulus reused + predicted phase",
+                ),
+            ]
+        )
+
+        amplitude_shift_difference = pred_amp_before - pred_amp_post
+        amplitude_target_difference = pred_amp_post - true_amp_post
+        amplitude_volume_rows.append(
+            [
+                (true_amp_post, true_amp_post, "Target", args.threshold),
+                (
+                    pred_amp_before,
+                    pred_amp_before,
+                    "Prediction before center shift",
+                    args.threshold,
+                ),
+                (
+                    pred_amp_post,
+                    pred_amp_post,
+                    "Prediction after center shift",
+                    args.threshold,
+                ),
+                (
+                    np.abs(amplitude_shift_difference),
+                    amplitude_shift_difference,
+                    "Difference: before - after",
+                    args.amplitude_error_level,
+                ),
+                (
+                    np.abs(amplitude_target_difference),
+                    amplitude_target_difference,
+                    "Difference: after - target",
+                    args.amplitude_error_level,
+                ),
+            ]
+        )
+
+        phase_shift_geometry = np.minimum(pred_amp_before, pred_amp_post)
+        phase_target_geometry = np.minimum(pred_amp_post, true_amp_post)
+        phase_volume_rows.append(
+            [
+                (
+                    true_amp_post,
+                    wrap_phase(true_phi_post),
+                    "Target",
+                    args.threshold,
+                ),
+                (
+                    pred_amp_before,
+                    wrap_phase(pred_phi_before),
+                    "Prediction before center shift",
+                    args.threshold,
+                ),
+                (
+                    pred_amp_post,
+                    wrap_phase(pred_phi_post),
+                    "Prediction after center shift",
+                    args.threshold,
+                ),
+                (
+                    phase_shift_geometry,
+                    wrap_phase(pred_phi_before - pred_phi_post),
+                    "Wrapped difference: before - after",
+                    args.threshold,
+                ),
+                (
+                    phase_target_geometry,
+                    wrap_phase(pred_phi_post - true_phi_post),
+                    "Wrapped difference: after - target",
+                    args.threshold,
+                ),
+            ]
+        )
+
+        diffraction_shift_difference = (
+            pred_before_modulus_norm - pred_post_modulus_norm
+        )
+        diffraction_target_difference = pred_post_modulus_norm - measured_norm
+        diffraction_volume_rows.append(
+            [
+                (
+                    measured_norm,
+                    np.log10(np.clip(measured_norm, 1e-6, None)),
+                    "Target measured modulus",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    pred_before_modulus_norm,
+                    np.log10(np.clip(pred_before_modulus_norm, 1e-6, None)),
+                    "Reconstruction before center shift",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    pred_post_modulus_norm,
+                    np.log10(np.clip(pred_post_modulus_norm, 1e-6, None)),
+                    "Reconstruction after center shift",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    np.abs(diffraction_shift_difference),
+                    diffraction_shift_difference,
+                    "Difference: before - after",
+                    args.diffraction_difference_threshold,
+                ),
+                (
+                    np.abs(diffraction_target_difference),
+                    diffraction_target_difference,
+                    "Difference: after - target",
+                    args.diffraction_difference_threshold,
+                ),
+            ]
+        )
+
+        diffraction_phase_shift_geometry = np.minimum(
+            pred_before_modulus_norm,
+            pred_post_modulus_norm,
+        )
+        diffraction_phase_target_geometry = np.minimum(
+            pred_post_modulus_norm,
+            measured_norm,
+        )
+        diffraction_phase_volume_rows.append(
+            [
+                (
+                    measured_norm,
+                    true_post_farfield_phase,
+                    "Target phase derived from real-space target",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    pred_before_modulus_norm,
+                    pred_before_farfield_phase,
+                    "Reconstruction before center shift",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    pred_post_modulus_norm,
+                    pred_post_farfield_phase,
+                    "Reconstruction after center shift",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    diffraction_phase_shift_geometry,
+                    wrap_phase(pred_before_farfield_phase - pred_post_farfield_phase),
+                    "Wrapped difference: before - after",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    diffraction_phase_target_geometry,
+                    wrap_phase(pred_post_farfield_phase - true_post_farfield_phase),
+                    "Wrapped difference: after - target",
+                    args.reciprocal_phase_threshold,
                 ),
             ]
         )
@@ -605,6 +803,73 @@ def main() -> int:
             args.view_azimuth,
             "Measured modulus with target vs predicted reciprocal phase",
         )
+    if outputs["output_amplitude_3d_png"] is not None:
+        plot_five_panel_volume(
+            amplitude_volume_rows,
+            names,
+            outputs["output_amplitude_3d_png"],
+            figure_title="HighStrain real-space amplitude 3D volumes",
+            absolute_color_map="viridis",
+            difference_color_map="coolwarm",
+            absolute_colorbar_label="Amplitude",
+            difference_colorbar_label="Signed amplitude difference",
+            max_points=args.max_volume_points,
+            point_size=args.volume_point_size,
+            alpha=args.volume_alpha,
+            elevation=args.view_elevation,
+            azimuth=args.view_azimuth,
+            absolute_zero_minimum=True,
+        )
+    if outputs["output_phase_3d_png"] is not None:
+        plot_five_panel_volume(
+            phase_volume_rows,
+            names,
+            outputs["output_phase_3d_png"],
+            figure_title="HighStrain real-space phase 3D volumes",
+            absolute_color_map="twilight",
+            difference_color_map="coolwarm",
+            absolute_colorbar_label="Wrapped phase (rad)",
+            difference_colorbar_label="Wrapped phase difference (rad)",
+            max_points=args.max_volume_points,
+            point_size=args.volume_point_size,
+            alpha=args.volume_alpha,
+            elevation=args.view_elevation,
+            azimuth=args.view_azimuth,
+            absolute_limits=(-float(np.pi), float(np.pi)),
+        )
+    if outputs["output_diffraction_3d_png"] is not None:
+        plot_five_panel_volume(
+            diffraction_volume_rows,
+            names,
+            outputs["output_diffraction_3d_png"],
+            figure_title="HighStrain diffraction-modulus 3D volumes",
+            absolute_color_map="magma",
+            difference_color_map="coolwarm",
+            absolute_colorbar_label="log10 normalized diffraction modulus",
+            difference_colorbar_label="Signed normalized modulus difference",
+            max_points=args.max_volume_points,
+            point_size=args.volume_point_size,
+            alpha=args.volume_alpha,
+            elevation=args.view_elevation,
+            azimuth=args.view_azimuth,
+        )
+    if outputs["output_diffraction_phase_3d_png"] is not None:
+        plot_five_panel_volume(
+            diffraction_phase_volume_rows,
+            names,
+            outputs["output_diffraction_phase_3d_png"],
+            figure_title="HighStrain derived diffraction-phase 3D volumes",
+            absolute_color_map="twilight",
+            difference_color_map="coolwarm",
+            absolute_colorbar_label="Wrapped diffraction phase (rad)",
+            difference_colorbar_label="Wrapped diffraction-phase difference (rad)",
+            max_points=args.max_volume_points,
+            point_size=args.volume_point_size,
+            alpha=args.volume_alpha,
+            elevation=args.view_elevation,
+            azimuth=args.view_azimuth,
+            absolute_limits=(-float(np.pi), float(np.pi)),
+        )
 
     metadata_path = outputs["output_png"].with_suffix(".json")
     metadata_path.write_text(
@@ -645,6 +910,9 @@ def main() -> int:
     LOGGER.info("Saved HighStrain visualizations: %s", output_dir)
     LOGGER.info("Selected samples: %s", ", ".join(names))
     LOGGER.info("Saved visualization metadata: %s", metadata_path)
+    for output_name, output_path in outputs.items():
+        if output_path is not None:
+            LOGGER.info("Saved %s: %s", output_name, output_path)
     return 0
 
 
