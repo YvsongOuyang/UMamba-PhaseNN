@@ -25,4 +25,4 @@ Support:
   RMSE: 0.190152
   RelL1: 1.70823
 2026-08-20 17:30:05 | INFO    | WCA: 0.766761 | twin selection fraction: 0.3486
-2026-08-20 17:30:05 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/output/evaluate_autophase
+2026-08-20 17:30:05 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced

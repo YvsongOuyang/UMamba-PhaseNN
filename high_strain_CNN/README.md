@@ -23,6 +23,8 @@ retrieval algorithm.
 - `train_pytorch.py`: PyTorch training entry point for the AutoPhaseNN files.
 - `evaluate_autophase.py`: reconstructs real space and evaluates with the same
   post-processing and metric functions as `autophasenn_training_pipeline`.
+- `visualize_postprocessed.py`: creates matching reciprocal-space and
+  real-space 2D/3D diagnostic figures from a HighStrain checkpoint.
 - `convert_keras_weights.py`: converts `model_paper.h5` to a standard PyTorch
   checkpoint.
 - `export_tensorflow_reference.py` and `verify_pytorch_parity.py`: reproducible
@@ -201,7 +203,7 @@ python -u train_pytorch.py --run-name high_strain_autophase_scratch
 Background training with a timestamped, self-describing run directory:
 
 ```bash
-RUN_NAME="high_strain_scratch_bs1_lr1e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="high_strain_reduced_scratch_bs16_lr1e-4_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/runs/${RUN_NAME}"
 mkdir -p "${RUN_DIR}"
 
@@ -228,10 +230,9 @@ from the checkpoint.
 
 Important defaults matching the original recipe are 60 epochs, Adam with
 learning rate `1e-4`, `beta1=0.9`, `beta2=0.999`, `epsilon=1e-7`, constant
-learning rate, float32, and the WCA objective. The local default batch size is
-1; increase it only after checking GPU memory on the target server. Use
-`--lr-scheduler plateau` only for an intentional departure from the original
-recipe.
+learning rate, float32, batch size 16, and the WCA objective. Reduce the batch
+size if the target GPU runs out of memory. Use `--lr-scheduler plateau` only for
+an intentional departure from the original recipe.
 
 Small run records and TensorBoard events are written under `runs/<run-name>`.
 Large checkpoints are written under:
@@ -259,20 +260,21 @@ predicted_object = fftshift(ifftn(ifftshift(predicted_spectrum)))
 
 It then extracts real-space amplitude, phase, and support and directly reuses
 the official AutoPhaseNN phase unwrapping, phase-offset removal, center-of-mass
-alignment, support threshold, and metric functions. The resulting `FT`,
-`Amplitude`, `Phase`, and `Support` values therefore use the same scale and
-definitions as `autophasenn_training_pipeline/evaluate.py`.
+alignment, support threshold, and metric functions. The real-space amplitude,
+phase, SSIM, and support metrics therefore use the same scale and definitions
+as `autophasenn_training_pipeline/evaluate.py`.
 
 Evaluate a trained checkpoint on the full validation set:
 
 ```bash
 python -u evaluate_autophase.py \
   --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
-  --data-dir /data_ssd/oyys/autophasenn \
-  --output-dir /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/evaluate \
-  --save-realspace \
-  --save-reciprocal-phase
+  --data-dir /data_ssd/oyys/autophasenn
 ```
+
+Unless `--output-dir` is supplied, results are stored like the AutoPhaseNN
+pipeline under `evaluate/evaluate_<model-variant>/`, for example
+`evaluate/evaluate_reduced/`.
 
 The standard result files match the AutoPhaseNN evaluation bundle:
 
@@ -315,6 +317,24 @@ FFT consistency but do not measure learned quality. Compare `phase_wca` and the
 real-space amplitude, phase, SSIM, and support metrics when judging this model
 against AutoPhaseNN.
 
+## Visualize reconstructed objects
+
+The visualization entry point uses the same post-processing and result naming
+convention as AutoPhaseNN:
+
+```bash
+python -u visualize_postprocessed.py \
+  --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
+  --data-dir /data_ssd/oyys/autophasenn \
+  --num-samples 3
+```
+
+Unless overridden, figures and metadata are written to
+`vision/vision_<model-variant>/`. The 2D overview separates learned reciprocal
+phase quality from real-space reconstruction quality. The reprojected modulus
+panels are labeled explicitly because they reuse the measured modulus and are
+only an FFT consistency check.
+
 ## Original project
 
 The upstream project and pretrained model are available at
@@ -324,24 +344,3 @@ This source tree was vendored from upstream commit `43d31f3`. Large upstream
 Git LFS data and model files are intentionally excluded from the parent
 UMamba-PhaseNN repository and can be downloaded from the upstream project when
 needed.
-
-
-cd high_strain_CNN
-
-RUN_NAME="high_strain_reduced_scratch_bs16_lr1e-4_$(date +%Y%m%d_%H%M%S)"
-RUN_DIR="$PWD/runs/${RUN_NAME}"
-
-mkdir -p "${RUN_DIR}"
-
-nohup env CUDA_VISIBLE_DEVICES=1 python -u train_pytorch.py \
-  --run-name "${RUN_NAME}" \
-  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
-
-PID=$!
-echo "${PID}" > "${RUN_DIR}/train.pid"
-
-echo "训练已启动"
-echo "PID         : ${PID}"
-echo "日志        : ${RUN_DIR}/console.log"
-echo "运行记录    : ${RUN_DIR}"
-echo "Checkpoints : /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/${RUN_NAME}"

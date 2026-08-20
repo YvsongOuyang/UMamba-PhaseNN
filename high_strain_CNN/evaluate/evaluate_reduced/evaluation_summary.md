@@ -1,5 +1,11 @@
 # high_strain_CNN AutoPhaseNN evaluation
 
+> Interpretation correction: the real-space amplitude, phase, SSIM, and support
+> metrics are directly comparable with AutoPhaseNN. The reciprocal `FT` values
+> below are only a reconstruction consistency check because HighStrain reuses
+> the measured modulus; they are not learned-quality metrics. See
+> `result_analysis.md` for the baseline comparison.
+
 ## Run
 
 | Item | Value |
@@ -14,7 +20,7 @@
 | Ambiguity mode | `twin_aligned` |
 | Support threshold | 0.1 |
 
-## AutoPhaseNN-scale metrics
+## Metric snapshot
 
 | Group | Metric | Mean |
 |---|---|---:|

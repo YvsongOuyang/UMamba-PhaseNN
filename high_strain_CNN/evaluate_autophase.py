@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 import logging
+import math
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -54,14 +55,51 @@ from autophasenn_training_pipeline.losses import (  # noqa: E402
     METRIC_DESCRIPTIONS,
     fixed_metric_groups,
     format_fixed_metric_groups,
-    group_metrics,
     metric_tensor_dict,
     realspace_metric_tensor_dict,
 )
 
 
 LOGGER = logging.getLogger("high_strain.evaluate_autophase")
-DEFAULT_OUTPUT_DIR = PROJECT_DIR / "output" / "evaluate_autophase"
+DEFAULT_EVALUATE_ROOT = PROJECT_DIR / "evaluate"
+DEFAULT_CHECKPOINT = (
+    "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/"
+    "high_strain_reduced_scratch_bs16_lr1e-4_20260819_171256/"
+    "checkpoint_best.pt"
+)
+
+COMPARABLE_METRICS = {
+    "phase_wca": ("lower", "Reciprocal-phase WCA objective used for training."),
+    "real_amp_l1": ("lower", "Full-volume post-processed amplitude L1."),
+    "real_amp_ssim": ("higher", "Local-window 3D amplitude SSIM."),
+    "real_support_iou": ("higher", "Post-processed support intersection-over-union."),
+    "real_support_dice": ("higher", "Post-processed support Dice score."),
+    "real_support_volume_ratio": ("near 1", "Predicted/true support volume ratio."),
+    "real_phase_mae_true_support": (
+        "lower",
+        "Wrapped phase MAE on the post-processed true support.",
+    ),
+}
+
+REPROJECTION_METRICS = (
+    "paper_modulus_mae",
+    "relative_l1_modulus",
+    "chi2_modulus",
+    "pearson_corr",
+    "voxel_mse",
+    "voxel_rmse",
+)
+
+
+def resolve_output_dir(args: argparse.Namespace, model_variant: str) -> Path:
+    """Resolve an explicit directory or the model-specific default."""
+
+    output_dir = (
+        Path(args.output_dir).expanduser()
+        if args.output_dir
+        else DEFAULT_EVALUATE_ROOT / f"evaluate_{model_variant}"
+    )
+    return output_dir.resolve()
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,7 +114,7 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
-    parser.add_argument("--checkpoint", default=str("/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_scratch_bs16_lr1e-4_20260819_171256/checkpoint_best.pt"))
+    parser.add_argument("--checkpoint", default=DEFAULT_CHECKPOINT)
     parser.add_argument("--data-dir", default=data_config["root"])
     parser.add_argument("--data-diff", default=val_config["diffraction"])
     parser.add_argument("--data-real", default=val_config["realspace"])
@@ -116,7 +154,14 @@ def parse_args() -> argparse.Namespace:
             "sign permitted by the published WCA loss, or reconstruct the raw phase."
         ),
     )
-    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
+    parser.add_argument(
+        "--output-dir",
+        default="",
+        help=(
+            "Artifact directory; empty uses "
+            "<project>/evaluate/evaluate_<checkpoint-variant>."
+        ),
+    )
     parser.add_argument(
         "--save-realspace",
         action="store_true",
@@ -231,53 +276,171 @@ def write_sample_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
+def format_number(value: object) -> str:
+    """Format report scalars compactly while preserving small values."""
+
+    if value is None:
+        return "n/a"
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.6g}" if math.isfinite(value) else "n/a"
+    return str(value)
+
+
+def high_strain_metric_groups(mean: dict[str, float]) -> dict[str, dict[str, float]]:
+    """Group learned-quality and construction-only metrics separately."""
+
+    group_keys = {
+        "phase_retrieval": (
+            "phase_wca",
+            "phase_wca_direct",
+            "phase_wca_inverted",
+            "twin_flip_selected",
+        ),
+        "realspace_primary": (
+            "real_amp_l1",
+            "real_amp_ssim",
+            "real_amp_global_ssim",
+            "real_support_iou",
+            "real_support_dice",
+            "real_support_pred_fraction",
+            "real_support_volume_ratio",
+            "real_phase_mae_true_support",
+        ),
+        "realspace_diagnostic": (
+            "real_amp_mse",
+            "real_amp_rmse",
+            "real_amp_rel_l1",
+            "real_support_l1",
+            "real_support_rmse",
+            "real_support_true_fraction",
+            "real_phase_mae_intersection",
+            "real_phase_rmse_true_support",
+        ),
+        "reprojection_identity": REPROJECTION_METRICS,
+        "timing": ("inference_ms",),
+    }
+    return {
+        group_name: {key: mean[key] for key in keys if key in mean}
+        for group_name, keys in group_keys.items()
+    }
+
+
 def render_markdown(report: dict[str, object]) -> str:
+    """Render a summary that distinguishes learned quality from identities."""
+
     run = report["run"]
     mean = report["mean"]
+    statistics = report["metric_statistics"]
+    timing = report["timing"]
     lines = [
-        "# high_strain_CNN AutoPhaseNN evaluation",
+        "# HighStrain AutoPhaseNN Evaluation Summary",
         "",
         "## Run",
         "",
         "| Item | Value |",
         "|---|---|",
         f"| Checkpoint | `{run['checkpoint']}` |",
+        f"| Checkpoint epoch | {format_number(run['checkpoint_epoch'])} |",
         f"| Model variant | `{run['model_variant']}` |",
         f"| Model parameters | {run['model_parameters']:,} |",
         f"| Project version | `{run['project_version']}` |",
         f"| Git commit | `{run['git_commit']}` |",
         f"| Samples | {run['num_samples']} |",
+        f"| Batch size | {run['batch_size']} |",
         f"| Device | `{run['device']}` |",
+        f"| GPU | {format_number(run['gpu_name'])} |",
         f"| Ambiguity mode | `{run['ambiguity_mode']}` |",
-        f"| Support threshold | {run['threshold']} |",
+        f"| Support threshold | {format_number(run['support_threshold'])} |",
+        f"| Phase unwrap workers | {run['postprocess_workers']} |",
+        f"| Evaluation wall time | {format_number(timing['evaluation_wall_seconds'])} s |",
+        f"| Mean inference | {format_number(timing['mean_inference_ms_per_sample'])} ms/sample |",
+        f"| Throughput | {format_number(timing['throughput_samples_per_second'])} samples/s |",
         "",
-        "## AutoPhaseNN-scale metrics",
+        "## Metric Interpretation",
         "",
-        "| Group | Metric | Mean |",
-        "|---|---|---:|",
+        "The real-space metrics below use the same AutoPhaseNN post-processing and "
+        "metric implementations and are directly comparable. Reciprocal modulus "
+        "metrics are not model-quality measurements for this method: reconstruction "
+        "explicitly reuses the measured modulus, so their near-zero errors only test "
+        "FFT/reprojection consistency.",
+        "",
+        "## Comparable Quality Metrics",
+        "",
+        "| Metric | Mean | Std | P50 | P95 | Better | Meaning |",
+        "|---|---:|---:|---:|---:|---|---|",
     ]
-    for group_name, values in fixed_metric_groups(mean).items():
-        for metric_name, value in values.items():
-            lines.append(f"| {group_name} | {metric_name} | {value:.6g} |")
+    for key, (direction, description) in COMPARABLE_METRICS.items():
+        stats = statistics.get(key)
+        if stats is None:
+            values = ["n/a"] * 4
+        else:
+            values = [
+                format_number(stats[statistic])
+                for statistic in ("mean", "std", "p50", "p95")
+            ]
+        lines.append(
+            f"| `{key}` | {values[0]} | {values[1]} | {values[2]} | {values[3]} "
+            f"| {direction} | {description} |"
+        )
+
     lines.extend(
         [
             "",
-            "## Phase retrieval diagnostics",
+            "## AutoPhaseNN-Compatible Fixed Metrics",
             "",
-            f"- WCA loss: `{mean.get('phase_wca', float('nan')):.6g}`",
-            f"- Twin/conjugate selection fraction: `{mean.get('twin_flip_selected', 0.0):.6g}`",
-            f"- Mean model inference: `{mean.get('inference_ms', float('nan')):.6g} ms/sample`",
+            "The `FT` row is retained for file-format compatibility but is a "
+            "reprojection identity, not an independently predicted quantity.",
             "",
-            "## Interpretation",
+            "| Group | Metric | Mean |",
+            "|---|---|---:|",
+        ]
+    )
+    for group_name, values in fixed_metric_groups(mean).items():
+        display_group = "FT (reprojection only)" if group_name == "FT" else group_name
+        for metric_name, value in values.items():
+            lines.append(
+                f"| {display_group} | {metric_name} | {format_number(value)} |"
+            )
+
+    lines.extend(["", "## Mean Metrics by Group", ""])
+    descriptions = report["metric_descriptions"]
+    for group_name, metrics in report["mean_metric_groups"].items():
+        lines.extend(
+            [
+                f"### {group_name.replace('_', ' ').title()}",
+                "",
+                "| Metric | Mean | Meaning |",
+                "|---|---:|---|",
+            ]
+        )
+        for key, value in metrics.items():
+            lines.append(
+                f"| `{key}` | {format_number(value)} | "
+                f"{descriptions.get(key, 'Additional diagnostic.')} |"
+            )
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Interpretation Notes",
             "",
-            "The real-space amplitude, phase, and support metrics use the same official "
-            "AutoPhaseNN post-processing and metric functions. Reciprocal-space modulus "
-            "metrics are expected to be nearly zero because reconstruction explicitly "
-            "reuses the measured modulus; WCA is the meaningful reciprocal-phase metric.",
+            "- `twin_aligned` uses the target only to choose between the two reciprocal-"
+            "phase signs treated as equivalent by the published WCA loss.",
+            "- `phase_wca`, amplitude SSIM, support IoU/Dice, and real-space phase error "
+            "are the meaningful quality indicators for this architecture.",
+            "- A support volume ratio far from one indicates that reciprocal-phase errors "
+            "spread reconstructed energy outside the object.",
             "",
-            "`twin_aligned` uses the real-space target only during evaluation to select "
-            "between the two signs explicitly treated as equivalent by the published WCA "
-            "loss. Use `raw` to measure the uncorrected model output.",
+            "## Files",
+            "",
+            "- `evaluation_results.json`: configuration, provenance, distributions, and per-sample metrics.",
+            "- `evaluation_samples.csv`: one row per sample.",
+            "- `evaluation_summary.md`: this readable summary.",
+            "- `evaluation.log`: execution log.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -291,6 +454,7 @@ def evaluate(
     device: torch.device,
     output_dir: Path,
     sample_count: int,
+    postprocess_workers: int,
 ) -> list[dict[str, object]]:
     model.eval()
     rows: list[dict[str, object]] = []
@@ -314,10 +478,6 @@ def evaluate(
         )
         if args.save_reciprocal_phase
         else None
-    )
-    postprocess_workers = resolve_postprocess_workers(
-        args.postprocess_workers,
-        args.batch_size,
     )
     executor = (
         ThreadPoolExecutor(
@@ -449,11 +609,17 @@ def warm_up(
 def main() -> int:
     args = parse_args()
     validate_args(args)
-    output_dir = Path(args.output_dir).expanduser().resolve()
-    configure_logging(output_dir, args.log_level)
     checkpoint_path = Path(args.checkpoint).expanduser().resolve()
     if not checkpoint_path.is_file():
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+    device = choose_device(args.device)
+    model, checkpoint_metadata = load_model(
+        checkpoint_path,
+        device,
+        args.model_variant,
+    )
+    output_dir = resolve_output_dir(args, model.model_variant)
+    configure_logging(output_dir, args.log_level)
 
     sample_count = min(args.num_samples, args.limit) if args.limit > 0 else args.num_samples
     data_config = load_data_config(args.data_config)
@@ -485,7 +651,6 @@ def main() -> int:
         input_log_data=args.input_log_data,
         return_diffraction_modulus=True,
     )
-    device = choose_device(args.device)
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -493,11 +658,6 @@ def main() -> int:
         num_workers=args.num_workers,
         pin_memory=device.type == "cuda",
         persistent_workers=args.num_workers > 0,
-    )
-    model, checkpoint_metadata = load_model(
-        checkpoint_path,
-        device,
-        args.model_variant,
     )
     runtime = runtime_manifest(device)
     checkpoint_version = checkpoint_metadata.get("project_version")
@@ -516,17 +676,71 @@ def main() -> int:
         device,
         args.ambiguity_mode,
     )
+    postprocess_workers = resolve_postprocess_workers(
+        args.postprocess_workers,
+        args.batch_size,
+    )
+    LOGGER.info(
+        "Output: %s | post-process workers=%d",
+        output_dir,
+        postprocess_workers,
+    )
     warm_up(model, loader, device, args.warmup_batches)
 
     started = time.perf_counter()
-    rows = evaluate(args, model, loader, device, output_dir, sample_count)
+    rows = evaluate(
+        args,
+        model,
+        loader,
+        device,
+        output_dir,
+        sample_count,
+        postprocess_workers,
+    )
     wall_seconds = time.perf_counter() - started
     if not rows:
         raise RuntimeError("Evaluation produced no samples.")
     statistics = metric_statistics(rows)
     mean = {key: values["mean"] for key, values in statistics.items()}
+    mean_inference_ms = statistics["inference_ms"]["mean"]
+    model_inference_seconds = sum(
+        float(row["inference_ms"]) / 1000.0 for row in rows
+    )
+    timing = {
+        "evaluation_wall_seconds": wall_seconds,
+        "model_inference_seconds": model_inference_seconds,
+        "mean_inference_ms_per_sample": mean_inference_ms,
+        "throughput_samples_per_second": len(rows)
+        / max(model_inference_seconds, 1e-12),
+    }
+    metric_descriptions = {
+        **METRIC_DESCRIPTIONS,
+        "paper_modulus_mae": (
+            "Measured-modulus reprojection L1; near zero by construction and not "
+            "comparable to an independently predicted modulus."
+        ),
+        "relative_l1_modulus": "Scale-normalized reprojection consistency.",
+        "chi2_modulus": "Reprojection chi-square consistency.",
+        "pearson_corr": "Measured/reprojected modulus correlation.",
+        "voxel_mse": "Measured/reprojected modulus voxel MSE.",
+        "voxel_rmse": "Measured/reprojected modulus voxel RMSE.",
+        "phase_wca": "Published symmetry-aware reciprocal-phase WCA loss.",
+        "phase_wca_direct": "WCA error against the direct reciprocal phase.",
+        "phase_wca_inverted": "WCA error against the conjugate/twin phase.",
+        "twin_flip_selected": (
+            "Fraction indicator for evaluation-time conjugate/twin sign selection."
+        ),
+        "inference_ms": "Mean model forward latency assigned to each sample.",
+    }
+    fixed_metric_descriptions = {
+        **FIXED_METRIC_DESCRIPTIONS,
+        "FT/L1": "Measured-modulus reprojection L1; construction-only consistency.",
+        "FT/MSE": "Measured-modulus reprojection MSE; construction-only consistency.",
+        "FT/RMSE": "Measured-modulus reprojection RMSE; construction-only consistency.",
+        "FT/RelL1": "Relative reprojection L1; construction-only consistency.",
+    }
     report: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run": {
             "checkpoint": str(checkpoint_path),
@@ -539,14 +753,25 @@ def main() -> int:
             "git_commit": runtime["git_commit"],
             "device": str(device),
             "torch_version": torch.__version__,
+            "cuda_version": torch.version.cuda,
+            "gpu_name": runtime["gpu_name"],
             "num_samples": len(rows),
             "batch_size": args.batch_size,
             "ambiguity_mode": args.ambiguity_mode,
-            "threshold": args.threshold,
+            "support_threshold": args.threshold,
             "ssim_window_size": args.ssim_window_size,
-            "wall_seconds": wall_seconds,
+            "realspace_post_process": "official_skimage_unwrap_batched_torch",
+            "postprocess_tensor_device": str(device),
+            "postprocess_workers": postprocess_workers,
+        },
+        "checkpoint_metadata": {
+            "epoch": checkpoint_metadata.get("epoch"),
+            "project_version": checkpoint_version,
+            "git_commit": checkpoint_metadata.get("git_commit"),
+            "training_args": checkpoint_metadata.get("args", {}),
         },
         "configuration": vars(args),
+        "resolved_output_dir": str(output_dir),
         "runtime": runtime,
         "data": data_manifest,
         "reconstruction": {
@@ -567,16 +792,20 @@ def main() -> int:
             ),
             "memmap_shape": [sample_count, *shape],
         },
-        "fixed_metric_groups": fixed_metric_groups(mean),
-        "fixed_metric_descriptions": FIXED_METRIC_DESCRIPTIONS,
-        "mean_metric_groups": group_metrics(mean),
-        "metric_descriptions": {
-            **METRIC_DESCRIPTIONS,
-            "phase_wca": "Published symmetry-aware weighted circular-average loss.",
-            "phase_wca_direct": "WCA error against the direct reciprocal phase.",
-            "phase_wca_inverted": "WCA error against the conjugate/twin phase.",
-            "twin_flip_selected": "One when twin alignment negates the predicted phase.",
+        "timing": timing,
+        "comparison_eligibility": {
+            "directly_comparable": list(COMPARABLE_METRICS),
+            "construction_only": list(REPROJECTION_METRICS),
+            "reason": (
+                "The reconstructed spectrum reuses measured modulus; only its phase "
+                "is predicted. Modulus reprojection errors therefore cannot be compared "
+                "with AutoPhaseNN's independently predicted diffraction modulus."
+            ),
         },
+        "fixed_metric_groups": fixed_metric_groups(mean),
+        "fixed_metric_descriptions": fixed_metric_descriptions,
+        "mean_metric_groups": high_strain_metric_groups(mean),
+        "metric_descriptions": metric_descriptions,
         "metric_statistics": statistics,
         "mean": mean,
         "per_sample": rows,
@@ -586,8 +815,9 @@ def main() -> int:
                 "and metric functions as autophasenn_training_pipeline/evaluate.py."
             ),
             "reciprocal_metrics": (
-                "Modulus metrics are nearly exact by construction because measured "
-                "modulus is reused; phase_wca evaluates the learned reciprocal phase."
+                "Modulus metrics are FFT/reprojection checks only. They are nearly exact "
+                "because measured modulus is reused and must not be interpreted as model "
+                "prediction quality."
             ),
             "twin_alignment": (
                 "twin_aligned uses target data only for evaluation-time choice between "
@@ -605,7 +835,18 @@ def main() -> int:
     write_sample_csv(csv_path, rows)
     markdown_path.write_text(render_markdown(report), encoding="utf-8")
     LOGGER.info("\n%s", format_fixed_metric_groups(mean, title="Mean metrics"))
-    LOGGER.info("WCA: %.6g | twin selection fraction: %.6g", mean["phase_wca"], mean["twin_flip_selected"])
+    LOGGER.info(
+        "Comparable quality | WCA=%.6g | amp SSIM=%.6g | support IoU=%.6g | "
+        "phase MAE=%.6g",
+        mean["phase_wca"],
+        mean["real_amp_ssim"],
+        mean["real_support_iou"],
+        mean["real_phase_mae_true_support"],
+    )
+    LOGGER.info(
+        "Reprojection modulus MAE %.6g is construction-only, not model quality.",
+        mean["paper_modulus_mae"],
+    )
     LOGGER.info("Wrote results: %s", output_dir)
     return 0
 

@@ -1,5 +1,6 @@
 numpy>=1.23,<3
 h5py>=3.8,<4
+matplotlib>=3.7,<4
 scikit-image>=0.20
 scipy>=1.10
 torch>=2.0
