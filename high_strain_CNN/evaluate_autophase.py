@@ -64,7 +64,7 @@ LOGGER = logging.getLogger("high_strain.evaluate_autophase")
 DEFAULT_EVALUATE_ROOT = PROJECT_DIR / "evaluate"
 DEFAULT_CHECKPOINT = (
     "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/"
-    "high_strain_reduced_scratch_bs16_lr1e-4_20260819_171256/"
+    "high_strain_reduced_centered_resume_old60_lr1e-4_plateau_20260820_232732/"
     "checkpoint_best.pt"
 )
 

@@ -56,3 +56,33 @@ Support:
 2026-08-20 18:16:27 | INFO    | Comparable quality | WCA=0.766761 | amp SSIM=0.855792 | support IoU=0.385794 | phase MAE=0.864478
 2026-08-20 18:16:27 | INFO    | Reprojection modulus MAE 7.07249e-06 is construction-only, not model quality.
 2026-08-20 18:16:27 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced
+2026-08-21 16:52:24 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume_old60_lr1e-4_plateau_20260820_232732/checkpoint_best.pt
+2026-08-21 16:52:24 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-21 16:52:24 | INFO    | Model: reduced | 39,160,897 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-21 16:52:24 | INFO    | Output: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced | post-process workers=8
+2026-08-21 16:52:26 | INFO    | Completed 1 warmup batch(es).
+2026-08-21 16:58:48 | INFO    | 
+Mean metrics
+FT:
+  L1: 7.06582e-06
+  MSE: 3.2722e-10
+  RMSE: 0.00010162
+  RelL1: 5.95215e-07
+Amplitude:
+  L1: 0.00760519
+  MSE: 0.00189816
+  RMSE: 0.0413966
+  RelL1: 0.411796
+Phase:
+  L1: 0.706375
+  MSE: 0.840256
+  RMSE: 0.778484
+  RelL1: 1.3035
+Support:
+  L1: 0.025979
+  MSE: 0.025979
+  RMSE: 0.154045
+  RelL1: 1.09002
+2026-08-21 16:58:48 | INFO    | Comparable quality | WCA=0.676606 | amp SSIM=0.897686 | support IoU=0.489882 | phase MAE=0.706375
+2026-08-21 16:58:48 | INFO    | Reprojection modulus MAE 7.06582e-06 is construction-only, not model quality.
+2026-08-21 16:58:48 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced
