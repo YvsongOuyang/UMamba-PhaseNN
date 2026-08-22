@@ -211,7 +211,7 @@ mkdir -p "${RUN_DIR}"
 
 nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
   --run-name "${RUN_NAME}" \
-  --epochs 120 \
+  --epochs 240 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
 PID=$!
@@ -236,8 +236,9 @@ Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
 AutoPhaseNN reproduction starts at the paper's `1e-4` and uses the AutoPhaseNN
 `ReduceLROnPlateau` defaults: factor `0.5`, patience `5`, and minimum learning
 rate `1e-6`. The scheduler is the only learning-rate-policy departure from the
-paper's constant rate. Reduce the batch size if the target GPU runs out of
-memory.
+paper's constant rate. The adapted reduced-model training horizon defaults to
+240 epochs; the published upstream training used 60 epochs. Reduce the batch
+size if the target GPU runs out of memory.
 
 Small run records and TensorBoard events are written under `runs/<run-name>`.
 Large checkpoints are written under:
@@ -277,6 +278,21 @@ python -u evaluate_autophase.py \
   --data-dir /data_ssd/oyys/autophasenn
 ```
 
+Run the planned support-threshold diagnostic in the same evaluation pass:
+
+```bash
+python -u evaluate_autophase.py \
+  --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
+  --threshold 0.1 \
+  --threshold-sweep 0.05 0.075 0.1 0.125 0.15 0.2 0.25
+```
+
+The evaluator unwraps each phase volume only once, then applies every requested
+threshold. The primary `--threshold 0.1` metrics remain the headline
+AutoPhaseNN comparison. The sweep reports the threshold with the best mean
+support IoU and the threshold whose mean support-volume ratio is closest to one;
+both are validation diagnostics rather than replacements for the primary result.
+
 Unless `--output-dir` is supplied, results are stored like the AutoPhaseNN
 pipeline under `evaluate/evaluate_<model-variant>/`, for example
 `evaluate/evaluate_reduced/`.
@@ -288,6 +304,13 @@ evaluation_results.json
 evaluation_samples.csv
 evaluation_summary.md
 evaluation.log
+```
+
+When `--threshold-sweep` is enabled, it additionally writes:
+
+```text
+evaluation_threshold_sweep.csv
+evaluation_threshold_sweep_samples.csv
 ```
 
 With the two save flags, the evaluator also writes raw memmaps compatible with
