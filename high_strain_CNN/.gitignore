@@ -1,7 +1,6 @@
 __pycache__/
 *.py[cod]
 .venv*/
-runs/
 parity_output/
 /vision/
 *.pt
