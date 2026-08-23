@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-20T11:46:13.230148+00:00",
+  "runtime": {
+    "project_version": "1.3.0",
+    "git_commit": "f9c1ba210b79f3dc7e3c28ec864baddffda03be3",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "data": {
+    "schema_version": 1,
+    "dataset_name": "AutoPhaseNN",
+    "dataset_version": "autophasenn_64_memmap_v2_centered_phase",
+    "source_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "storage": "raw_numpy_memmap_without_npy_header",
+    "root": "/data_ssd/oyys/autophasenn",
+    "shape": [
+      64,
+      64,
+      64
+    ],
+    "dtypes": {
+      "diffraction": "float32",
+      "realspace": "complex64"
+    },
+    "input_log_data": true,
+    "input_preprocessing": {
+      "modulus_to_intensity": "square",
+      "transform": "log1p",
+      "normalization": "per_volume_minmax_0_1"
+    },
+    "target_preprocessing": {
+      "transform": "fftshift(fftn(ifftshift(realspace)))",
+      "translation_canonicalization": "remove_linear_phase_ramp_from_amplitude_center_of_mass",
+      "target": "centered_particle_reciprocal_phase_minus_center_phase"
+    },
+    "semantics": {
+      "diffraction": "centered reciprocal-space modulus abs(FFT)",
+      "realspace": "centered complex-valued object"
+    },
+    "splits": {
+      "train": {
+        "num_samples": 25000,
+        "diffraction": "/data_ssd/oyys/autophasenn/train_diff.npy",
+        "realspace": "/data_ssd/oyys/autophasenn/train_real.npy",
+        "expected_diffraction_bytes": 26214400000,
+        "expected_realspace_bytes": 52428800000
+      },
+      "val": {
+        "num_samples": 5000,
+        "diffraction": "/data_ssd/oyys/autophasenn/val_diff.npy",
+        "realspace": "/data_ssd/oyys/autophasenn/val_real.npy",
+        "expected_diffraction_bytes": 5242880000,
+        "expected_realspace_bytes": 10485760000
+      }
+    },
+    "file_status": {
+      "train": {
+        "diffraction": {
+          "path": "/data_ssd/oyys/autophasenn/train_diff.npy",
+          "exists": true,
+          "expected_bytes": 26214400000,
+          "actual_bytes": 26214400000,
+          "size_valid": true
+        },
+        "realspace": {
+          "path": "/data_ssd/oyys/autophasenn/train_real.npy",
+          "exists": true,
+          "expected_bytes": 52428800000,
+          "actual_bytes": 52428800000,
+          "size_valid": true
+        }
+      },
+      "val": {
+        "diffraction": {
+          "path": "/data_ssd/oyys/autophasenn/val_diff.npy",
+          "exists": true,
+          "expected_bytes": 5242880000,
+          "actual_bytes": 5242880000,
+          "size_valid": true
+        },
+        "realspace": {
+          "path": "/data_ssd/oyys/autophasenn/val_real.npy",
+          "exists": true,
+          "expected_bytes": 10485760000,
+          "actual_bytes": 10485760000,
+          "size_valid": true
+        }
+      }
+    }
+  },
+  "training": {
+    "data_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "data_dir": "/data_ssd/oyys/autophasenn",
+    "train_diff": "train_diff.npy",
+    "train_real": "train_real.npy",
+    "val_diff": "val_diff.npy",
+    "val_real": "val_real.npy",
+    "num_samples_train": 25000,
+    "num_samples_val": 5000,
+    "shape": 64,
+    "diffraction_dtype": "float32",
+    "realspace_dtype": "complex64",
+    "input_log_data": true,
+    "epochs": 120,
+    "batch_size": 16,
+    "num_workers": 4,
+    "learning_rate": 0.0005,
+    "model_variant": "reduced",
+    "lr_scheduler": "plateau",
+    "device": "cuda",
+    "seed": 42,
+    "pretrained": "",
+    "resume": "",
+    "run_name": "high_strain_reduced_centered_scratch_bs16_lr5e-4_plateau_20260820_194612",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/runs",
+    "checkpoint_root": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn",
+    "save_every": 10,
+    "print_freq": 50,
+    "max_batches_per_epoch": 0,
+    "fp16": false,
+    "run_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/runs/high_strain_reduced_centered_scratch_bs16_lr5e-4_plateau_20260820_194612",
+    "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_scratch_bs16_lr5e-4_plateau_20260820_194612"
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-19T08:30:35.615405+00:00",
+  "passed": true,
+  "runtime": {
+    "project_version": "1.1.0",
+    "git_commit": "b40adac334c5a14a2ffa6be7c6810daaedf4d167",
+    "git_dirty": false,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cpu",
+    "gpu_name": null
+  },
+  "data_manifest": {
+    "schema_version": 1,
+    "dataset_name": "AutoPhaseNN",
+    "dataset_version": "autophasenn_64_memmap_v1",
+    "source_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "storage": "raw_numpy_memmap_without_npy_header",
+    "root": "/data_ssd/oyys/autophasenn",
+    "shape": [
+      64,
+      64,
+      64
+    ],
+    "dtypes": {
+      "diffraction": "float32",
+      "realspace": "complex64"
+    },
+    "input_log_data": true,
+    "input_preprocessing": {
+      "modulus_to_intensity": "square",
+      "transform": "log1p",
+      "normalization": "per_volume_minmax_0_1"
+    },
+    "target_preprocessing": {
+      "transform": "fftshift(fftn(ifftshift(realspace)))",
+      "target": "reciprocal_phase_minus_center_phase"
+    },
+    "semantics": {
+      "diffraction": "centered reciprocal-space modulus abs(FFT)",
+      "realspace": "centered complex-valued object"
+    },
+    "splits": {
+      "train": {
+        "num_samples": 25000,
+        "diffraction": "/data_ssd/oyys/autophasenn/train_diff.npy",
+        "realspace": "/data_ssd/oyys/autophasenn/train_real.npy",
+        "expected_diffraction_bytes": 26214400000,
+        "expected_realspace_bytes": 52428800000
+      },
+      "val": {
+        "num_samples": 5000,
+        "diffraction": "/data_ssd/oyys/autophasenn/val_diff.npy",
+        "realspace": "/data_ssd/oyys/autophasenn/val_real.npy",
+        "expected_diffraction_bytes": 5242880000,
+        "expected_realspace_bytes": 10485760000
+      }
+    }
+  },
+  "checks": {
+    "train": {
+      "diffraction": {
+        "path": "/data_ssd/oyys/autophasenn/train_diff.npy",
+        "exists": true,
+        "dtype": "float32",
+        "expected_bytes": 26214400000,
+        "actual_bytes": 26214400000,
+        "size_matches": true,
+        "sample_check": {
+          "sample_indices": [
+            0,
+            12499,
+            24999
+          ],
+          "all_finite": true,
+          "all_nonnegative": true,
+          "samples": [
+            {
+              "index": 0,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1473.0,
+              "magnitude_mean": 8.688987731933594
+            },
+            {
+              "index": 12499,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 3397.0,
+              "magnitude_mean": 9.978897094726562
+            },
+            {
+              "index": 24999,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 6383.0,
+              "magnitude_mean": 13.48605728149414
+            }
+          ]
+        },
+        "passed": true
+      },
+      "realspace": {
+        "path": "/data_ssd/oyys/autophasenn/train_real.npy",
+        "exists": true,
+        "dtype": "complex64",
+        "expected_bytes": 52428800000,
+        "actual_bytes": 52428800000,
+        "size_matches": true,
+        "sample_check": {
+          "sample_indices": [
+            0,
+            12499,
+            24999
+          ],
+          "all_finite": true,
+          "all_nonnegative": true,
+          "samples": [
+            {
+              "index": 0,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0,
+              "magnitude_mean": 0.005753993988037109
+            },
+            {
+              "index": 12499,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0,
+              "magnitude_mean": 0.013823844492435455
+            },
+            {
+              "index": 24999,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0,
+              "magnitude_mean": 0.026632050052285194
+            }
+          ]
+        },
+        "passed": true
+      }
+    },
+    "val": {
+      "diffraction": {
+        "path": "/data_ssd/oyys/autophasenn/val_diff.npy",
+        "exists": true,
+        "dtype": "float32",
+        "expected_bytes": 5242880000,
+        "actual_bytes": 5242880000,
+        "size_matches": true,
+        "sample_check": {
+          "sample_indices": [
+            0,
+            2499,
+            4999
+          ],
+          "all_finite": true,
+          "all_nonnegative": true,
+          "samples": [
+            {
+              "index": 0,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 6749.0,
+              "magnitude_mean": 11.80355453491211
+            },
+            {
+              "index": 2499,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 2066.0,
+              "magnitude_mean": 9.526473999023438
+            },
+            {
+              "index": 4999,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 4894.0,
+              "magnitude_mean": 11.33060073852539
+            }
+          ]
+        },
+        "passed": true
+      },
+      "realspace": {
+        "path": "/data_ssd/oyys/autophasenn/val_real.npy",
+        "exists": true,
+        "dtype": "complex64",
+        "expected_bytes": 10485760000,
+        "actual_bytes": 10485760000,
+        "size_matches": true,
+        "sample_check": {
+          "sample_indices": [
+            0,
+            2499,
+            4999
+          ],
+          "all_finite": true,
+          "all_nonnegative": true,
+          "samples": [
+            {
+              "index": 0,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0000001192092896,
+              "magnitude_mean": 0.027412796393036842
+            },
+            {
+              "index": 2499,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0,
+              "magnitude_mean": 0.0082247881218791
+            },
+            {
+              "index": 4999,
+              "finite": true,
+              "nonnegative": true,
+              "magnitude_min": 0.0,
+              "magnitude_max": 1.0,
+              "magnitude_mean": 0.01991300657391548
+            }
+          ]
+        },
+        "passed": true
+      }
+    }
+  }
+}
