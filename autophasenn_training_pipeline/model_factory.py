@@ -16,6 +16,7 @@ try:
         DecoderCrossConcatAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_concat_baseline_weights,
     )
+    from .model_mamba_skip import AutoPhaseNNBiPVMSkip
     from .model_residual import ResidualAutoPhaseNN
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -31,6 +32,7 @@ except ImportError:
         DecoderCrossConcatAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_concat_baseline_weights,
     )
+    from model_mamba_skip import AutoPhaseNNBiPVMSkip
     from model_residual import ResidualAutoPhaseNN
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -41,6 +43,7 @@ MODEL_VARIANTS = (
     "amplitude_skip",
     "decoder_cross_skip",
     "decoder_cross_concat",
+    "mamba_skip",
 )
 
 
@@ -57,6 +60,8 @@ def create_model(model_variant: str, threshold: float) -> nn.Module:
         return DecoderCrossSkipAutoPhaseNN(threshold=threshold)
     if model_variant == "decoder_cross_concat":
         return DecoderCrossConcatAutoPhaseNN(threshold=threshold)
+    if model_variant == "mamba_skip":
+        return AutoPhaseNNBiPVMSkip(threshold=threshold)
     raise ValueError(f"Unknown model variant: {model_variant}")
 
 

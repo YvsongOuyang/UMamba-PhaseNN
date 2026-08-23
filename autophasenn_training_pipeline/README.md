@@ -17,6 +17,7 @@ model_residual.py           ResidualAutoPhaseNN architecture variant
 model_amplitude_skip.py     AmplitudeSkipAutoPhaseNN architecture variant
 model_decoder_cross_skip.py DecoderCrossSkipAutoPhaseNN architecture variant
 model_decoder_cross_concat.py DecoderCrossConcatAutoPhaseNN architecture variant
+model_mamba_skip.py         AutoPhaseNNBiPVMSkip architecture variant
 model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
@@ -128,6 +129,32 @@ copied exactly and new cross-channel kernels start at zero. The initialized
 model therefore reproduces baseline outputs without `alpha`, extra fusion
 blocks, attention, gates, or new losses. Fine-tune the full model directly at a
 low learning rate.
+
+## Bi-PVM Mamba Skip Variant
+
+`AutoPhaseNNBiPVMSkip` preserves the baseline encoder, bottleneck, both decoder
+paths, output activations, support construction, forward physics, and training
+loss. It adds independent encoder-to-decoder Bi-PVM bridges at only the
+`8 x 8 x 8` and `16 x 16 x 16` scales. Amplitude and phase use four completely
+independent bridges and fusion blocks.
+
+Each bridge projects its encoder feature to 32 channels, applies residual
+depthwise 3D local mixing, splits the flattened sequence into four 8-channel
+groups, and applies independent forward and reverse Mamba operators per group.
+The bridge output is concatenated with the matching decoder feature and fused
+by one `3 x 3 x 3` convolution with the baseline LeakyReLU and BatchNorm
+configuration. The Mamba parameters are fixed to `d_model=8`, `d_state=16`,
+`d_conv=4`, and `expand=2` for this experiment.
+
+The variant uses the repository's existing `mamba-ssm` dependency and is
+selected with `--model-variant mamba_skip`. Train it from random initialization
+with the same configuration as the baseline comparison:
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --model-variant mamba_skip \
+  --from-scratch
+```
 
 Training runs are kept inside this subproject by default. If `--run-name` is
 omitted, the script builds one from the timestamp, model variant,
