@@ -1,0 +1,33 @@
+2026-08-22 17:22:58 | WARNING | Checkpoint project version 1.3.1 differs from evaluator version 1.4.0.
+2026-08-22 17:22:58 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume_old60_lr1e-4_plateau_20260820_232732/checkpoint_best.pt
+2026-08-22 17:22:58 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-22 17:22:58 | INFO    | Model: reduced | 39,160,897 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-22 17:22:58 | INFO    | Output: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/high_strain_epoch119_threshold_sweep_20260822_172256 | post-process workers=8
+2026-08-22 17:22:58 | INFO    | Support threshold sweep: 0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.25 | primary=0.1
+2026-08-22 17:22:59 | INFO    | Completed 1 warmup batch(es).
+2026-08-22 17:30:29 | INFO    | 
+Mean metrics
+FT:
+  L1: 7.06623e-06
+  MSE: 3.27304e-10
+  RMSE: 0.000101621
+  RelL1: 5.95252e-07
+Amplitude:
+  L1: 0.0076051
+  MSE: 0.00189812
+  RMSE: 0.0413962
+  RelL1: 0.411792
+Phase:
+  L1: 0.706692
+  MSE: 0.841713
+  RMSE: 0.778774
+  RelL1: 1.30505
+Support:
+  L1: 0.0259792
+  MSE: 0.0259792
+  RMSE: 0.154046
+  RelL1: 1.09003
+2026-08-22 17:30:29 | INFO    | Comparable quality | WCA=0.676606 | amp SSIM=0.897686 | support IoU=0.489877 | phase MAE=0.706692
+2026-08-22 17:30:29 | INFO    | Reprojection modulus MAE 7.06623e-06 is construction-only, not model quality.
+2026-08-22 17:30:29 | INFO    | Threshold sweep | best mean IoU at 0.25 | volume ratio closest to 1 at 0.25
+2026-08-22 17:30:29 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/high_strain_epoch119_threshold_sweep_20260822_172256

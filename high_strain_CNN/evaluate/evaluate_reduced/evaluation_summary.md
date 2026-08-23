@@ -4,12 +4,12 @@
 
 | Item | Value |
 |---|---|
-| Checkpoint | `/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume_old60_lr1e-4_plateau_20260820_232732/checkpoint_best.pt` |
-| Checkpoint epoch | 119 |
+| Checkpoint | `/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume120_to240_20260822_172432/checkpoint_best.pt` |
+| Checkpoint epoch | 158 |
 | Model variant | `reduced` |
 | Model parameters | 39,160,897 |
-| Project version | `1.3.1` |
-| Git commit | `7b6fb1c659f6a6df0e356d7cbb21b24edd034cca` |
+| Project version | `1.4.0` |
+| Git commit | `5be3014ccf79a8d69423b477ae0829562e3bfa8c` |
 | Samples | 5000 |
 | Batch size | 16 |
 | Device | `cuda` |
@@ -17,9 +17,9 @@
 | Ambiguity mode | `twin_aligned` |
 | Support threshold | 0.1 |
 | Phase unwrap workers | 8 |
-| Evaluation wall time | 382.187 s |
-| Mean inference | 17.7285 ms/sample |
-| Throughput | 56.4065 samples/s |
+| Evaluation wall time | 375.506 s |
+| Mean inference | 22.2712 ms/sample |
+| Throughput | 44.901 samples/s |
 
 ## Metric Interpretation
 
@@ -29,13 +29,13 @@ The real-space metrics below use the same AutoPhaseNN post-processing and metric
 
 | Metric | Mean | Std | P50 | P95 | Better | Meaning |
 |---|---:|---:|---:|---:|---|---|
-| `phase_wca` | 0.676606 | 0.13122 | 0.657969 | 0.910479 | lower | Reciprocal-phase WCA objective used for training. |
-| `real_amp_l1` | 0.00760519 | 0.00430023 | 0.00652499 | 0.0158299 | lower | Full-volume post-processed amplitude L1. |
-| `real_amp_ssim` | 0.897686 | 0.0630135 | 0.915943 | 0.969127 | higher | Local-window 3D amplitude SSIM. |
-| `real_support_iou` | 0.489882 | 0.0875309 | 0.488428 | 0.63195 | higher | Post-processed support intersection-over-union. |
-| `real_support_dice` | 0.65293 | 0.0799147 | 0.6563 | 0.774472 | higher | Post-processed support Dice score. |
-| `real_support_volume_ratio` | 2.0534 | 0.38633 | 1.99455 | 2.7952 | near 1 | Predicted/true support volume ratio. |
-| `real_phase_mae_true_support` | 0.706375 | 0.509693 | 0.56758 | 1.78034 | lower | Wrapped phase MAE on the post-processed true support. |
+| `phase_wca` | 0.667847 | 0.139546 | 0.650184 | 0.912103 | lower | Reciprocal-phase WCA objective used for training. |
+| `real_amp_l1` | 0.00722869 | 0.00407635 | 0.00623544 | 0.0150865 | lower | Full-volume post-processed amplitude L1. |
+| `real_amp_ssim` | 0.905985 | 0.0582976 | 0.922112 | 0.972255 | higher | Local-window 3D amplitude SSIM. |
+| `real_support_iou` | 0.513093 | 0.088853 | 0.514104 | 0.656717 | higher | Post-processed support intersection-over-union. |
+| `real_support_dice` | 0.673584 | 0.0788988 | 0.679087 | 0.792793 | higher | Post-processed support Dice score. |
+| `real_support_volume_ratio` | 1.95707 | 0.3582 | 1.89451 | 2.63569 | near 1 | Predicted/true support volume ratio. |
+| `real_phase_mae_true_support` | 0.649965 | 0.469745 | 0.521392 | 1.53949 | lower | Wrapped phase MAE on the post-processed true support. |
 
 ## AutoPhaseNN-Compatible Fixed Metrics
 
@@ -43,22 +43,22 @@ The `FT` row is retained for file-format compatibility but is a reprojection ide
 
 | Group | Metric | Mean |
 |---|---|---:|
-| FT (reprojection only) | L1 | 7.06582e-06 |
-| FT (reprojection only) | MSE | 3.2722e-10 |
-| FT (reprojection only) | RMSE | 0.00010162 |
-| FT (reprojection only) | RelL1 | 5.95215e-07 |
-| Amplitude | L1 | 0.00760519 |
-| Amplitude | MSE | 0.00189816 |
-| Amplitude | RMSE | 0.0413966 |
-| Amplitude | RelL1 | 0.411796 |
-| Phase | L1 | 0.706375 |
-| Phase | MSE | 0.840256 |
-| Phase | RMSE | 0.778484 |
-| Phase | RelL1 | 1.3035 |
-| Support | L1 | 0.025979 |
-| Support | MSE | 0.025979 |
-| Support | RMSE | 0.154045 |
-| Support | RelL1 | 1.09002 |
+| FT (reprojection only) | L1 | 7.06722e-06 |
+| FT (reprojection only) | MSE | 3.27633e-10 |
+| FT (reprojection only) | RMSE | 0.000101622 |
+| FT (reprojection only) | RelL1 | 5.95328e-07 |
+| Amplitude | L1 | 0.00722869 |
+| Amplitude | MSE | 0.00182963 |
+| Amplitude | RMSE | 0.0405421 |
+| Amplitude | RelL1 | 0.392725 |
+| Phase | L1 | 0.649965 |
+| Phase | MSE | 0.718471 |
+| Phase | RMSE | 0.720712 |
+| Phase | RelL1 | 1.21091 |
+| Support | L1 | 0.0235346 |
+| Support | MSE | 0.0235346 |
+| Support | RMSE | 0.14677 |
+| Support | RelL1 | 0.992923 |
 
 ## Mean Metrics by Group
 
@@ -66,53 +66,53 @@ The `FT` row is retained for file-format compatibility but is a reprojection ide
 
 | Metric | Mean | Meaning |
 |---|---:|---|
-| `phase_wca` | 0.676606 | Published symmetry-aware reciprocal-phase WCA loss. |
-| `phase_wca_direct` | 0.783117 | WCA error against the direct reciprocal phase. |
-| `phase_wca_inverted` | 0.864377 | WCA error against the conjugate/twin phase. |
-| `twin_flip_selected` | 0.3652 | Fraction indicator for evaluation-time conjugate/twin sign selection. |
+| `phase_wca` | 0.667847 | Published symmetry-aware reciprocal-phase WCA loss. |
+| `phase_wca_direct` | 0.777611 | WCA error against the direct reciprocal phase. |
+| `phase_wca_inverted` | 0.861853 | WCA error against the conjugate/twin phase. |
+| `twin_flip_selected` | 0.3654 | Fraction indicator for evaluation-time conjugate/twin sign selection. |
 
 ### Realspace Primary
 
 | Metric | Mean | Meaning |
 |---|---:|---|
-| `real_amp_l1` | 0.00760519 | Real-space full-volume amplitude L1. Lower is better, but can be small for sparse objects. |
-| `real_amp_ssim` | 0.897686 | Local-window 3D amplitude SSIM reported by the paper. Higher is better. |
-| `real_amp_global_ssim` | 0.925924 | Global 3D amplitude SSIM-like score. Higher is better. |
-| `real_support_iou` | 0.489882 | Intersection-over-union between predicted and true support. Higher is better. |
-| `real_support_dice` | 0.65293 | Dice score between predicted and true support. Higher is better. |
-| `real_support_pred_fraction` | 0.0485605 | Predicted support fraction in the 64^3 volume; should be close to true fraction. |
-| `real_support_volume_ratio` | 2.0534 | pred_support_fraction / true_support_fraction; ideal is near 1. |
-| `real_phase_mae_true_support` | 0.706375 | Wrapped phase MAE on the true support. Lower is better. |
+| `real_amp_l1` | 0.00722869 | Real-space full-volume amplitude L1. Lower is better, but can be small for sparse objects. |
+| `real_amp_ssim` | 0.905985 | Local-window 3D amplitude SSIM reported by the paper. Higher is better. |
+| `real_amp_global_ssim` | 0.929631 | Global 3D amplitude SSIM-like score. Higher is better. |
+| `real_support_iou` | 0.513093 | Intersection-over-union between predicted and true support. Higher is better. |
+| `real_support_dice` | 0.673584 | Dice score between predicted and true support. Higher is better. |
+| `real_support_pred_fraction` | 0.0461296 | Predicted support fraction in the 64^3 volume; should be close to true fraction. |
+| `real_support_volume_ratio` | 1.95707 | pred_support_fraction / true_support_fraction; ideal is near 1. |
+| `real_phase_mae_true_support` | 0.649965 | Wrapped phase MAE on the true support. Lower is better. |
 
 ### Realspace Diagnostic
 
 | Metric | Mean | Meaning |
 |---|---:|---|
-| `real_amp_mse` | 0.00189816 | Real-space full-volume amplitude MSE. Lower is better. |
-| `real_amp_rmse` | 0.0413966 | Real-space full-volume amplitude RMSE. Lower is better. |
-| `real_amp_rel_l1` | 0.411796 | Real-space amplitude L1 normalized by true amplitude sum. Lower is better. |
-| `real_support_l1` | 0.025979 | Binary support mask L1. Lower is better. |
-| `real_support_rmse` | 0.154045 | Binary support mask RMSE. Lower is better. |
+| `real_amp_mse` | 0.00182963 | Real-space full-volume amplitude MSE. Lower is better. |
+| `real_amp_rmse` | 0.0405421 | Real-space full-volume amplitude RMSE. Lower is better. |
+| `real_amp_rel_l1` | 0.392725 | Real-space amplitude L1 normalized by true amplitude sum. Lower is better. |
+| `real_support_l1` | 0.0235346 | Binary support mask L1. Lower is better. |
+| `real_support_rmse` | 0.14677 | Binary support mask RMSE. Lower is better. |
 | `real_support_true_fraction` | 0.0234351 | True support fraction in the 64^3 volume. |
-| `real_phase_mae_intersection` | 0.702448 | Wrapped phase MAE on support intersection. Lower is better. |
-| `real_phase_rmse_true_support` | 0.778484 | Wrapped phase RMSE on the true support. Lower is better. |
+| `real_phase_mae_intersection` | 0.645743 | Wrapped phase MAE on support intersection. Lower is better. |
+| `real_phase_rmse_true_support` | 0.720712 | Wrapped phase RMSE on the true support. Lower is better. |
 
 ### Reprojection Identity
 
 | Metric | Mean | Meaning |
 |---|---:|---|
-| `paper_modulus_mae` | 7.06582e-06 | Measured-modulus reprojection L1; near zero by construction and not comparable to an independently predicted modulus. |
-| `relative_l1_modulus` | 5.95215e-07 | Scale-normalized reprojection consistency. |
-| `chi2_modulus` | 8.20283e-14 | Reprojection chi-square consistency. |
+| `paper_modulus_mae` | 7.06722e-06 | Measured-modulus reprojection L1; near zero by construction and not comparable to an independently predicted modulus. |
+| `relative_l1_modulus` | 5.95328e-07 | Scale-normalized reprojection consistency. |
+| `chi2_modulus` | 8.21224e-14 | Reprojection chi-square consistency. |
 | `pearson_corr` | 1 | Measured/reprojected modulus correlation. |
-| `voxel_mse` | 3.2722e-10 | Measured/reprojected modulus voxel MSE. |
-| `voxel_rmse` | 0.00010162 | Measured/reprojected modulus voxel RMSE. |
+| `voxel_mse` | 3.27633e-10 | Measured/reprojected modulus voxel MSE. |
+| `voxel_rmse` | 0.000101622 | Measured/reprojected modulus voxel RMSE. |
 
 ### Timing
 
 | Metric | Mean | Meaning |
 |---|---:|---|
-| `inference_ms` | 17.7285 | Mean model forward latency assigned to each sample. |
+| `inference_ms` | 22.2712 | Mean model forward latency assigned to each sample. |
 
 ## Interpretation Notes
 

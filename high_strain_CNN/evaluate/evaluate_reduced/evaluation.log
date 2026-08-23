@@ -86,3 +86,38 @@ Support:
 2026-08-21 16:58:48 | INFO    | Comparable quality | WCA=0.676606 | amp SSIM=0.897686 | support IoU=0.489882 | phase MAE=0.706375
 2026-08-21 16:58:48 | INFO    | Reprojection modulus MAE 7.06582e-06 is construction-only, not model quality.
 2026-08-21 16:58:48 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced
+2026-08-23 13:25:48 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume120_to240_20260822_172432/checkpoint_best.pt
+2026-08-23 13:25:48 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-23 13:25:48 | INFO    | Model: reduced | 39,160,897 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-23 13:25:48 | INFO    | Output: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced | post-process workers=8
+2026-08-23 13:25:50 | INFO    | Completed 1 warmup batch(es).
+2026-08-23 13:27:15 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_centered_resume120_to240_20260822_172432/checkpoint_best.pt
+2026-08-23 13:27:15 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-23 13:27:15 | INFO    | Model: reduced | 39,160,897 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-23 13:27:15 | INFO    | Output: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced | post-process workers=8
+2026-08-23 13:27:16 | INFO    | Completed 1 warmup batch(es).
+2026-08-23 13:33:32 | INFO    | 
+Mean metrics
+FT:
+  L1: 7.06722e-06
+  MSE: 3.27633e-10
+  RMSE: 0.000101622
+  RelL1: 5.95328e-07
+Amplitude:
+  L1: 0.00722869
+  MSE: 0.00182963
+  RMSE: 0.0405421
+  RelL1: 0.392725
+Phase:
+  L1: 0.649965
+  MSE: 0.718471
+  RMSE: 0.720712
+  RelL1: 1.21091
+Support:
+  L1: 0.0235346
+  MSE: 0.0235346
+  RMSE: 0.14677
+  RelL1: 0.992923
+2026-08-23 13:33:32 | INFO    | Comparable quality | WCA=0.667847 | amp SSIM=0.905985 | support IoU=0.513093 | phase MAE=0.649965
+2026-08-23 13:33:32 | INFO    | Reprojection modulus MAE 7.06722e-06 is construction-only, not model quality.
+2026-08-23 13:33:32 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced
