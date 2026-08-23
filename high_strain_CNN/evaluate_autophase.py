@@ -155,7 +155,7 @@ def parse_args() -> argparse.Namespace:
         default="auto",
         help="Infer the architecture from the checkpoint by default.",
     )
-    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument("--threshold", type=float, default=0.3)
     parser.add_argument(
         "--threshold-sweep",
         type=float,

@@ -261,7 +261,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-mode", choices=("seeded", "first"), default="seeded")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--slice-index", type=int, default=configured_shape[0] // 2)
-    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument("--threshold", type=float, default=0.3)
     parser.add_argument("--reciprocal-phase-threshold", type=float, default=0.02)
     parser.add_argument("--reciprocal-surface-level", type=float, default=0.02)
     parser.add_argument("--amplitude-error-level", type=float, default=0.05)
