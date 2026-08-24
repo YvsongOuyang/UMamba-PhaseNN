@@ -23,7 +23,11 @@ try:
         shift_support,
     )
     from .losses import metric_dict, realspace_metric_dict, scale_align_sum
-    from .model_factory import MODEL_VARIANTS, create_model
+    from .model_factory import (
+        MODEL_VARIANTS,
+        create_model,
+        resolve_support_threshold,
+    )
     from .model_tf_compatible import load_weights
 except ImportError:
     from dataset import AutoPhaseDataset
@@ -36,7 +40,7 @@ except ImportError:
         shift_support,
     )
     from losses import metric_dict, realspace_metric_dict, scale_align_sum
-    from model_factory import MODEL_VARIANTS, create_model
+    from model_factory import MODEL_VARIANTS, create_model, resolve_support_threshold
     from model_tf_compatible import load_weights
 
 
@@ -1048,7 +1052,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--slice-index", type=int, default=32)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
-    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="Support threshold; defaults to 0.3 for mamba_skip and 0.1 otherwise.",
+    )
     parser.add_argument("--surface-step-size", type=int, default=2)
     parser.add_argument(
         "--amplitude-error-level",
@@ -1092,6 +1101,7 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
     )
     args = parser.parse_args()
+    args.threshold = resolve_support_threshold(args.model_variant, args.threshold)
 
     apply_default_output_paths(args)
 

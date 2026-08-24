@@ -46,9 +46,38 @@ MODEL_VARIANTS = (
     "mamba_skip",
 )
 
+DEFAULT_SUPPORT_THRESHOLDS = {
+    model_variant: (0.3 if model_variant == "mamba_skip" else 0.1)
+    for model_variant in MODEL_VARIANTS
+}
 
-def create_model(model_variant: str, threshold: float) -> nn.Module:
+
+def default_support_threshold(model_variant: str) -> float:
+    """Return the validated operating threshold for one model variant."""
+
+    try:
+        return DEFAULT_SUPPORT_THRESHOLDS[model_variant]
+    except KeyError as exc:
+        raise ValueError(f"Unknown model variant: {model_variant}") from exc
+
+
+def resolve_support_threshold(
+    model_variant: str,
+    threshold: float | None,
+) -> float:
+    """Use a caller override or the variant-specific operating threshold."""
+
+    return (
+        default_support_threshold(model_variant)
+        if threshold is None
+        else float(threshold)
+    )
+
+
+def create_model(model_variant: str, threshold: float | None = None) -> nn.Module:
     """Construct a model with the common AutoPhaseNN forward contract."""
+
+    threshold = resolve_support_threshold(model_variant, threshold)
 
     if model_variant == "baseline":
         return TFCompatibleAutoPhaseNN(threshold=threshold)

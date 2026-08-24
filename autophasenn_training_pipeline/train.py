@@ -13,7 +13,12 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dataset import AutoPhaseDataset
 from losses import get_loss, metric_dict, scale_align_sum
-from model_factory import MODEL_VARIANTS, create_model, load_pretrained_weights
+from model_factory import (
+    MODEL_VARIANTS,
+    create_model,
+    load_pretrained_weights,
+    resolve_support_threshold,
+)
 from model_tf_compatible import load_weights
 
 
@@ -543,7 +548,12 @@ def main():
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="Support threshold; defaults to 0.3 for mamba_skip and 0.1 otherwise.",
+    )
     parser.add_argument("--scale-i", type=float, default=0.0)
     parser.add_argument("--scale-align-loss", action="store_true")
     parser.add_argument("--loss-type", default="l1")
@@ -588,6 +598,7 @@ def main():
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    args.threshold = resolve_support_threshold(args.model_variant, args.threshold)
 
     if args.batch_average_loss:
         LOGGER.warning(

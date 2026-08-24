@@ -185,7 +185,7 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
 
     def __init__(
         self,
-        threshold: float = 0.1,
+        threshold: float = 0.3,
         *,
         mamba_factory: MambaFactory | None = None,
     ) -> None:

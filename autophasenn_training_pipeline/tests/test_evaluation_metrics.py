@@ -27,6 +27,10 @@ from autophasenn_training_pipeline.losses import (
     realspace_metric_tensor_dict,
     windowed_ssim_3d,
 )
+from autophasenn_training_pipeline.model_factory import (
+    default_support_threshold,
+    resolve_support_threshold,
+)
 
 
 def test_windowed_ssim_is_one_for_identical_volumes():
@@ -90,6 +94,12 @@ def test_threshold_sweep_includes_primary_and_removes_duplicates():
 
     assert thresholds == (0.05, 0.1, 0.2, 0.4)
     assert resolve_threshold_sweep(0.1, []) == ()
+
+
+def test_model_variant_support_threshold_defaults_are_isolated():
+    assert default_support_threshold("mamba_skip") == pytest.approx(0.3)
+    assert default_support_threshold("baseline") == pytest.approx(0.1)
+    assert resolve_support_threshold("mamba_skip", 0.15) == pytest.approx(0.15)
 
 
 def test_threshold_sweep_can_recover_pre_support_amplitude():

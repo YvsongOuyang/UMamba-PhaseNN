@@ -30,7 +30,11 @@ try:
         metric_tensor_dict,
         realspace_metric_tensor_dict,
     )
-    from .model_factory import MODEL_VARIANTS, create_model
+    from .model_factory import (
+        MODEL_VARIANTS,
+        create_model,
+        resolve_support_threshold,
+    )
     from .model_tf_compatible import load_weights
 except ImportError:
     from dataset import AutoPhaseDataset
@@ -44,7 +48,7 @@ except ImportError:
         metric_tensor_dict,
         realspace_metric_tensor_dict,
     )
-    from model_factory import MODEL_VARIANTS, create_model
+    from model_factory import MODEL_VARIANTS, create_model, resolve_support_threshold
     from model_tf_compatible import load_weights
 
 
@@ -172,7 +176,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
-    parser.add_argument("--threshold", type=float, default=0.1)
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="Support threshold; defaults to 0.3 for mamba_skip and 0.1 otherwise.",
+    )
     parser.add_argument(
         "--threshold-sweep",
         type=float,
@@ -244,7 +253,9 @@ def parse_args() -> argparse.Namespace:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.threshold = resolve_support_threshold(args.model_variant, args.threshold)
+    return args
 
 
 def validate_args(args: argparse.Namespace) -> None:

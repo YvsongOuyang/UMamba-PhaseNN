@@ -22,6 +22,7 @@ model_factory.py            Model selection and pretrained initialization
 train.py                    Full train / fine-tune entry point
 evaluate.py                 Checkpoint evaluation and loss report
 visualize_postprocessed.py  TF test_network_unsup-style visualization
+experiments/bn_recalibration Isolated BatchNorm running-statistics experiment
 ```
 
 ## ResidualAutoPhaseNN Variant
@@ -154,6 +155,26 @@ with the same configuration as the baseline comparison:
 python autophasenn_training_pipeline/train.py \
   --model-variant mamba_skip \
   --from-scratch
+```
+
+The validation support sweep selected `0.3` as the Mamba-Skip operating
+threshold. Training, evaluation, and visualization therefore default to `0.3`
+for `mamba_skip`; all other variants retain `0.1`. Passing `--threshold`
+explicitly always takes precedence.
+
+## BatchNorm Recalibration Experiment
+
+The isolated experiment in `experiments/bn_recalibration` evaluates one
+checkpoint normally, recalibrates only BatchNorm running buffers from training
+inputs, and evaluates the same validation samples again. Learned parameters,
+BatchNorm affine parameters, and all non-BN training behavior stay fixed. When
+`--threshold` is omitted, the experiment reads the checkpoint's original
+threshold to keep BN as the only changed variable.
+
+```bash
+python -u autophasenn_training_pipeline/experiments/bn_recalibration/run.py \
+  --checkpoint /path/to/mamba_skip/checkpoint_best.pt \
+  --model-variant mamba_skip
 ```
 
 Training runs are kept inside this subproject by default. If `--run-name` is
