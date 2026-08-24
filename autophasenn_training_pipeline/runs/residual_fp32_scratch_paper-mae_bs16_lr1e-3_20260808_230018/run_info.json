@@ -1,0 +1,29 @@
+{
+  "run_name": "residual_fp32_scratch_paper-mae_bs16_lr1e-3_20260808_230018",
+  "created_at": "2026-08-08T23:00:19.902015+08:00",
+  "model_variant": "residual",
+  "initialization": "from_scratch",
+  "loss": {
+    "type": "l1",
+    "scope": "diff"
+  },
+  "optimization": {
+    "optimizer": "adam",
+    "learning_rate": 0.001,
+    "scheduler": "plateau",
+    "batch_size": 16,
+    "epochs": 100,
+    "fp16": false
+  },
+  "data": {
+    "directory": "/data_ssd/oyys/autophasenn/",
+    "train_samples": 25000,
+    "validation_samples": 5000
+  },
+  "paths": {
+    "run": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/residual_fp32_scratch_paper-mae_bs16_lr1e-3_20260808_230018",
+    "output": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/residual_fp32_scratch_paper-mae_bs16_lr1e-3_20260808_230018",
+    "checkpoints": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/residual_fp32_scratch_paper-mae_bs16_lr1e-3_20260808_230018",
+    "tensorboard": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/residual_fp32_scratch_paper-mae_bs16_lr1e-3_20260808_230018/tensorboard"
+  }
+}

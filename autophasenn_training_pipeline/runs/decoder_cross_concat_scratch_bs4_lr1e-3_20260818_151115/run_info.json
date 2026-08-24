@@ -1,0 +1,31 @@
+{
+  "run_name": "decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115",
+  "created_at": "2026-08-18T15:11:16.596913+08:00",
+  "model_variant": "decoder_cross_concat",
+  "initialization": "from_scratch",
+  "loss": {
+    "type": "l1",
+    "scope": "diff"
+  },
+  "optimization": {
+    "optimizer": "adam",
+    "learning_rate": 0.001,
+    "scheduler": "plateau",
+    "batch_size": 16,
+    "epochs": 100,
+    "fp16": false,
+    "cross_skip_only_epochs": 0,
+    "decoder_finetune_epochs": 0
+  },
+  "data": {
+    "directory": "/data_ssd/oyys/autophasenn/",
+    "train_samples": 25000,
+    "validation_samples": 5000
+  },
+  "paths": {
+    "run": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115",
+    "output": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115",
+    "checkpoints": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115",
+    "tensorboard": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/decoder_cross_concat_scratch_bs4_lr1e-3_20260818_151115/tensorboard"
+  }
+}
