@@ -1,0 +1,35 @@
+2026-08-24 21:56:47,022 | INFO | Output directory: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/evaluate/evaluate_mamba_skip_threshold_sweep
+2026-08-24 21:56:47,022 | INFO | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/mamba_skip_scratch_bs4_lr1e-3_20260823_155916/checkpoint_best.pt
+2026-08-24 21:56:47,022 | INFO | Diffraction data: /data_ssd/oyys/autophasenn/val_diff.npy
+2026-08-24 21:56:47,022 | INFO | Real-space data: /data_ssd/oyys/autophasenn/val_real.npy
+2026-08-24 21:56:47,022 | INFO | Resolved sample count: 5000
+2026-08-24 21:56:49,337 | INFO | Free metrics: source=generated_diagnostic_mask, selected_voxels=12906, fraction=0.049232
+2026-08-24 21:56:49,338 | INFO | Real-space post-process: tensor_device=cuda, phase_unwrap_workers=8
+2026-08-24 21:56:49,338 | INFO | Support threshold sweep: 0.05, 0.075, 0.1, 0.125, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4 | primary=0.1
+2026-08-24 21:56:49,905 | INFO | Completed 1 warmup batch(es).
+2026-08-24 22:03:13,490 | INFO | 
+Evaluation mean metrics
+FT:
+  L1: 4.06393
+  MSE: 125.961
+  RMSE: 9.56111
+  RelL1: 0.344542
+Amplitude:
+  L1: 0.0061336
+  MSE: 0.00252403
+  RMSE: 0.0484642
+  RelL1: 0.344781
+Phase:
+  L1: 0.38548
+  MSE: 0.275007
+  RMSE: 0.498333
+  RelL1: 0.649646
+Support:
+  L1: 0.00770905
+  MSE: 0.00770905
+  RMSE: 0.0859689
+  RelL1: 0.346818
+2026-08-24 22:03:13,491 | INFO | Wrote JSON report: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/evaluate/evaluate_mamba_skip_threshold_sweep/evaluation_results.json
+2026-08-24 22:03:13,491 | INFO | Wrote sample CSV: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/evaluate/evaluate_mamba_skip_threshold_sweep/evaluation_samples.csv
+2026-08-24 22:03:13,491 | INFO | Wrote Markdown summary: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/evaluate/evaluate_mamba_skip_threshold_sweep/evaluation_summary.md
+2026-08-24 22:03:13,491 | INFO | Threshold sweep | best mean IoU at 0.3 | volume ratio closest to 1 at 0.4
