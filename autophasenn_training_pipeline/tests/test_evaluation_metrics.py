@@ -9,6 +9,7 @@ from autophasenn_training_pipeline.evaluate import (
     materialize_metric_rows,
     post_process_realspace_batch,
     post_process_realspace_sample,
+    post_process_unwrapped_realspace,
     raw_amp_from_outputs,
     resolve_threshold_sweep,
     scipy_wrap_shift_batch,
@@ -98,6 +99,46 @@ def test_threshold_sweep_can_recover_pre_support_amplitude():
 
     assert raw_amp_from_outputs(outputs, masked_amp) is raw_amp
     assert raw_amp_from_outputs(outputs[:5], masked_amp) is masked_amp
+
+
+def test_primary_threshold_sweep_matches_standard_postprocess_path():
+    coordinates = torch.meshgrid(
+        torch.arange(7),
+        torch.arange(7),
+        torch.arange(7),
+        indexing="ij",
+    )
+    z, y, x = (coordinate.float() for coordinate in coordinates)
+    true_amp = torch.exp(-((z - 3) ** 2 + (y - 2) ** 2 + (x - 4) ** 2) / 4)[
+        None, None
+    ]
+    raw_amp = torch.exp(-((z - 2) ** 2 + (y - 4) ** 2 + (x - 3) ** 2) / 5)[
+        None, None
+    ]
+    true_phi = (0.1 * z + 0.2 * y - 0.1 * x)[None, None]
+    pred_phi = (0.2 * z - 0.1 * y + 0.1 * x)[None, None]
+    threshold = 0.1
+    support = (raw_amp >= threshold).float()
+    masked_amp = raw_amp * support
+
+    standard = post_process_unwrapped_realspace(
+        true_amp,
+        true_phi,
+        masked_amp,
+        pred_phi,
+        threshold,
+        pred_support=support,
+    )
+    swept = post_process_unwrapped_realspace(
+        true_amp,
+        true_phi,
+        raw_amp,
+        pred_phi,
+        threshold,
+    )
+
+    for standard_tensor, swept_tensor in zip(standard, swept):
+        assert torch.equal(standard_tensor, swept_tensor)
 
 
 def test_threshold_sweep_summary_selects_iou_and_volume_operating_points():

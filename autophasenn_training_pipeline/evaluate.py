@@ -667,43 +667,18 @@ def post_process_realspace_batch(
 ) -> tuple[torch.Tensor, ...]:
     """Batch official post-processing while keeping tensor operations on device."""
 
-    batch_size = pred_phi.shape[0]
-    true_phi_array = true_phi.detach().to(device="cpu", dtype=torch.float32).numpy()
-    pred_phi_array = pred_phi.detach().to(device="cpu", dtype=torch.float32).numpy()
-    phase_batch = np.concatenate((true_phi_array, pred_phi_array), axis=0)
-    unwrapped = unwrap_phase_volumes(phase_batch, executor=executor)
-    unwrapped_tensor = torch.from_numpy(unwrapped).to(
-        device=pred_phi.device,
-        dtype=pred_phi.dtype,
+    true_phi_unwrapped, pred_phi_unwrapped = unwrap_realspace_phase_pair(
+        true_phi,
+        pred_phi,
+        executor=executor,
     )
-    true_phi_unwrapped, pred_phi_unwrapped = torch.split(
-        unwrapped_tensor,
-        [batch_size, batch_size],
-        dim=0,
-    )
-    true_amp_device = true_amp.to(
-        device=pred_amp.device,
-        dtype=pred_amp.dtype,
-        non_blocking=pred_amp.device.type == "cuda",
-    )
-    true_amp_post, true_phi_post = official_post_process_tensor_batch(
-        true_amp_device,
+    return post_process_unwrapped_realspace(
+        true_amp,
         true_phi_unwrapped,
-        threshold=threshold,
-    )
-    pred_amp_post, pred_phi_post = official_post_process_tensor_batch(
         pred_amp,
         pred_phi_unwrapped,
-        threshold=threshold,
-    )
-    support_shifts = center_of_mass_shifts(pred_support)
-    support_post = scipy_wrap_shift_batch(pred_support, support_shifts)
-    return (
-        true_amp_post,
-        true_phi_post,
-        pred_amp_post,
-        pred_phi_post,
-        support_post,
+        threshold,
+        pred_support=pred_support,
     )
 
 
@@ -736,8 +711,9 @@ def post_process_unwrapped_realspace(
     pred_amp: torch.Tensor,
     pred_phi_unwrapped: torch.Tensor,
     threshold: float,
+    pred_support: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, ...]:
-    """Apply official post-processing to raw amplitude at one sweep threshold."""
+    """Apply the shared official processing after support threshold selection."""
 
     true_amp_device = true_amp.to(
         device=pred_amp.device,
@@ -754,7 +730,8 @@ def post_process_unwrapped_realspace(
         pred_phi_unwrapped,
         threshold=threshold,
     )
-    pred_support = (pred_amp >= threshold).float()
+    if pred_support is None:
+        pred_support = (pred_amp >= threshold).float()
     support_shifts = center_of_mass_shifts(pred_support)
     pred_support_post = scipy_wrap_shift_batch(pred_support, support_shifts)
     return (
