@@ -1,0 +1,9 @@
+2026-08-24 22:49:57 | INFO    | BN experiment | model=mamba_skip | checkpoint_epoch=70 | threshold=0.1 (checkpoint_metadata)
+2026-08-24 22:49:57 | INFO    | Data | calibration=25000 train samples | validation=5000 samples | batch=16
+2026-08-24 22:49:57 | INFO    | Evaluating checkpoint running statistics.
+2026-08-24 22:49:57 | INFO    | Completed 1 warmup batch(es).
+2026-08-24 22:54:29 | INFO    | Recalibrating 30 BatchNorm layers from training inputs.
+2026-08-24 22:58:40 | INFO    | Evaluating recalibrated running statistics.
+2026-08-24 22:58:40 | INFO    | Completed 1 warmup batch(es).
+2026-08-24 23:03:14 | INFO    | Complete | modulus MAE 4.06393 -> 4.19917 (-3.328%) | samples improved 12.90%
+2026-08-24 23:03:14 | INFO    | Artifacts: /home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/experiments/bn_recalibration/results/bn_recalibration_mamba_skip_checkpoint_best
