@@ -20,9 +20,15 @@ except ImportError:
 MAMBA_WIDTH = 32
 PVM_GROUPS = 4
 PVM_GROUP_WIDTH = MAMBA_WIDTH // PVM_GROUPS
-BN_EPS = 1e-3
-BN_MOMENTUM = 0.01
-LEAKY_RELU_SLOPE = 0.01
+MAMBA_SKIP_CONV_NAMES = (
+    "conv3d_10",
+    "conv3d_12",
+    "conv3d_19",
+    "conv3d_21",
+)
+MAMBA_SKIP_WEIGHT_KEYS = frozenset(
+    f"layers.{name}.weight" for name in MAMBA_SKIP_CONV_NAMES
+)
 
 MambaFactory: TypeAlias = Callable[..., nn.Module]
 MAMBA_SKIP_PREFIXES = (
@@ -30,10 +36,6 @@ MAMBA_SKIP_PREFIXES = (
     "amp_skip16.",
     "phase_skip8.",
     "phase_skip16.",
-    "amp_fuse8.",
-    "amp_fuse16.",
-    "phase_fuse8.",
-    "phase_fuse16.",
 )
 
 
@@ -155,42 +157,6 @@ class BiPVMBridge(nn.Module):
         )
 
 
-class _SkipFusion3D(nn.Module):
-    """Fuse a 32-channel skip with one baseline decoder feature."""
-
-    def __init__(self, decoder_channels: int) -> None:
-        super().__init__()
-        self.conv = nn.Conv3d(
-            decoder_channels + MAMBA_WIDTH,
-            decoder_channels,
-            kernel_size=3,
-            padding=1,
-        )
-        self.bn = nn.BatchNorm3d(
-            decoder_channels,
-            eps=BN_EPS,
-            momentum=BN_MOMENTUM,
-            affine=True,
-            track_running_stats=True,
-        )
-
-    def forward(self, decoder: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
-        """Concatenate equal-resolution features and restore decoder channels."""
-
-        if (
-            decoder.shape[0] != skip.shape[0]
-            or decoder.shape[-3:] != skip.shape[-3:]
-        ):
-            raise ValueError(
-                "Decoder and Bi-PVM skip features must match in batch and space; "
-                f"got decoder={tuple(decoder.shape)}, skip={tuple(skip.shape)}."
-            )
-        x = torch.cat((decoder, skip), dim=1)
-        x = self.conv(x)
-        x = F.leaky_relu(x, negative_slope=LEAKY_RELU_SLOPE)
-        return self.bn(x)
-
-
 class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
     """Baseline AutoPhaseNN with independent 8^3 and 16^3 Bi-PVM skips."""
 
@@ -202,16 +168,25 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
     ) -> None:
         super().__init__(threshold=threshold)
 
+        for name in MAMBA_SKIP_CONV_NAMES:
+            original = self.layers[name]
+            self.layers[name] = nn.Conv3d(
+                original.in_channels + MAMBA_WIDTH,
+                original.out_channels,
+                kernel_size=original.kernel_size,
+                stride=original.stride,
+                padding=original.padding,
+                dilation=original.dilation,
+                groups=original.groups,
+                bias=original.bias is not None,
+                padding_mode=original.padding_mode,
+            )
+
         bridge_kwargs = {"mamba_factory": mamba_factory}
         self.amp_skip8 = BiPVMBridge(128, **bridge_kwargs)
         self.amp_skip16 = BiPVMBridge(64, **bridge_kwargs)
         self.phase_skip8 = BiPVMBridge(128, **bridge_kwargs)
         self.phase_skip16 = BiPVMBridge(64, **bridge_kwargs)
-
-        self.amp_fuse8 = _SkipFusion3D(256)
-        self.amp_fuse16 = _SkipFusion3D(128)
-        self.phase_fuse8 = _SkipFusion3D(128)
-        self.phase_fuse16 = _SkipFusion3D(128)
 
     def encode_with_skips(
         self,
@@ -257,6 +232,27 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
         )
         return bottleneck, e16, e8
 
+    def _up_mamba_skip_lrelu_block(
+        self,
+        x: torch.Tensor,
+        skip: torch.Tensor,
+        conv1: str,
+        bn1: str,
+        conv2: str,
+        bn2: str,
+    ) -> torch.Tensor:
+        """Upsample, concatenate one Bi-PVM skip, and run a decoder block."""
+
+        x = F.interpolate(x, scale_factor=2, mode="nearest")
+        if x.shape[0] != skip.shape[0] or x.shape[-3:] != skip.shape[-3:]:
+            raise ValueError(
+                "Decoder and Bi-PVM skip features must match in batch and space; "
+                f"got decoder={tuple(x.shape)}, skip={tuple(skip.shape)}."
+            )
+        x = torch.cat((x, skip), dim=1)
+        x = self._conv_lrelu_bn(x, conv1, bn1)
+        return self._conv_lrelu_bn(x, conv2, bn2)
+
     def decode_amplitude_with_skips(
         self,
         encoded: torch.Tensor,
@@ -265,22 +261,22 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
     ) -> torch.Tensor:
         """Decode amplitude with independent Bi-PVM skips at 8^3 and 16^3."""
 
-        x = self._up_lrelu_block(
+        x = self._up_mamba_skip_lrelu_block(
             encoded,
+            self.amp_skip8(e8),
             "conv3d_10",
             "batch_normalization_10",
             "conv3d_11",
             "batch_normalization_11",
         )
-        x = self.amp_fuse8(x, self.amp_skip8(e8))
-        x = self._up_lrelu_block(
+        x = self._up_mamba_skip_lrelu_block(
             x,
+            self.amp_skip16(e16),
             "conv3d_12",
             "batch_normalization_12",
             "conv3d_13",
             "batch_normalization_13",
         )
-        x = self.amp_fuse16(x, self.amp_skip16(e16))
         x = self._up_lrelu_block(
             x,
             "conv3d_14",
@@ -305,22 +301,22 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
     ) -> torch.Tensor:
         """Decode phase with independent Bi-PVM skips at 8^3 and 16^3."""
 
-        x = self._up_lrelu_block(
+        x = self._up_mamba_skip_lrelu_block(
             encoded,
+            self.phase_skip8(e8),
             "conv3d_19",
             "batch_normalization_18",
             "conv3d_20",
             "batch_normalization_19",
         )
-        x = self.phase_fuse8(x, self.phase_skip8(e8))
-        x = self._up_lrelu_block(
+        x = self._up_mamba_skip_lrelu_block(
             x,
+            self.phase_skip16(e16),
             "conv3d_21",
             "batch_normalization_20",
             "conv3d_22",
             "batch_normalization_21",
         )
-        x = self.phase_fuse16(x, self.phase_skip16(e16))
         x = self._up_lrelu_block(
             x,
             "conv3d_23",
@@ -350,7 +346,7 @@ def initialize_from_baseline_state_dict(
     model: AutoPhaseNNBiPVMSkip,
     baseline_state_dict: Mapping[str, torch.Tensor],
 ) -> None:
-    """Copy the complete baseline backbone and retain new-module initialization."""
+    """Copy baseline weights and zero the four added Mamba input slices."""
 
     target_state = model.state_dict()
     baseline_keys = set(baseline_state_dict)
@@ -370,12 +366,28 @@ def initialize_from_baseline_state_dict(
     adapted_state = dict(target_state)
     for key, source in baseline_state_dict.items():
         target = target_state[key]
-        if source.shape != target.shape:
-            raise RuntimeError(
-                f"Unexpected baseline shape mismatch for {key}: "
-                f"checkpoint={tuple(source.shape)}, model={tuple(target.shape)}."
+        if key in MAMBA_SKIP_WEIGHT_KEYS:
+            expected_target_shape = (
+                source.shape[0],
+                source.shape[1] + MAMBA_WIDTH,
+                *source.shape[2:],
             )
-        adapted_state[key] = source
+            if tuple(target.shape) != expected_target_shape:
+                raise RuntimeError(
+                    f"Mamba-skip convolution {key} has shape {tuple(target.shape)}; "
+                    f"expected {expected_target_shape}."
+                )
+            expanded = source.new_zeros(target.shape)
+            expanded[:, : source.shape[1]] = source
+            adapted_state[key] = expanded
+            continue
+        if source.shape == target.shape:
+            adapted_state[key] = source
+            continue
+        raise RuntimeError(
+            f"Unexpected baseline shape mismatch for {key}: "
+            f"checkpoint={tuple(source.shape)}, model={tuple(target.shape)}."
+        )
     model.load_state_dict(adapted_state, strict=True)
 
 

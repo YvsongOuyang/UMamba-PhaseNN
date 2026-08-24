@@ -775,8 +775,8 @@ def main():
             )
         elif args.model_variant == "mamba_skip":
             LOGGER.info(
-                "Loaded baseline backbone weights; Mamba bridges and fusion blocks "
-                "retain their initialized values: %s",
+                "Loaded baseline weights with zero-initialized Mamba decoder input "
+                "channels; Bi-PVM bridges retain their initialized values: %s",
                 args.pretrained,
             )
         else:

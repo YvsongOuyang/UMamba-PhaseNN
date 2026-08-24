@@ -137,15 +137,16 @@ low learning rate.
 paths, output activations, support construction, forward physics, and training
 loss. It adds independent encoder-to-decoder Bi-PVM bridges at only the
 `8 x 8 x 8` and `16 x 16 x 16` scales. Amplitude and phase use four completely
-independent bridges and fusion blocks.
+independent bridges.
 
 Each bridge projects its encoder feature to 32 channels, applies residual
 depthwise 3D local mixing, splits the flattened sequence into four 8-channel
 groups, and applies independent forward and reverse Mamba operators per group.
-The bridge output is concatenated with the matching decoder feature and fused
-by one `3 x 3 x 3` convolution with the baseline LeakyReLU and BatchNorm
-configuration. The Mamba parameters are fixed to `d_model=8`, `d_state=16`,
-`d_conv=4`, and `expand=2` for this experiment.
+The bridge output is concatenated with the matching upsampled decoder input.
+The corresponding original decoder convolution receives 32 additional input
+channels while retaining its baseline LeakyReLU and BatchNorm path. The Mamba
+parameters are fixed to `d_model=8`, `d_state=16`, `d_conv=4`, and `expand=2`
+for this experiment.
 
 The variant uses the repository's existing `mamba-ssm` dependency and is
 selected with `--model-variant mamba_skip`. To initialize it from a trained
@@ -154,19 +155,26 @@ baseline, pass the baseline checkpoint through `--pretrained`:
 ```bash
 python autophasenn_training_pipeline/train.py \
   --model-variant mamba_skip \
+  --threshold 0.1 \
   --pretrained /path/to/baseline/checkpoint_best.pt
 ```
 
-Every same-name, same-shape baseline encoder, bottleneck, decoder, output, and
-BatchNorm tensor is copied. The four Bi-PVM bridges and four fusion blocks keep
-their own initialization, and the full network is then trained with a fresh
-optimizer. Use `--resume` only to continue an existing Mamba-Skip run, or
-`--from-scratch` to keep the original random-initialization experiment.
+Every baseline encoder, bottleneck, decoder, output, and BatchNorm tensor is
+copied. For the four expanded decoder convolutions, the original input-channel
+weights are copied and the 32 new Mamba-channel weights start at zero. The four
+Bi-PVM bridges keep their own initialization. With the baseline threshold of
+`0.1`, the initialized model therefore reproduces the baseline forward output;
+the full network is then trained with a fresh optimizer. Use `--resume` only to
+continue an existing Mamba-Skip run, or `--from-scratch` to keep the original
+random-initialization experiment.
 
 The validation support sweep selected `0.3` as the Mamba-Skip operating
 threshold. Training, evaluation, and visualization therefore default to `0.3`
 for `mamba_skip`; all other variants retain `0.1`. Passing `--threshold`
-explicitly always takes precedence.
+explicitly always takes precedence. Baseline-initialized training should pass
+`--threshold 0.1` explicitly so the support and forward physics also match the
+baseline at initialization; `0.3` remains available for post-training support
+evaluation.
 
 ## BatchNorm Recalibration Experiment
 

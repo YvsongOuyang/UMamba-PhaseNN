@@ -32,7 +32,9 @@ from autophasenn_training_pipeline.model_factory import (
     resolve_support_threshold,
 )
 from autophasenn_training_pipeline.model_mamba_skip import (
+    MAMBA_SKIP_CONV_NAMES,
     MAMBA_SKIP_PREFIXES,
+    MAMBA_WIDTH,
     initialize_from_baseline_state_dict,
 )
 
@@ -106,29 +108,41 @@ def test_model_variant_support_threshold_defaults_are_isolated():
     assert resolve_support_threshold("mamba_skip", 0.15) == pytest.approx(0.15)
 
 
-def test_mamba_skip_baseline_initialization_preserves_new_modules():
+def test_mamba_skip_baseline_initialization_zeroes_new_input_channels():
     class TinyMambaSkip(torch.nn.Module):
         def __init__(self):
             super().__init__()
-            self.layers = torch.nn.Conv3d(1, 2, kernel_size=1)
+            self.layers = torch.nn.ModuleDict(
+                {
+                    name: torch.nn.Conv3d(2 + MAMBA_WIDTH, 2, kernel_size=1)
+                    for name in MAMBA_SKIP_CONV_NAMES
+                }
+            )
             for prefix in MAMBA_SKIP_PREFIXES:
                 setattr(self, prefix.removesuffix("."), torch.nn.Conv3d(1, 1, 1))
 
     model = TinyMambaSkip()
     initial_state = {key: value.clone() for key, value in model.state_dict().items()}
-    baseline_state = {
-        key: torch.full_like(value, 0.25)
-        for key, value in initial_state.items()
-        if key.startswith("layers.")
-    }
+    baseline_state = {}
+    for name in MAMBA_SKIP_CONV_NAMES:
+        baseline_state[f"layers.{name}.weight"] = torch.full(
+            (2, 2, 1, 1, 1),
+            0.25,
+        )
+        baseline_state[f"layers.{name}.bias"] = torch.full((2,), 0.25)
 
     initialize_from_baseline_state_dict(model, baseline_state)
     initialized_state = model.state_dict()
 
+    for name in MAMBA_SKIP_CONV_NAMES:
+        weight_key = f"layers.{name}.weight"
+        bias_key = f"layers.{name}.bias"
+        expanded_weight = initialized_state[weight_key]
+        assert torch.equal(expanded_weight[:, :2], baseline_state[weight_key])
+        assert torch.count_nonzero(expanded_weight[:, 2:]).item() == 0
+        assert torch.equal(initialized_state[bias_key], baseline_state[bias_key])
     for key, value in initialized_state.items():
-        if key.startswith("layers."):
-            assert torch.equal(value, baseline_state[key])
-        else:
+        if key.startswith(MAMBA_SKIP_PREFIXES):
             assert torch.equal(value, initial_state[key])
 
 
