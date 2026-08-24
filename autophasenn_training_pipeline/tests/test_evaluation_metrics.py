@@ -31,6 +31,10 @@ from autophasenn_training_pipeline.model_factory import (
     default_support_threshold,
     resolve_support_threshold,
 )
+from autophasenn_training_pipeline.model_mamba_skip import (
+    MAMBA_SKIP_PREFIXES,
+    initialize_from_baseline_state_dict,
+)
 
 
 def test_windowed_ssim_is_one_for_identical_volumes():
@@ -100,6 +104,32 @@ def test_model_variant_support_threshold_defaults_are_isolated():
     assert default_support_threshold("mamba_skip") == pytest.approx(0.3)
     assert default_support_threshold("baseline") == pytest.approx(0.1)
     assert resolve_support_threshold("mamba_skip", 0.15) == pytest.approx(0.15)
+
+
+def test_mamba_skip_baseline_initialization_preserves_new_modules():
+    class TinyMambaSkip(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = torch.nn.Conv3d(1, 2, kernel_size=1)
+            for prefix in MAMBA_SKIP_PREFIXES:
+                setattr(self, prefix.removesuffix("."), torch.nn.Conv3d(1, 1, 1))
+
+    model = TinyMambaSkip()
+    initial_state = {key: value.clone() for key, value in model.state_dict().items()}
+    baseline_state = {
+        key: torch.full_like(value, 0.25)
+        for key, value in initial_state.items()
+        if key.startswith("layers.")
+    }
+
+    initialize_from_baseline_state_dict(model, baseline_state)
+    initialized_state = model.state_dict()
+
+    for key, value in initialized_state.items():
+        if key.startswith("layers."):
+            assert torch.equal(value, baseline_state[key])
+        else:
+            assert torch.equal(value, initial_state[key])
 
 
 def test_threshold_sweep_can_recover_pre_support_amplitude():

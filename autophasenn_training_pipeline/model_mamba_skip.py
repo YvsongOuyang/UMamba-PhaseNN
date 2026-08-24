@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import TypeAlias
 
 import torch
@@ -24,6 +25,16 @@ BN_MOMENTUM = 0.01
 LEAKY_RELU_SLOPE = 0.01
 
 MambaFactory: TypeAlias = Callable[..., nn.Module]
+MAMBA_SKIP_PREFIXES = (
+    "amp_skip8.",
+    "amp_skip16.",
+    "phase_skip8.",
+    "phase_skip16.",
+    "amp_fuse8.",
+    "amp_fuse16.",
+    "phase_fuse8.",
+    "phase_fuse16.",
+)
 
 
 def _resolve_mamba_factory() -> MambaFactory:
@@ -333,3 +344,49 @@ class AutoPhaseNNBiPVMSkip(TFCompatibleAutoPhaseNN):
         amp = self.decode_amplitude_with_skips(encoded, e16, e8)
         phi = self.decode_phase_with_skips(encoded, e16, e8)
         return self._apply_forward_physics(amp, phi)
+
+
+def initialize_from_baseline_state_dict(
+    model: AutoPhaseNNBiPVMSkip,
+    baseline_state_dict: Mapping[str, torch.Tensor],
+) -> None:
+    """Copy the complete baseline backbone and retain new-module initialization."""
+
+    target_state = model.state_dict()
+    baseline_keys = set(baseline_state_dict)
+    target_keys = set(target_state)
+    unexpected = sorted(baseline_keys.difference(target_keys))
+    missing = sorted(target_keys.difference(baseline_keys))
+    expected_missing = sorted(
+        key for key in target_keys if key.startswith(MAMBA_SKIP_PREFIXES)
+    )
+    if unexpected or missing != expected_missing:
+        raise RuntimeError(
+            "Baseline checkpoint keys do not match AutoPhaseNNBiPVMSkip: "
+            f"missing={missing}, unexpected={unexpected}. Use --resume for an "
+            "existing mamba_skip checkpoint."
+        )
+
+    adapted_state = dict(target_state)
+    for key, source in baseline_state_dict.items():
+        target = target_state[key]
+        if source.shape != target.shape:
+            raise RuntimeError(
+                f"Unexpected baseline shape mismatch for {key}: "
+                f"checkpoint={tuple(source.shape)}, model={tuple(target.shape)}."
+            )
+        adapted_state[key] = source
+    model.load_state_dict(adapted_state, strict=True)
+
+
+def load_baseline_weights(
+    model: AutoPhaseNNBiPVMSkip,
+    checkpoint_path: str | Path,
+    map_location: str | torch.device = "cpu",
+) -> object:
+    """Initialize a Mamba-Skip model from a standard baseline checkpoint."""
+
+    checkpoint = torch.load(checkpoint_path, map_location=map_location)
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+    initialize_from_baseline_state_dict(model, state_dict)
+    return checkpoint

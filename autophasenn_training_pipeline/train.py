@@ -773,6 +773,12 @@ def main():
                 "Loaded baseline weights with zero-initialized cross-concat kernels: %s",
                 args.pretrained,
             )
+        elif args.model_variant == "mamba_skip":
+            LOGGER.info(
+                "Loaded baseline backbone weights; Mamba bridges and fusion blocks "
+                "retain their initialized values: %s",
+                args.pretrained,
+            )
         else:
             LOGGER.info("Loaded pretrained weights: %s", args.pretrained)
 

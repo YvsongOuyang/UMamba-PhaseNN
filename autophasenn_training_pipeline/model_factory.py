@@ -16,7 +16,10 @@ try:
         DecoderCrossConcatAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_concat_baseline_weights,
     )
-    from .model_mamba_skip import AutoPhaseNNBiPVMSkip
+    from .model_mamba_skip import (
+        AutoPhaseNNBiPVMSkip,
+        load_baseline_weights as load_mamba_skip_baseline_weights,
+    )
     from .model_residual import ResidualAutoPhaseNN
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -32,7 +35,10 @@ except ImportError:
         DecoderCrossConcatAutoPhaseNN,
         load_baseline_weights as load_decoder_cross_concat_baseline_weights,
     )
-    from model_mamba_skip import AutoPhaseNNBiPVMSkip
+    from model_mamba_skip import (
+        AutoPhaseNNBiPVMSkip,
+        load_baseline_weights as load_mamba_skip_baseline_weights,
+    )
     from model_residual import ResidualAutoPhaseNN
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
@@ -126,6 +132,14 @@ def load_pretrained_weights(
                 "decoder_cross_concat requires DecoderCrossConcatAutoPhaseNN."
             )
         return load_decoder_cross_concat_baseline_weights(
+            model,
+            checkpoint_path,
+            map_location=map_location,
+        )
+    if model_variant == "mamba_skip":
+        if not isinstance(model, AutoPhaseNNBiPVMSkip):
+            raise TypeError("mamba_skip requires AutoPhaseNNBiPVMSkip.")
+        return load_mamba_skip_baseline_weights(
             model,
             checkpoint_path,
             map_location=map_location,

@@ -148,14 +148,20 @@ configuration. The Mamba parameters are fixed to `d_model=8`, `d_state=16`,
 `d_conv=4`, and `expand=2` for this experiment.
 
 The variant uses the repository's existing `mamba-ssm` dependency and is
-selected with `--model-variant mamba_skip`. Train it from random initialization
-with the same configuration as the baseline comparison:
+selected with `--model-variant mamba_skip`. To initialize it from a trained
+baseline, pass the baseline checkpoint through `--pretrained`:
 
 ```bash
 python autophasenn_training_pipeline/train.py \
   --model-variant mamba_skip \
-  --from-scratch
+  --pretrained /path/to/baseline/checkpoint_best.pt
 ```
+
+Every same-name, same-shape baseline encoder, bottleneck, decoder, output, and
+BatchNorm tensor is copied. The four Bi-PVM bridges and four fusion blocks keep
+their own initialization, and the full network is then trained with a fresh
+optimizer. Use `--resume` only to continue an existing Mamba-Skip run, or
+`--from-scratch` to keep the original random-initialization experiment.
 
 The validation support sweep selected `0.3` as the Mamba-Skip operating
 threshold. Training, evaluation, and visualization therefore default to `0.3`
