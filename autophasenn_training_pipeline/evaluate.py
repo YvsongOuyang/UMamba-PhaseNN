@@ -80,6 +80,15 @@ PAPER_METRICS = {
     },
 }
 
+THRESHOLD_SWEEP_METRICS = (
+    "real_amp_l1",
+    "real_amp_ssim",
+    "real_support_iou",
+    "real_support_dice",
+    "real_support_volume_ratio",
+    "real_phase_mae_true_support",
+)
+
 
 def optional_data_path(data_dir: Path, filename: str | None) -> Path | None:
     """Resolve an optional data filename relative to the data directory."""
@@ -165,6 +174,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     parser.add_argument("--threshold", type=float, default=0.1)
     parser.add_argument(
+        "--threshold-sweep",
+        type=float,
+        nargs="+",
+        default=(),
+        metavar="T",
+        help=(
+            "Evaluate additional real-space support thresholds in the same pass. "
+            "The primary --threshold is always included and remains the headline result."
+        ),
+    )
+    parser.add_argument(
         "--ssim-window-size",
         type=int,
         default=7,
@@ -242,6 +262,9 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("--num-workers cannot be negative.")
     if args.postprocess_workers < 0:
         raise ValueError("--postprocess-workers cannot be negative.")
+    thresholds = (args.threshold, *args.threshold_sweep)
+    if any(not math.isfinite(value) or value < 0 for value in thresholds):
+        raise ValueError("Support thresholds must be finite and nonnegative.")
     if not 0.0 <= args.free_fraction < 1.0:
         raise ValueError("--free-fraction must be in [0, 1).")
     if args.ssim_window_size < 1 or args.ssim_window_size % 2 == 0:
@@ -252,6 +275,22 @@ def validate_args(args: argparse.Namespace) -> None:
         raise ValueError("--warmup-batches cannot be negative.")
     if args.reference_runtime_ms < 0:
         raise ValueError("--reference-runtime-ms cannot be negative.")
+
+
+def resolve_threshold_sweep(
+    primary_threshold: float,
+    requested_thresholds: tuple[float, ...] | list[float],
+) -> tuple[float, ...]:
+    """Return sorted unique sweep thresholds with the primary value included."""
+
+    if not requested_thresholds:
+        return ()
+    resolved: list[float] = []
+    for value in (primary_threshold, *requested_thresholds):
+        threshold = float(value)
+        if not any(math.isclose(threshold, current) for current in resolved):
+            resolved.append(threshold)
+    return tuple(sorted(resolved))
 
 
 def load_external_free_mask(
@@ -357,6 +396,17 @@ def unpack_outputs(outputs: object) -> tuple[torch.Tensor, ...]:
             "Model must return (pred_diff, pred_obj, pred_amp, pred_phi, support)."
         )
     return tuple(outputs[:5])
+
+
+def raw_amp_from_outputs(
+    outputs: object,
+    masked_amp: torch.Tensor,
+) -> torch.Tensor:
+    """Return pre-support amplitude when the six-output model contract provides it."""
+
+    if isinstance(outputs, (tuple, list)) and len(outputs) >= 6:
+        return outputs[5]
+    return masked_amp
 
 
 def shift_center_of_mass(
@@ -657,6 +707,65 @@ def post_process_realspace_batch(
     )
 
 
+def unwrap_realspace_phase_pair(
+    true_phi: torch.Tensor,
+    pred_phi: torch.Tensor,
+    executor: Executor | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Unwrap target and prediction once for every requested support threshold."""
+
+    batch_size = pred_phi.shape[0]
+    phase_batch = np.concatenate(
+        (
+            true_phi.detach().to(device="cpu", dtype=torch.float32).numpy(),
+            pred_phi.detach().to(device="cpu", dtype=torch.float32).numpy(),
+        ),
+        axis=0,
+    )
+    unwrapped = unwrap_phase_volumes(phase_batch, executor=executor)
+    unwrapped_tensor = torch.from_numpy(unwrapped).to(
+        device=pred_phi.device,
+        dtype=pred_phi.dtype,
+    )
+    return torch.split(unwrapped_tensor, [batch_size, batch_size], dim=0)
+
+
+def post_process_unwrapped_realspace(
+    true_amp: torch.Tensor,
+    true_phi_unwrapped: torch.Tensor,
+    pred_amp: torch.Tensor,
+    pred_phi_unwrapped: torch.Tensor,
+    threshold: float,
+) -> tuple[torch.Tensor, ...]:
+    """Apply official post-processing to raw amplitude at one sweep threshold."""
+
+    true_amp_device = true_amp.to(
+        device=pred_amp.device,
+        dtype=pred_amp.dtype,
+        non_blocking=pred_amp.device.type == "cuda",
+    )
+    true_amp_post, true_phi_post = official_post_process_tensor_batch(
+        true_amp_device,
+        true_phi_unwrapped,
+        threshold=threshold,
+    )
+    pred_amp_post, pred_phi_post = official_post_process_tensor_batch(
+        pred_amp,
+        pred_phi_unwrapped,
+        threshold=threshold,
+    )
+    pred_support = (pred_amp >= threshold).float()
+    support_shifts = center_of_mass_shifts(pred_support)
+    pred_support_post = scipy_wrap_shift_batch(pred_support, support_shifts)
+    return (
+        true_amp_post,
+        true_phi_post,
+        pred_amp_post,
+        pred_phi_post,
+        pred_support_post,
+    )
+
+
 def materialize_metric_rows(
     metrics: dict[str, torch.Tensor],
 ) -> list[dict[str, float]]:
@@ -760,6 +869,50 @@ def metric_statistics(
     return statistics
 
 
+def summarize_threshold_sweep(
+    rows: list[dict[str, object]],
+) -> dict[str, object]:
+    """Aggregate sweep metrics and select transparent support operating points."""
+
+    thresholds = sorted({float(row["threshold"]) for row in rows})
+    summaries: list[dict[str, object]] = []
+    for threshold in thresholds:
+        threshold_rows = [
+            row for row in rows if math.isclose(float(row["threshold"]), threshold)
+        ]
+        statistics = metric_statistics(threshold_rows)
+        statistics.pop("threshold", None)
+        summaries.append(
+            {
+                "threshold": threshold,
+                "num_samples": len(threshold_rows),
+                "mean": {
+                    metric: statistics[metric]["mean"]
+                    for metric in THRESHOLD_SWEEP_METRICS
+                },
+                "metric_statistics": statistics,
+            }
+        )
+
+    best_iou = max(
+        summaries,
+        key=lambda item: item["mean"]["real_support_iou"],
+    )
+    closest_volume = min(
+        summaries,
+        key=lambda item: abs(item["mean"]["real_support_volume_ratio"] - 1.0),
+    )
+    return {
+        "enabled": True,
+        "selection_scope": "validation_diagnostic_only",
+        "primary_threshold_unchanged": True,
+        "metrics": list(THRESHOLD_SWEEP_METRICS),
+        "summaries": summaries,
+        "best_mean_iou_threshold": best_iou["threshold"],
+        "closest_mean_volume_ratio_threshold": closest_volume["threshold"],
+    }
+
+
 def write_json(path: Path, report: dict[str, object]) -> None:
     """Write the full machine-readable report."""
 
@@ -787,6 +940,26 @@ def write_sample_csv(path: Path, per_sample: list[dict[str, object]]) -> None:
         writer.writerows(per_sample)
 
 
+def write_threshold_sweep_summary_csv(
+    path: Path,
+    sweep: dict[str, object],
+) -> None:
+    """Write one compact aggregate row per support threshold."""
+
+    fieldnames = ["threshold", "num_samples", *THRESHOLD_SWEEP_METRICS]
+    with path.open("w", newline="", encoding="utf-8-sig") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer.writeheader()
+        for summary in sweep["summaries"]:
+            writer.writerow(
+                {
+                    "threshold": summary["threshold"],
+                    "num_samples": summary["num_samples"],
+                    **summary["mean"],
+                }
+            )
+
+
 def format_number(value: object) -> str:
     """Format report scalars compactly without losing small values."""
 
@@ -810,6 +983,9 @@ def render_markdown(report: dict[str, object]) -> str:
     timing = report["timing"]
     paper_coverage = report["paper_metric_coverage"]
     grouped_mean = report["mean_metric_groups"]
+    sweep_display = ", ".join(
+        format_number(value) for value in run["support_threshold_sweep"]
+    ) or "disabled"
     lines = [
         "# AutoPhaseNN Evaluation Summary",
         "",
@@ -827,6 +1003,7 @@ def render_markdown(report: dict[str, object]) -> str:
         f"| Samples | {run['num_samples']} |",
         f"| Batch size | {run['batch_size']} |",
         f"| Support threshold | {format_number(run['support_threshold'])} |",
+        f"| Support threshold sweep | {sweep_display} |",
         f"| SSIM window | {run['ssim_window_size']} x {run['ssim_window_size']} x {run['ssim_window_size']} |",
         f"| Real-space ground truth | {run['realspace_metrics']} |",
         f"| Real-space post-process | `{run['realspace_post_process']}` |",
@@ -855,6 +1032,47 @@ def render_markdown(report: dict[str, object]) -> str:
         lines.append(
             f"| `{key}` | {values[0]} | {values[1]} | {values[2]} | {values[3]} "
             f"| {metadata['direction']} | {metadata['paper_reference']} |"
+        )
+
+    threshold_sweep = report["threshold_sweep"]
+    if threshold_sweep["enabled"]:
+        lines.extend(
+            [
+                "",
+                "## Support Threshold Sweep",
+                "",
+                "The primary threshold remains the headline operating point. Sweep-selected "
+                "thresholds are validation diagnostics and must not be treated as an "
+                "independently tested hyperparameter choice.",
+                "",
+                "| Threshold | Primary | Amp L1 | Amp SSIM | Support IoU | "
+                "Support Dice | Volume ratio | Phase MAE |",
+                "|---:|:---:|---:|---:|---:|---:|---:|---:|",
+            ]
+        )
+        for summary in threshold_sweep["summaries"]:
+            threshold = summary["threshold"]
+            values = summary["mean"]
+            is_primary = (
+                "yes" if math.isclose(threshold, run["support_threshold"]) else ""
+            )
+            lines.append(
+                f"| {format_number(threshold)} | {is_primary} | "
+                f"{format_number(values['real_amp_l1'])} | "
+                f"{format_number(values['real_amp_ssim'])} | "
+                f"{format_number(values['real_support_iou'])} | "
+                f"{format_number(values['real_support_dice'])} | "
+                f"{format_number(values['real_support_volume_ratio'])} | "
+                f"{format_number(values['real_phase_mae_true_support'])} |"
+            )
+        lines.extend(
+            [
+                "",
+                "- Best mean-IoU threshold: "
+                f"`{format_number(threshold_sweep['best_mean_iou_threshold'])}`.",
+                "- Threshold with mean volume ratio closest to one: "
+                f"`{format_number(threshold_sweep['closest_mean_volume_ratio_threshold'])}`.",
+            ]
         )
 
     lines.extend(
@@ -892,6 +1110,14 @@ def render_markdown(report: dict[str, object]) -> str:
             "",
         ]
     )
+    if threshold_sweep["enabled"]:
+        lines.extend(
+            [
+                "- `evaluation_threshold_sweep.csv`: one aggregate row per threshold.",
+                "- `evaluation_threshold_sweep_samples.csv`: per-sample sweep metrics.",
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -904,12 +1130,21 @@ def evaluate(
     device: torch.device,
     free_mask: torch.Tensor | None,
     postprocess_workers: int,
-) -> tuple[list[dict[str, object]], dict[str, float]]:
+) -> tuple[
+    list[dict[str, object]],
+    dict[str, float],
+    list[dict[str, object]],
+]:
     """Evaluate all samples with model.eval() and inference-only autograd state."""
 
     model.eval()
     total: dict[str, float] = {}
     per_sample: list[dict[str, object]] = []
+    threshold_sweep_rows: list[dict[str, object]] = []
+    sweep_thresholds = resolve_threshold_sweep(
+        args.threshold,
+        args.threshold_sweep,
+    )
     has_realspace = dataset.mmap_real is not None
     device_free_mask = free_mask.to(device) if free_mask is not None else None
     progress = tqdm(loader, desc="AutoPhaseNN evaluation", unit="batch")
@@ -926,6 +1161,7 @@ def evaluate(
             diff = batch["diff"].to(device, non_blocking=True).float()
             outputs, batch_inference_seconds = timed_model_forward(model, diff, device)
             pred_diff, _pred_obj, pred_amp, pred_phi, support = unpack_outputs(outputs)
+            raw_pred_amp = raw_amp_from_outputs(outputs, pred_amp)
             inference_ms_per_sample = 1000.0 * batch_inference_seconds / diff.shape[0]
 
             metric_tensors = metric_tensor_dict(diff, pred_diff)
@@ -933,14 +1169,46 @@ def evaluate(
                 metric_tensors.update(
                     free_metric_tensor_dict(diff, pred_diff, device_free_mask)
                 )
-            if has_realspace:
-                (
-                    true_amp_post,
-                    true_phi_post,
-                    pred_amp_post,
-                    pred_phi_post,
-                    support_post,
-                ) = post_process_realspace_batch(
+            if has_realspace and sweep_thresholds:
+                true_phi_unwrapped, pred_phi_unwrapped = unwrap_realspace_phase_pair(
+                    batch["phi"].float(),
+                    pred_phi,
+                    executor=unwrap_executor,
+                )
+                primary_realspace_metrics = None
+                for threshold in sweep_thresholds:
+                    processed = post_process_unwrapped_realspace(
+                        batch["amp"].float(),
+                        true_phi_unwrapped,
+                        raw_pred_amp,
+                        pred_phi_unwrapped,
+                        threshold,
+                    )
+                    realspace_metrics = realspace_metric_tensor_dict(
+                        *processed,
+                        threshold=threshold,
+                        ssim_window_size=args.ssim_window_size,
+                    )
+                    if math.isclose(threshold, args.threshold):
+                        primary_realspace_metrics = realspace_metrics
+                    sweep_metrics = {
+                        key: realspace_metrics[key]
+                        for key in THRESHOLD_SWEEP_METRICS
+                    }
+                    batch_sweep_rows = materialize_metric_rows(sweep_metrics)
+                    for name, metrics in zip(batch["name"], batch_sweep_rows):
+                        threshold_sweep_rows.append(
+                            {
+                                "name": name,
+                                "threshold": threshold,
+                                **metrics,
+                            }
+                        )
+                if primary_realspace_metrics is None:
+                    raise RuntimeError("Primary threshold missing from threshold sweep.")
+                metric_tensors.update(primary_realspace_metrics)
+            elif has_realspace:
+                processed = post_process_realspace_batch(
                     batch["amp"].float(),
                     batch["phi"].float(),
                     pred_amp,
@@ -951,11 +1219,7 @@ def evaluate(
                 )
                 metric_tensors.update(
                     realspace_metric_tensor_dict(
-                        true_amp_post,
-                        true_phi_post,
-                        pred_amp_post,
-                        pred_phi_post,
-                        support_post,
+                        *processed,
                         threshold=args.threshold,
                         ssim_window_size=args.ssim_window_size,
                     )
@@ -968,7 +1232,7 @@ def evaluate(
     finally:
         if unwrap_executor is not None:
             unwrap_executor.shutdown(wait=True)
-    return per_sample, total
+    return per_sample, total, threshold_sweep_rows
 
 
 def main() -> int:
@@ -976,6 +1240,10 @@ def main() -> int:
 
     args = parse_args()
     validate_args(args)
+    sweep_thresholds = resolve_threshold_sweep(
+        args.threshold,
+        args.threshold_sweep,
+    )
     output_dir = resolve_output_dir(args)
     configure_logging(output_dir, args.log_level)
     device = choose_device(args.device)
@@ -1009,6 +1277,8 @@ def main() -> int:
         dtype_real=args.dtype_real,
         shuffle=False,
     )
+    if sweep_thresholds and dataset.mmap_real is None:
+        raise ValueError("--threshold-sweep requires --data-real ground truth.")
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -1059,10 +1329,16 @@ def main() -> int:
         device,
         postprocess_workers,
     )
+    if sweep_thresholds:
+        LOGGER.info(
+            "Support threshold sweep: %s | primary=%.6g",
+            ", ".join(format_number(value) for value in sweep_thresholds),
+            args.threshold,
+        )
 
     warm_up_model(model, loader, device, args.warmup_batches)
     evaluation_started = time.perf_counter()
-    per_sample, total = evaluate(
+    per_sample, total, threshold_sweep_rows = evaluate(
         args,
         model,
         loader,
@@ -1074,6 +1350,20 @@ def main() -> int:
     evaluation_wall_seconds = time.perf_counter() - evaluation_started
     if not per_sample:
         raise RuntimeError("Evaluation produced no samples.")
+
+    threshold_sweep = (
+        summarize_threshold_sweep(threshold_sweep_rows)
+        if threshold_sweep_rows
+        else {
+            "enabled": False,
+            "selection_scope": "disabled",
+            "primary_threshold_unchanged": True,
+            "metrics": list(THRESHOLD_SWEEP_METRICS),
+            "summaries": [],
+            "best_mean_iou_threshold": None,
+            "closest_mean_volume_ratio_threshold": None,
+        }
+    )
 
     statistics = metric_statistics(per_sample)
     mean_metrics = {key: values["mean"] for key, values in statistics.items()}
@@ -1101,7 +1391,7 @@ def main() -> int:
         for key, metadata in PAPER_METRICS.items()
     }
     report: dict[str, object] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run": {
             "checkpoint": str(checkpoint_path),
@@ -1116,6 +1406,7 @@ def main() -> int:
             "num_samples": len(per_sample),
             "batch_size": args.batch_size,
             "support_threshold": args.threshold,
+            "support_threshold_sweep": list(sweep_thresholds),
             "ssim_window_size": args.ssim_window_size,
             "realspace_metrics": dataset.mmap_real is not None,
             "realspace_post_process": "official_skimage_unwrap_batched_torch",
@@ -1141,6 +1432,7 @@ def main() -> int:
         "mean_metric_groups": group_metrics(mean_metrics),
         "metric_descriptions": METRIC_DESCRIPTIONS,
         "metric_statistics": statistics,
+        "threshold_sweep": threshold_sweep,
         "sum": total,
         "mean": mean_metrics,
         "per_sample": per_sample,
@@ -1170,6 +1462,10 @@ def main() -> int:
                 "CUDA events time each forward pass. Per-sample values divide batch latency "
                 "evenly across the batch."
             ),
+            "threshold_calibration": (
+                "Threshold-sweep selections are validation diagnostics computed from the "
+                "raw pre-support amplitude. The primary threshold remains unchanged."
+            ),
         },
     }
 
@@ -1178,6 +1474,15 @@ def main() -> int:
     markdown_path = output_dir / "evaluation_summary.md"
     write_json(json_path, report)
     write_sample_csv(csv_path, per_sample)
+    if threshold_sweep["enabled"]:
+        write_threshold_sweep_summary_csv(
+            output_dir / "evaluation_threshold_sweep.csv",
+            threshold_sweep,
+        )
+        write_sample_csv(
+            output_dir / "evaluation_threshold_sweep_samples.csv",
+            threshold_sweep_rows,
+        )
     markdown_path.write_text(render_markdown(report), encoding="utf-8")
 
     LOGGER.info(
@@ -1187,6 +1492,12 @@ def main() -> int:
     LOGGER.info("Wrote JSON report: %s", json_path)
     LOGGER.info("Wrote sample CSV: %s", csv_path)
     LOGGER.info("Wrote Markdown summary: %s", markdown_path)
+    if threshold_sweep["enabled"]:
+        LOGGER.info(
+            "Threshold sweep | best mean IoU at %.6g | volume ratio closest to 1 at %.6g",
+            threshold_sweep["best_mean_iou_threshold"],
+            threshold_sweep["closest_mean_volume_ratio_threshold"],
+        )
     return 0
 
 

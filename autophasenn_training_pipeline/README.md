@@ -406,6 +406,22 @@ Use the original experiment holdout mask when available:
 Use `--data-real none` for experimental data without ground-truth amplitude and
 phase; reciprocal-space and free-mask metrics are still produced.
 
+Use `--threshold-sweep` to evaluate multiple real-space support thresholds from
+the model's raw pre-support amplitude in one inference pass. The primary
+`--threshold` remains the headline result. A sweep additionally writes
+`evaluation_threshold_sweep.csv` with one aggregate row per threshold and
+`evaluation_threshold_sweep_samples.csv` with per-sample metrics. Thresholds
+selected on validation data are calibration diagnostics, not independent test
+results.
+
+```bash
+python autophasenn_training_pipeline/evaluate.py \
+  --model-variant mamba_skip \
+  --checkpoint /path/to/checkpoint_best.pt \
+  --threshold 0.1 \
+  --threshold-sweep 0.05 0.075 0.1 0.125 0.15 0.2 0.25 0.3 0.35 0.4
+```
+
 ## Visualize
 
 ```powershell

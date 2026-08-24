@@ -9,7 +9,10 @@ from autophasenn_training_pipeline.evaluate import (
     materialize_metric_rows,
     post_process_realspace_batch,
     post_process_realspace_sample,
+    raw_amp_from_outputs,
+    resolve_threshold_sweep,
     scipy_wrap_shift_batch,
+    summarize_threshold_sweep,
 )
 from autophasenn_training_pipeline.losses import (
     chi2_free,
@@ -76,6 +79,56 @@ def test_generated_free_mask_is_reproducible_and_nonempty():
     assert torch.equal(first, second)
     assert bool(first.any())
     assert not bool(first.all())
+
+
+def test_threshold_sweep_includes_primary_and_removes_duplicates():
+    thresholds = resolve_threshold_sweep(
+        0.1,
+        [0.2, 0.05, 0.1, 0.05, 0.4],
+    )
+
+    assert thresholds == (0.05, 0.1, 0.2, 0.4)
+    assert resolve_threshold_sweep(0.1, []) == ()
+
+
+def test_threshold_sweep_can_recover_pre_support_amplitude():
+    masked_amp = torch.zeros((1, 1, 2, 2, 2))
+    raw_amp = torch.full_like(masked_amp, 0.075)
+    outputs = (None, None, masked_amp, None, None, raw_amp)
+
+    assert raw_amp_from_outputs(outputs, masked_amp) is raw_amp
+    assert raw_amp_from_outputs(outputs[:5], masked_amp) is masked_amp
+
+
+def test_threshold_sweep_summary_selects_iou_and_volume_operating_points():
+    rows = []
+    for threshold, iou, volume_ratio in (
+        (0.05, 0.7, 1.2),
+        (0.1, 0.8, 1.05),
+        (0.2, 0.75, 0.99),
+    ):
+        rows.append(
+            {
+                "name": f"sample_{threshold}",
+                "threshold": threshold,
+                "real_amp_l1": threshold,
+                "real_amp_ssim": 1.0 - threshold,
+                "real_support_iou": iou,
+                "real_support_dice": iou,
+                "real_support_volume_ratio": volume_ratio,
+                "real_phase_mae_true_support": threshold * 2,
+            }
+        )
+
+    summary = summarize_threshold_sweep(rows)
+
+    assert summary["best_mean_iou_threshold"] == pytest.approx(0.1)
+    assert summary["closest_mean_volume_ratio_threshold"] == pytest.approx(0.2)
+    assert [item["threshold"] for item in summary["summaries"]] == [
+        0.05,
+        0.1,
+        0.2,
+    ]
 
 
 def test_batched_metric_tensors_match_sample_metric_dicts():
