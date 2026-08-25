@@ -32,11 +32,12 @@ retrieval algorithm.
 
 ## PyTorch architecture
 
-`HighStrainPhaseUNet` supports two variants:
+`HighStrainPhaseUNet` supports three variants:
 
 | Variant | Encoder scales | Bottleneck | Parameters | Purpose |
 |---|---:|---:|---:|---|
 | `reduced` | 5 | 1024 | 39,160,897 | Default AutoPhaseNN-data training |
+| `reduced_bn_no_outer_skip` | 5 | 1024 | 39,121,665 | BatchNorm and no full-resolution skip ablation |
 | `published` | 6 | 2048 | 143,759,937 | Original-weight conversion and parity |
 
 The reduced model removes the complete deepest encoder-decoder scale. Its
@@ -44,9 +45,20 @@ bottom path is `4^3 x 512 -> pool -> 2^3 x 512 -> 2^3 x 1024 -> 4^3 x 512`.
 The result is concatenated with the compressed `4^3 x 256` skip, preserving the
 published decoder input of `4^3 x 768` from that point onward.
 
-Both variants retain the two multi-dilation input blocks, compressed U-Net
+All variants retain the two multi-dilation input blocks, compressed U-Net
 skips, LeakyReLU slope 0.2, TensorFlow `SAME` padding, transpose-convolution
 voxel alignment, and one-channel `64 x 64 x 64` reciprocal-phase output.
+
+The `reduced_bn_no_outer_skip` variant is based only on `reduced`. It removes
+the outermost `64^3` encoder-to-decoder skip, including its dedicated
+`conv3d_12` compressor, so `conv3d_19` receives the decoder's 32 channels
+directly instead of a 48-channel concatenation. Every remaining hidden
+convolution and transpose convolution follows
+`Conv/ConvTranspose -> BatchNorm3d -> LeakyReLU`; the final one-channel
+`conv3d_20` output is intentionally left unnormalized. BatchNorm uses
+`eps=1e-3` and PyTorch `momentum=0.01`, equivalent to Keras running-statistics
+momentum `0.99`. The data pipeline, WCA loss, output semantics, and real-space
+reconstruction are unchanged.
 
 PyTorch tensors use `NCDHW`; TensorFlow tensors use `NDHWC`. This layout change
 does not change the logical tensor dimensions.
@@ -202,6 +214,16 @@ the 39.2M-parameter `reduced` variant unless explicitly overridden:
 python -u train_pytorch.py --run-name high_strain_autophase_scratch
 ```
 
+Train the BatchNorm/no-outer-skip ablation from scratch with the otherwise
+unchanged defaults. This variant starts at `1e-3`; the existing variants keep
+their `1e-4` default:
+
+```bash
+python -u train_pytorch.py \
+  --model-variant reduced_bn_no_outer_skip \
+  --run-name high_strain_reduced_bn_no_outer_skip_scratch
+```
+
 Background training with a timestamped, self-describing run directory:
 
 ```bash
@@ -232,13 +254,15 @@ deepest tensor shapes differ. Evaluation detects the variant automatically
 from the checkpoint.
 
 Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
-`epsilon=1e-7`), float32, batch size 16, and the WCA objective. The current
-AutoPhaseNN reproduction starts at the paper's `1e-4` and uses the AutoPhaseNN
-`ReduceLROnPlateau` defaults: factor `0.5`, patience `5`, and minimum learning
-rate `1e-6`. The scheduler is the only learning-rate-policy departure from the
-paper's constant rate. The adapted reduced-model training horizon defaults to
-240 epochs; the published upstream training used 60 epochs. Reduce the batch
-size if the target GPU runs out of memory.
+`epsilon=1e-7`), float32, batch size 16, and the WCA objective. The `reduced`
+and `published` variants start at the paper's `1e-4`; the BatchNorm ablation
+starts at `1e-3` to test whether normalization supports faster optimization.
+All variants use the AutoPhaseNN `ReduceLROnPlateau` defaults: factor `0.5`,
+patience `5`, and minimum learning rate `1e-6`. The scheduler is the only
+learning-rate-policy departure from the paper's constant rate. The adapted
+reduced-model training horizon defaults to 240 epochs; the published upstream
+training used 60 epochs. Reduce the batch size if the target GPU runs out of
+memory.
 
 Small run records and TensorBoard events are written under `runs/<run-name>`.
 Large checkpoints are written under:

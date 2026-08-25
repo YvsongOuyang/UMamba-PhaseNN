@@ -5,6 +5,7 @@ from .management import project_version
 from .model import (
     DEFAULT_MODEL_VARIANT,
     MODEL_VARIANTS,
+    REDUCED_BN_NO_OUTER_SKIP_VARIANT,
     HighStrainPhaseUNet,
     infer_model_variant,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "HighStrainPhaseUNet",
     "DEFAULT_MODEL_VARIANT",
     "MODEL_VARIANTS",
+    "REDUCED_BN_NO_OUTER_SKIP_VARIANT",
     "farfield_modulus_from_realspace",
     "phase_retrieval_wca_components",
     "phase_retrieval_wca_loss",

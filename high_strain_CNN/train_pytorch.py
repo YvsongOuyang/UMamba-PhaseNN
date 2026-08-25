@@ -28,6 +28,7 @@ from pytorch_port.management import (
 from pytorch_port.model import (
     DEFAULT_MODEL_VARIANT,
     MODEL_VARIANTS,
+    REDUCED_BN_NO_OUTER_SKIP_VARIANT,
     HighStrainPhaseUNet,
     count_parameters,
     infer_model_variant,
@@ -102,12 +103,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=240)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=None,
+        help=(
+            "Initial learning rate. Defaults to 1e-3 for "
+            "reduced_bn_no_outer_skip and 1e-4 otherwise."
+        ),
+    )
     parser.add_argument(
         "--model-variant",
         choices=MODEL_VARIANTS,
         default=DEFAULT_MODEL_VARIANT,
-        help="Use the five-level reduced model by default; published retains 2048 channels.",
+        help=(
+            "Use reduced by default; reduced_bn_no_outer_skip adds BatchNorm and "
+            "removes the full-resolution skip; published retains 2048 channels."
+        ),
     )
     parser.add_argument(
         "--lr-scheduler",
@@ -127,6 +139,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--fp16", action="store_true")
     args = parser.parse_args()
+    if args.learning_rate is None:
+        args.learning_rate = (
+            1e-3
+            if args.model_variant == REDUCED_BN_NO_OUTER_SKIP_VARIANT
+            else 1e-4
+        )
     args.data_config = str(Path(args.data_config).expanduser().resolve())
     return args
 

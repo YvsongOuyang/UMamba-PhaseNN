@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Subset
 from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
 from pytorch_port.losses import phase_retrieval_wca_components
 from pytorch_port.management import DEFAULT_DATA_CONFIG, load_data_config
+from pytorch_port.model import MODEL_VARIANTS
 from pytorch_port.reconstruction import (
     farfield_modulus_from_realspace,
     realspace_from_modulus_phase,
@@ -255,7 +256,11 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         default=data_config.get("input_preprocessing", {}).get("transform") == "log1p",
     )
-    parser.add_argument("--model-variant", choices=("auto", "reduced", "published"), default="auto")
+    parser.add_argument(
+        "--model-variant",
+        choices=("auto", *MODEL_VARIANTS),
+        default="auto",
+    )
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--num-samples", type=int, default=5)
     parser.add_argument("--sample-mode", choices=("seeded", "first"), default="seeded")
