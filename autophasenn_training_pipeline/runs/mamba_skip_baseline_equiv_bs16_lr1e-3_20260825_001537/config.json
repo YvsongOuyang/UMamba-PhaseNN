@@ -13,9 +13,9 @@
   "dtype_diff": "float32",
   "dtype_real": "complex64",
   "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs",
-  "run_name": "mamba_skip_baseline_init_bs16_lr1e-3_20260824_234755",
-  "output_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_init_bs16_lr1e-3_20260824_234755",
-  "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/mamba_skip_baseline_init_bs16_lr1e-3_20260824_234755",
+  "run_name": "mamba_skip_baseline_equiv_bs16_lr1e-3_20260825_001537",
+  "output_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_equiv_bs16_lr1e-3_20260825_001537",
+  "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/mamba_skip_baseline_equiv_bs16_lr1e-3_20260825_001537",
   "train_size": 0,
   "overfit_samples": 0,
   "cache_data": false,
@@ -47,9 +47,9 @@
   "from_scratch": false,
   "save_every": 10,
   "fp16": false,
-  "print_freq": 50,
+  "print_freq": 100,
   "max_batches_per_epoch": 0,
   "dry_run": false,
-  "run_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_init_bs16_lr1e-3_20260824_234755",
-  "tensorboard_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_init_bs16_lr1e-3_20260824_234755/tensorboard"
+  "run_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_equiv_bs16_lr1e-3_20260825_001537",
+  "tensorboard_dir": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/mamba_skip_baseline_equiv_bs16_lr1e-3_20260825_001537/tensorboard"
 }

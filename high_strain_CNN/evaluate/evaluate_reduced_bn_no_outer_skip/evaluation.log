@@ -1,0 +1,30 @@
+2026-08-27 16:05:28 | INFO    | Checkpoint: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/checkpoint_best.pt
+2026-08-27 16:05:28 | INFO    | Data: 5000 samples from /data_ssd/oyys/autophasenn
+2026-08-27 16:05:28 | INFO    | Model: reduced_bn_no_outer_skip | 39,121,665 parameters | device=cuda | ambiguity=twin_aligned
+2026-08-27 16:05:28 | INFO    | Output: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced_bn_no_outer_skip | post-process workers=8
+2026-08-27 16:05:29 | INFO    | Completed 1 warmup batch(es).
+2026-08-27 16:11:47 | INFO    | 
+Mean metrics
+FT:
+  L1: 7.06215e-06
+  MSE: 3.27204e-10
+  RMSE: 0.00010162
+  RelL1: 5.94919e-07
+Amplitude:
+  L1: 0.00357609
+  MSE: 0.00110851
+  RMSE: 0.0317837
+  RelL1: 0.19826
+Phase:
+  L1: 0.185617
+  MSE: 0.106772
+  RMSE: 0.308922
+  RelL1: 0.309561
+Support:
+  L1: 0.00289407
+  MSE: 0.00289407
+  RMSE: 0.0518624
+  RelL1: 0.132427
+2026-08-27 16:11:47 | INFO    | Comparable quality | WCA=0.63433 | amp SSIM=0.975945 | support IoU=0.880243 | phase MAE=0.185617
+2026-08-27 16:11:47 | INFO    | Reprojection modulus MAE 7.06215e-06 is construction-only, not model quality.
+2026-08-27 16:11:47 | INFO    | Wrote results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/evaluate/evaluate_reduced_bn_no_outer_skip
