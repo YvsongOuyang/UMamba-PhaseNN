@@ -13,22 +13,24 @@ retrieval algorithm.
 
 ## Implementations
 
-- `train.py`: original TensorFlow training code from the upstream repository.
-- `pytorch_port/model.py`: reduced and published `HighStrainPhaseUNet` variants.
-- `pytorch_port/losses.py`: equivalent weighted circular-average (WCA) loss,
+- `tensorflow_reference/`: original TensorFlow training code from upstream and
+  the home for future official-model AutoPhaseNN adapters.
+- `pytorch_autophasenn/model.py`: reduced and published
+  `HighStrainPhaseUNet` variants.
+- `pytorch_autophasenn/losses.py`: equivalent weighted circular-average (WCA) loss,
   including global-phase and conjugate/twin ambiguity handling.
-- `pytorch_port/data.py`: AutoPhaseNN raw-memmap adapter.
-- `pytorch_port/reconstruction.py`: combines measured diffraction modulus and
+- `pytorch_autophasenn/data.py`: AutoPhaseNN raw-memmap adapter.
+- `pytorch_autophasenn/reconstruction.py`: combines measured diffraction modulus and
   predicted reciprocal phase, then reconstructs a complex real-space object.
-- `train_pytorch.py`: PyTorch training entry point for the AutoPhaseNN files.
-- `evaluate_autophase.py`: reconstructs real space and evaluates with the same
-  post-processing and metric functions as `autophasenn_training_pipeline`.
-- `visualize_postprocessed.py`: creates matching reciprocal-space and
-  real-space 2D/3D diagnostic figures from a HighStrain checkpoint.
-- `convert_keras_weights.py`: converts `model_paper.h5` to a standard PyTorch
-  checkpoint.
-- `export_tensorflow_reference.py` and `verify_pytorch_parity.py`: reproducible
-  TensorFlow/PyTorch numerical parity check.
+- `pytorch_autophasenn/train.py`, `evaluate.py`, and `visualize.py`: the full
+  PyTorch workflow on AutoPhaseNN data.
+- `simulation/`: configurable paper-style Wulff/Winterbottom/random-particle
+  simulation, official TensorFlow inference, reconstruction, and 2D/3D plots.
+- `tools/`: H5 conversion, TensorFlow/PyTorch parity, and data validation.
+- `artifacts/`: backend- and dataset-labelled experiment records and outputs.
+
+See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for the dependency
+graph, artifact policy, and planned TensorFlow evaluation layout.
 
 ## PyTorch architecture
 
@@ -68,21 +70,21 @@ does not change the logical tensor dimensions.
 The training port supports Python 3.10 and PyTorch 2.x:
 
 ```bash
-python -m pip install -r requirements-pytorch.txt
+python -m pip install -r requirements/pytorch.txt
 ```
 
 For the exact environment used by the numerical parity and end-to-end smoke
 tests, install the lock file in a clean Python 3.10 environment:
 
 ```bash
-python -m pip install -r requirements-pytorch-lock.txt
+python -m pip install -r requirements/pytorch-lock.txt
 ```
 
 TensorFlow is needed only to regenerate the numerical reference. Because the
 published model uses TensorFlow 2.10.1, use a separate Python 3.10 environment:
 
 ```bash
-python -m pip install -r requirements-tensorflow-parity.txt
+python -m pip install -r requirements/tensorflow-parity.txt
 ```
 
 ## Version and data management
@@ -101,8 +103,8 @@ allowing explicit command-line overrides. Validate the external data before a
 new training run:
 
 ```bash
-python -u validate_data.py \
-  --output runs/data_validation.json
+python -u -m tools.validate_data \
+  --output artifacts/training/pytorch_autophasenn/data_validation.json
 ```
 
 This checks the exact expected byte size of all four raw memmaps and samples
@@ -114,10 +116,10 @@ minutes.
 Every training run writes:
 
 ```text
-runs/<run-name>/config.json
-runs/<run-name>/run_manifest.json
-runs/<run-name>/history.json
-runs/<run-name>/tensorboard/
+artifacts/training/pytorch_autophasenn/<run-name>/config.json
+artifacts/training/pytorch_autophasenn/<run-name>/run_manifest.json
+artifacts/training/pytorch_autophasenn/<run-name>/history.json
+artifacts/training/pytorch_autophasenn/<run-name>/tensorboard/
 ```
 
 `run_manifest.json` records the project version, Git commit/dirty state, Python, NumPy,
@@ -128,13 +130,10 @@ the current evaluator version and warn when they differ.
 
 ## Convert the published weights
 
-`model_paper.h5` is managed by Git LFS. After cloning, make sure it is a real
-575 MB H5 file rather than a small LFS pointer, then run:
+Place the official `model_paper.h5` under `artifacts/models/`, then run:
 
 ```bash
-python convert_keras_weights.py \
-  --keras-h5 model_paper.h5 \
-  --output model_paper_pytorch.pt
+python -m tools.convert_keras_weights
 ```
 
 The converter validates the complete set of 27 parameterized layers before it
@@ -145,18 +144,16 @@ writes the checkpoint.
 Generate a deterministic TensorFlow reference:
 
 ```bash
-python export_tensorflow_reference.py \
-  --keras-h5 model_paper.h5 \
-  --output parity_output/tensorflow_layers.npz \
+python -m tools.export_tensorflow_reference \
+  --output artifacts/parity/tensorflow_layers.npz \
   --include-intermediates
 ```
 
 Compare every parameterized layer and the final output:
 
 ```bash
-python verify_pytorch_parity.py \
-  --checkpoint model_paper_pytorch.pt \
-  --reference parity_output/tensorflow_layers.npz \
+python -m tools.verify_pytorch_parity \
+  --reference artifacts/parity/tensorflow_layers.npz \
   --max-abs-tolerance 1e-3
 ```
 
@@ -174,6 +171,82 @@ normal float32 backend differences. They do not apply to the intentionally
 smaller `reduced` variant. Training a new model on a different dataset cannot
 guarantee identical paper metrics because the data distribution, hardware
 kernels, shuffling, and optimization trajectory are different.
+
+## Paper-style simulated data
+
+The article states that its synthetic objects combine Wulff, Winterbottom, and
+randomly plane-cut particle shapes with one of three real-space phase fields:
+two Gaussians, two cosines, or a 3D Gaussian-correlated random profile. It also
+specifies a `64 x 64 x 64` reciprocal grid, oversampling above two, random
+orientation, phase variation from `2pi` to `5pi`, and Poisson noise. The public
+repository does **not** include the PyNX simulation program or the complete
+sampling distributions used for those variables.
+
+`configs/simulation_paper.json` therefore separates the paper-fixed conditions
+from configurable replication assumptions. The NumPy FFT evaluates the same
+kinematic far-field transform on a regular cubic grid; it is not presented as
+the missing original PyNX source. Every sample records its exact random shape,
+phase, rotation, photon level, centering shift, and assumption notes in
+`metadata_json`, while retaining the official loader's required keys:
+
+```text
+I       float32 [64, 64, 64]  noisy linear diffraction intensity
+phi     float32 [64, 64, 64]  wrapped reciprocal-space phase
+```
+
+Generate a small balanced diagnostic set with all optional truth arrays:
+
+```bash
+python -m simulation.generate_dataset \
+  --config configs/simulation_paper.json \
+  --output-dir artifacts/simulation/dataset \
+  --num-samples 3 \
+  --balanced-categories \
+  --save-extras
+```
+
+Omit `--save-extras` when generating a larger training set. Those lean files
+still work directly with the original `load_and_process_file()` function in
+`tensorflow_reference/train_upstream.py`; extras are only needed for direct real-space accuracy analysis and
+visualization.
+
+For the strongest fidelity check, run the author's TensorFlow 2.10.1 H5 model
+rather than the converted network. The command saves the exact NDHWC input,
+raw TensorFlow phase, twin-aligned phase, reconstructed complex object, metrics,
+and both center-slice and 3D figures:
+
+```bash
+python -m simulation.run_paper_model \
+  --sample artifacts/simulation/dataset/sample_00000.npz \
+  --backend tensorflow \
+  --model artifacts/models/model_paper.h5 \
+  --output-dir artifacts/simulation/official_tensorflow
+```
+
+The runner applies the documented `log1p` and per-volume min-max input
+preprocessing. It reconstructs with
+`sqrt(I) * exp(1j * predicted_phase)` followed by the centered inverse FFT. For
+simulation evaluation only, the known target phase selects the direct or
+conjugate/twin-equivalent solution before real-space metrics are computed; the
+raw model output is always saved separately.
+
+The same entry point can consume the converted checkpoint:
+
+```bash
+python -m simulation.run_paper_model \
+  --sample artifacts/simulation/dataset/sample_00000.npz \
+  --backend pytorch \
+  --model artifacts/models/model_paper_pytorch.pt \
+  --device cuda \
+  --output-dir artifacts/simulation/converted_pytorch
+```
+
+The published TensorFlow model contains `143,759,937` trainable parameters. A
+numerical test of the simulator is available without loading that large model:
+
+```bash
+python -m unittest tests.test_simulation
+```
 
 ## AutoPhaseNN data mapping
 
@@ -211,7 +284,7 @@ The defaults already point to the paths and sample counts above. Training uses
 the 39.2M-parameter `reduced` variant unless explicitly overridden:
 
 ```bash
-python -u train_pytorch.py --run-name high_strain_autophase_scratch
+python -u -m pytorch_autophasenn.train --run-name high_strain_autophase_scratch
 ```
 
 Train the BatchNorm/no-outer-skip ablation from scratch with the otherwise
@@ -219,7 +292,7 @@ unchanged defaults. This variant starts at `1e-3`; the existing variants keep
 their `1e-4` default:
 
 ```bash
-python -u train_pytorch.py \
+python -u -m pytorch_autophasenn.train \
   --model-variant reduced_bn_no_outer_skip \
   --run-name high_strain_reduced_bn_no_outer_skip_scratch
 ```
@@ -228,10 +301,10 @@ Background training with a timestamped, self-describing run directory:
 
 ```bash
 RUN_NAME="high_strain_reduced_centered_scratch_bs16_lr1e-4_plateau_$(date +%Y%m%d_%H%M%S)"
-RUN_DIR="$PWD/runs/${RUN_NAME}"
+RUN_DIR="$PWD/artifacts/training/pytorch_autophasenn/${RUN_NAME}"
 mkdir -p "${RUN_DIR}"
 
-nohup env CUDA_VISIBLE_DEVICES=0 python -u train_pytorch.py \
+nohup env CUDA_VISIBLE_DEVICES=0 python -u -m pytorch_autophasenn.train \
   --run-name "${RUN_NAME}" \
   --epochs 240 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
@@ -243,10 +316,10 @@ echo "${PID}" > "${RUN_DIR}/train.pid"
 Fine-tune the converted published weights:
 
 ```bash
-python -u train_pytorch.py \
+python -u -m pytorch_autophasenn.train \
   --model-variant published \
   --run-name high_strain_autophase_finetune \
-  --pretrained model_paper_pytorch.pt
+  --pretrained artifacts/models/model_paper_pytorch.pt
 ```
 
 Published checkpoints cannot be loaded into the reduced model because the
@@ -264,7 +337,8 @@ reduced-model training horizon defaults to 240 epochs; the published upstream
 training used 60 epochs. Reduce the batch size if the target GPU runs out of
 memory.
 
-Small run records and TensorBoard events are written under `runs/<run-name>`.
+Small run records and TensorBoard events are written under
+`artifacts/training/pytorch_autophasenn/<run-name>`.
 Large checkpoints are written under:
 
 ```text
@@ -297,7 +371,7 @@ as `autophasenn_training_pipeline/evaluate.py`.
 Evaluate a trained checkpoint on the full validation set:
 
 ```bash
-python -u evaluate_autophase.py \
+python -u -m pytorch_autophasenn.evaluate \
   --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
   --data-dir /data_ssd/oyys/autophasenn
 ```
@@ -305,21 +379,21 @@ python -u evaluate_autophase.py \
 Run the planned support-threshold diagnostic in the same evaluation pass:
 
 ```bash
-python -u evaluate_autophase.py \
+python -u -m pytorch_autophasenn.evaluate \
   --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
-  --threshold 0.1 \
-  --threshold-sweep 0.05 0.075 0.1 0.125 0.15 0.2 0.25
+  --threshold 0.3 \
+  --threshold-sweep 0.05 0.1 0.15 0.2 0.25 0.3 0.35
 ```
 
 The evaluator unwraps each phase volume only once, then applies every requested
-threshold. The primary `--threshold 0.1` metrics remain the headline
-AutoPhaseNN comparison. The sweep reports the threshold with the best mean
+threshold. The primary `--threshold` value remains the headline result for
+that model. The sweep reports the threshold with the best mean
 support IoU and the threshold whose mean support-volume ratio is closest to one;
 both are validation diagnostics rather than replacements for the primary result.
 
 Unless `--output-dir` is supplied, results are stored like the AutoPhaseNN
-pipeline under `evaluate/evaluate_<model-variant>/`, for example
-`evaluate/evaluate_reduced/`.
+pipeline under
+`artifacts/evaluations/autophasenn_pytorch/evaluate_<model-variant>/`.
 
 The standard result files match the AutoPhaseNN evaluation bundle:
 
@@ -356,7 +430,7 @@ equivalent sign before computing real-space metrics. This produces the fairest
 quality comparison but is an evaluation-only oracle operation. Use:
 
 ```bash
-python -u evaluate_autophase.py \
+python -u -m pytorch_autophasenn.evaluate \
   --checkpoint path/to/checkpoint_best.pt \
   --ambiguity-mode raw
 ```
@@ -375,14 +449,14 @@ The visualization entry point uses the same post-processing and result naming
 convention as AutoPhaseNN:
 
 ```bash
-python -u visualize_postprocessed.py \
+python -u -m pytorch_autophasenn.visualize \
   --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/your_run/checkpoint_best.pt \
   --data-dir /data_ssd/oyys/autophasenn \
   --num-samples 3
 ```
 
 Unless overridden, figures and metadata are written to
-`vision/vision_<model-variant>/`. The 2D overview separates learned reciprocal
+`artifacts/visualizations/autophasenn_pytorch/vision_<model-variant>/`. The 2D overview separates learned reciprocal
 phase quality from real-space reconstruction quality. The reprojected modulus
 panels are labeled explicitly because they reuse the measured modulus and are
 only an FFT consistency check.

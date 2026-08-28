@@ -18,28 +18,28 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
-from pytorch_port.losses import phase_retrieval_wca_components
-from pytorch_port.management import (
+from pytorch_autophasenn.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
+from pytorch_autophasenn.losses import phase_retrieval_wca_components
+from pytorch_autophasenn.management import (
     DEFAULT_DATA_CONFIG,
     build_data_manifest,
     load_data_config,
     require_data_files,
     runtime_manifest,
 )
-from pytorch_port.model import (
+from pytorch_autophasenn.model import (
     MODEL_VARIANTS,
     HighStrainPhaseUNet,
     count_parameters,
     infer_model_variant,
 )
-from pytorch_port.reconstruction import (
+from pytorch_autophasenn.reconstruction import (
     farfield_modulus_from_realspace,
     realspace_from_modulus_phase,
 )
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 WORKSPACE_DIR = PROJECT_DIR.parent
 if str(WORKSPACE_DIR) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_DIR))
@@ -65,7 +65,9 @@ from autophasenn_training_pipeline.losses import (  # noqa: E402
 
 
 LOGGER = logging.getLogger("high_strain.evaluate_autophase")
-DEFAULT_EVALUATE_ROOT = PROJECT_DIR / "evaluate"
+DEFAULT_EVALUATE_ROOT = (
+    PROJECT_DIR / "artifacts" / "evaluations" / "autophasenn_pytorch"
+)
 DEFAULT_CHECKPOINT = (
     "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/"
     "high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/"
@@ -183,7 +185,8 @@ def parse_args() -> argparse.Namespace:
         default="",
         help=(
             "Artifact directory; empty uses "
-            "<project>/evaluate/evaluate_<checkpoint-variant>."
+            "<project>/artifacts/evaluations/autophasenn_pytorch/"
+            "evaluate_<checkpoint-variant>."
         ),
     )
     parser.add_argument(

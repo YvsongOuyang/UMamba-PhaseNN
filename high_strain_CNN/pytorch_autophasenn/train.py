@@ -16,16 +16,16 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
-from pytorch_port.losses import phase_retrieval_wca_loss
-from pytorch_port.management import (
+from pytorch_autophasenn.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
+from pytorch_autophasenn.losses import phase_retrieval_wca_loss
+from pytorch_autophasenn.management import (
     DEFAULT_DATA_CONFIG,
     build_data_manifest,
     load_data_config,
     require_data_files,
     runtime_manifest,
 )
-from pytorch_port.model import (
+from pytorch_autophasenn.model import (
     DEFAULT_MODEL_VARIANT,
     MODEL_VARIANTS,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
@@ -35,8 +35,10 @@ from pytorch_port.model import (
 )
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
-DEFAULT_RUNS_DIR = PROJECT_DIR / "runs"
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+DEFAULT_RUNS_DIR = (
+    PROJECT_DIR / "artifacts" / "training" / "pytorch_autophasenn"
+)
 DEFAULT_CHECKPOINT_ROOT = Path(
     "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn"
 )

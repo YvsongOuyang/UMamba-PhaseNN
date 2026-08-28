@@ -9,7 +9,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from pytorch_port.model import PUBLISHED_MODEL_VARIANT, HighStrainPhaseUNet
+from pytorch_autophasenn.model import PUBLISHED_MODEL_VARIANT, HighStrainPhaseUNet
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 def error_metrics(pytorch_value: np.ndarray, tensorflow_value: np.ndarray) -> dict:
@@ -27,14 +30,27 @@ def error_metrics(pytorch_value: np.ndarray, tensorflow_value: np.ndarray) -> di
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--checkpoint", default="model_paper_pytorch.pt")
+    parser.add_argument(
+        "--checkpoint",
+        default=str(
+            PROJECT_DIR / "artifacts" / "models" / "model_paper_pytorch.pt"
+        ),
+    )
     parser.add_argument(
         "--reference",
-        default="parity_output/tensorflow_reference.npz",
+        default=str(
+            PROJECT_DIR
+            / "artifacts"
+            / "parity"
+            / "tensorflow_reference.npz"
+        ),
     )
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--max-abs-tolerance", type=float, default=1e-3)
-    parser.add_argument("--report", default="parity_output/parity_report.json")
+    parser.add_argument(
+        "--report",
+        default=str(PROJECT_DIR / "artifacts" / "parity" / "parity_report.json"),
+    )
     return parser.parse_args()
 
 

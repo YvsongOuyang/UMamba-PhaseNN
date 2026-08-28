@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pytorch_port.management import (
+from pytorch_autophasenn.management import (
     DEFAULT_DATA_CONFIG,
     build_data_manifest,
     load_data_config,

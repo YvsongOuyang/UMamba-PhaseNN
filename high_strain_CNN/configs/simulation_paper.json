@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "description": "Paper-constrained simulation with explicit assumptions for unpublished sampling ranges.",
+  "grid_size": 64,
+  "shape": {
+    "types": ["wulff", "winterbottom", "random_polyhedron"],
+    "oversampling_ratio": [2.2, 3.2],
+    "wulff_111_to_100_distance": [0.82, 1.02],
+    "wulff_110_to_100_distance": [1.0, 1.3],
+    "winterbottom_retained_height": [0.65, 0.75],
+    "random_plane_count": [4, 10],
+    "random_plane_offset_fraction": [0.65, 1.15]
+  },
+  "phase": {
+    "types": ["double_gaussian", "double_cosine", "gaussian_correlated"],
+    "peak_to_peak_pi": [2.0, 5.0],
+    "gaussian_center_fraction": [-0.45, 0.45],
+    "gaussian_sigma_fraction": [0.12, 0.35],
+    "cosine_cycles": [0.5, 2.5],
+    "correlation_length_voxels": [2.0, 7.0]
+  },
+  "noise": {
+    "enabled": true,
+    "peak_photons": [1000.0, 1000000.0],
+    "sample_log_uniform": true
+  },
+  "provenance": {
+    "paper_fixed": [
+      "64 x 64 x 64 reciprocal-space grid",
+      "Wulff, Winterbottom, and randomly plane-cut particle families",
+      "oversampling ratio greater than two in every spatial direction",
+      "random reciprocal-space orientation",
+      "two-Gaussian, two-cosine, and 3D Gaussian-correlated phase families",
+      "real-space phase peak-to-peak variation between 2pi and 5pi",
+      "Poisson counting noise"
+    ],
+    "replication_assumptions": [
+      "The article does not publish the complete random-parameter distributions.",
+      "Ranges in shape, phase, and noise sections are configurable engineering assumptions.",
+      "Poisson noise is parameterized by expected photons at the brightest detector voxel.",
+      "FFT-based kinematic scattering is used because the public repository does not include the authors' PyNX generator."
+    ]
+  }
+}

@@ -13,17 +13,17 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from pytorch_port.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
-from pytorch_port.losses import phase_retrieval_wca_components
-from pytorch_port.management import DEFAULT_DATA_CONFIG, load_data_config
-from pytorch_port.model import MODEL_VARIANTS
-from pytorch_port.reconstruction import (
+from pytorch_autophasenn.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
+from pytorch_autophasenn.losses import phase_retrieval_wca_components
+from pytorch_autophasenn.management import DEFAULT_DATA_CONFIG, load_data_config
+from pytorch_autophasenn.model import MODEL_VARIANTS
+from pytorch_autophasenn.reconstruction import (
     farfield_modulus_from_realspace,
     realspace_from_modulus_phase,
 )
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 WORKSPACE_DIR = PROJECT_DIR.parent
 if str(WORKSPACE_DIR) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_DIR))
@@ -47,7 +47,7 @@ from autophasenn_training_pipeline.visualize_postprocessed import (  # noqa: E40
     wrap_phase,
 )
 
-from evaluate_autophase import (  # noqa: E402
+from pytorch_autophasenn.evaluate import (  # noqa: E402
     DEFAULT_CHECKPOINT,
     choose_device,
     load_model,
@@ -56,7 +56,9 @@ from evaluate_autophase import (  # noqa: E402
 
 
 LOGGER = logging.getLogger("high_strain.visualize")
-DEFAULT_VISION_ROOT = PROJECT_DIR / "vision"
+DEFAULT_VISION_ROOT = (
+    PROJECT_DIR / "artifacts" / "visualizations" / "autophasenn_pytorch"
+)
 DEFAULT_OUTPUT_FILENAMES = {
     "output_png": "visualization_2d.png",
     "output_3d_png": "visualization_3d.png",

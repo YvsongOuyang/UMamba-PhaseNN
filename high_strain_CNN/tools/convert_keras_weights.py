@@ -9,12 +9,15 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from pytorch_port.model import (
+from pytorch_autophasenn.model import (
     PUBLISHED_MODEL_VARIANT,
     HighStrainPhaseUNet,
     count_parameters,
 )
-from pytorch_port.management import runtime_manifest
+from pytorch_autophasenn.management import runtime_manifest
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 LOGGER = logging.getLogger("high_strain.convert")
@@ -22,8 +25,16 @@ LOGGER = logging.getLogger("high_strain.convert")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--keras-h5", default="model_paper.h5")
-    parser.add_argument("--output", default="model_paper_pytorch.pt")
+    parser.add_argument(
+        "--keras-h5",
+        default=str(PROJECT_DIR / "artifacts" / "models" / "model_paper.h5"),
+    )
+    parser.add_argument(
+        "--output",
+        default=str(
+            PROJECT_DIR / "artifacts" / "models" / "model_paper_pytorch.pt"
+        ),
+    )
     return parser.parse_args()
 
 

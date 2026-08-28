@@ -1,9 +1,20 @@
 __pycache__/
 *.py[cod]
 .venv*/
-parity_output/
-/vision/
 *.pt
 *.pth
+
+# Managed local artifacts. Lightweight records under artifacts/training and
+# artifacts/evaluations remain trackable for experiment provenance.
+/artifacts/models/
+/artifacts/parity/
+/artifacts/simulation/
+/artifacts/upstream_data/
+/artifacts/visualizations/
+
+# Legacy output locations retained so older commands do not pollute Git status.
 /exp_data/
 /model_paper.h5
+/parity_output/
+/simulation_output/
+/vision/

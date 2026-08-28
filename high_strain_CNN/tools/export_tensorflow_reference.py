@@ -8,10 +8,24 @@ from pathlib import Path
 import numpy as np
 
 
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--keras-h5", default="model_paper.h5")
-    parser.add_argument("--output", default="parity_output/tensorflow_reference.npz")
+    parser.add_argument(
+        "--keras-h5",
+        default=str(PROJECT_DIR / "artifacts" / "models" / "model_paper.h5"),
+    )
+    parser.add_argument(
+        "--output",
+        default=str(
+            PROJECT_DIR
+            / "artifacts"
+            / "parity"
+            / "tensorflow_reference.npz"
+        ),
+    )
     parser.add_argument("--input", default="", help="Optional NDHWC NumPy input.")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument(
