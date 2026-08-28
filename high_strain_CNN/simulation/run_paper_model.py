@@ -334,6 +334,7 @@ def main() -> int:
             target_object=target_object,
             predicted_object=reconstruction,
             destination=output_dir / "simulation_reconstruction_2d.png",
+            support_threshold=args.support_threshold,
         )
         volume_path = save_volume_overview(
             intensity=intensity,

@@ -194,13 +194,15 @@ I       float32 [64, 64, 64]  noisy linear diffraction intensity
 phi     float32 [64, 64, 64]  wrapped reciprocal-space phase
 ```
 
-Generate a small balanced diagnostic set with all optional truth arrays:
+Generate a small full-factorial diagnostic set with all optional truth arrays.
+`--balanced-categories` cycles through every one of the three-shape by
+three-phase combinations:
 
 ```bash
 python -m simulation.generate_dataset \
   --config configs/simulation_paper.json \
   --output-dir artifacts/simulation/dataset \
-  --num-samples 3 \
+  --num-samples 9 \
   --balanced-categories \
   --save-extras
 ```
@@ -247,6 +249,52 @@ numerical test of the simulator is available without loading that large model:
 ```bash
 python -m unittest tests.test_simulation
 ```
+
+### Evaluate the official model on reproduced simulations
+
+For threshold calibration and held-out evaluation, generate 72 samples. This
+gives 36 calibration and 36 evaluation samples, with every shape/phase pair
+appearing exactly four times in each half:
+
+```bash
+python -m simulation.generate_dataset \
+  --output-dir artifacts/simulation/paper_evaluation \
+  --num-samples 72 \
+  --seed 20260828 \
+  --balanced-categories \
+  --save-extras \
+  --overwrite
+```
+
+Run the official TensorFlow H5 once and perform the broad support-threshold
+scan. Model predictions are cached under the ignored `artifacts/simulation/`
+tree so later threshold scans do not repeat inference:
+
+```bash
+python -m simulation.evaluate_paper_model \
+  --dataset-dir artifacts/simulation/paper_evaluation \
+  --batch-size 1
+```
+
+Refine the near-optimal interval while reusing those predictions:
+
+```bash
+python -m simulation.evaluate_paper_model \
+  --dataset-dir artifacts/simulation/paper_evaluation \
+  --output-dir artifacts/evaluations/simulation_tensorflow/official_published_calibrated \
+  --visualization-dir artifacts/visualizations/simulation_tensorflow/official_published_calibrated \
+  --thresholds 0.125 0.13 0.135 0.14 0.145 0.15 0.155 0.16 0.165 0.17 0.175 \
+  --batch-size 1 \
+  --reuse-predictions
+```
+
+Threshold selection uses only the calibration half. It first identifies the
+IoU plateau within `0.001` of the highest mean support IoU, then selects the
+threshold whose predicted/true support-volume ratio is closest to one. The
+reported final metrics use only the held-out half and the exact boolean support
+saved by the simulator. The evaluator writes JSON, CSV, Markdown, and log files
+under `artifacts/evaluations/simulation_tensorflow/` and creates representative
+2D/3D figures under `artifacts/visualizations/simulation_tensorflow/`.
 
 ## AutoPhaseNN data mapping
 

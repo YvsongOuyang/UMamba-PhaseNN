@@ -26,6 +26,7 @@ def save_slice_overview(
     target_object: np.ndarray,
     predicted_object: np.ndarray,
     destination: str | Path,
+    support_threshold: float = 0.1,
 ) -> Path:
     """Save matched center slices in reciprocal and real space."""
 
@@ -36,8 +37,8 @@ def save_slice_overview(
     reciprocal_mask = normalized_intensity > 1e-3
     target_amplitude = np.abs(target_object)
     predicted_amplitude = np.abs(predicted_object)
-    target_mask = target_amplitude > 0.1 * max(float(target_amplitude.max()), 1e-12)
-    predicted_mask = predicted_amplitude > 0.1 * max(
+    target_mask = target_amplitude > 0.5 * max(float(target_amplitude.max()), 1e-12)
+    predicted_mask = predicted_amplitude > support_threshold * max(
         float(predicted_amplitude.max()), 1e-12
     )
     reciprocal_error = np.angle(

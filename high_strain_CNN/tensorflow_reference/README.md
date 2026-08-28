@@ -12,3 +12,7 @@ instead of modifying `train_upstream.py`.
 The official H5 model is a local artifact at
 `artifacts/models/model_paper.h5` and is intentionally not tracked in this
 parent repository.
+
+`simulation/evaluate_paper_model.py` loads that H5 directly for full-factorial
+simulation evaluation, support-threshold calibration, held-out metrics, and
+representative 2D/3D visualizations. It does not use converted PyTorch weights.

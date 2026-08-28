@@ -67,6 +67,12 @@ configs/simulation_paper.json
 This path is also the right place to compare TensorFlow and PyTorch on exactly
 the same input before introducing AutoPhaseNN-specific post-processing.
 
+`simulation/evaluate_paper_model.py` provides the dataset-level official-H5
+workflow. Balanced generation uses the full shape/phase Cartesian product; one
+half calibrates support threshold and the other half reports held-out metrics.
+Large predictions and figures stay ignored, while lightweight reports live in
+`artifacts/evaluations/simulation_tensorflow/`.
+
 ### Tools
 
 - `convert_keras_weights.py`: TensorFlow H5 to PyTorch checkpoint.
@@ -80,10 +86,12 @@ the same input before introducing AutoPhaseNN-specific post-processing.
 artifacts/
   training/pytorch_autophasenn/         tracked lightweight run records
   evaluations/autophasenn_pytorch/      tracked PyTorch evaluation tables/logs
+  evaluations/simulation_tensorflow/    tracked official-H5 simulation reports
   evaluations/autophasenn_tensorflow/   reserved for future TF evaluation
   models/                               local H5/PT weights, ignored
   parity/                               generated parity tensors, ignored
   simulation/                           generated datasets/results, ignored
+  visualizations/simulation_tensorflow/ generated official-H5 figures, ignored
   visualizations/autophasenn_pytorch/   generated PyTorch figures, ignored
   visualizations/autophasenn_tensorflow/ reserved for future TF figures
 ```

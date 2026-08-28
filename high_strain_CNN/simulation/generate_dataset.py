@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+from itertools import product
 from pathlib import Path
 
 import numpy as np
@@ -32,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--balanced-categories",
         action="store_true",
-        help="Cycle through configured shape and phase families before repeating.",
+        help="Cycle through every shape/phase Cartesian-product pair.",
     )
     parser.add_argument(
         "--save-extras",
@@ -62,18 +63,13 @@ def main() -> int:
         LOGGER.info("Removed %d existing generated samples", len(existing))
 
     rng = np.random.default_rng(args.seed)
+    balanced_pairs = tuple(product(config.shape.types, config.phase.types))
     records = []
     for index in range(args.num_samples):
-        shape_type = (
-            config.shape.types[index % len(config.shape.types)]
-            if args.balanced_categories
-            else None
-        )
-        phase_type = (
-            config.phase.types[index % len(config.phase.types)]
-            if args.balanced_categories
-            else None
-        )
+        if args.balanced_categories:
+            shape_type, phase_type = balanced_pairs[index % len(balanced_pairs)]
+        else:
+            shape_type, phase_type = None, None
         sample = generate_sample(
             config,
             rng,
@@ -111,6 +107,9 @@ def main() -> int:
         "seed": args.seed,
         "num_samples": args.num_samples,
         "balanced_categories": args.balanced_categories,
+        "balanced_strategy": (
+            "cartesian_product_cycle" if args.balanced_categories else None
+        ),
         "save_extras": args.save_extras,
         "samples": records,
     }
