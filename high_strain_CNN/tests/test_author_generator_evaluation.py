@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from simulation.author_generator import (
+    DEFAULT_AUTHOR_CODE_DIR,
     AuthorGeneratedSample,
     AuthorParticle,
     _author_amplitude_object,
@@ -271,10 +272,11 @@ def test_phase_adapter_defers_parameter_sampling_to_source(strain) -> None:
 
 @pytest.fixture(scope="module")
 def supplied_author_modules():
-    directory = os.environ.get("HIGH_STRAIN_AUTHOR_CODE_DIR")
-    if directory is None:
-        pytest.skip("Set HIGH_STRAIN_AUTHOR_CODE_DIR to run supplied-source integration checks.")
-    return load_author_modules(Path(directory))
+    return load_author_modules(supplied_author_directory())
+
+
+def supplied_author_directory() -> Path:
+    return Path(os.environ.get("HIGH_STRAIN_AUTHOR_CODE_DIR") or DEFAULT_AUTHOR_CODE_DIR)
 
 
 @pytest.fixture(scope="module")
@@ -294,7 +296,7 @@ def assert_rng_state_matches(numpy_state, python_state):
     ("wulff", 42), ("winterbottom", 42), ("random", 42), ("random", 36),
 ])
 def test_particle_construction_calls_source_unchanged(supplied_author_modules, shape, seed):
-    directory = Path(os.environ["HIGH_STRAIN_AUTHOR_CODE_DIR"])
+    directory = supplied_author_directory()
     np.random.seed(seed)
     random.seed(seed)
     # Seed 36 exercises the source's zero cut-direction draw; do not redraw it.
@@ -337,7 +339,7 @@ def test_reciprocal_grid_calls_source_unchanged(supplied_diffraction_module, rot
 
 @pytest.fixture(scope="module", params=["wulff", "winterbottom", "random"])
 def supplied_particle(supplied_author_modules, request):
-    return create_paper_particle(Path(os.environ["HIGH_STRAIN_AUTHOR_CODE_DIR"]),
+    return create_paper_particle(supplied_author_directory(),
                                  supplied_author_modules, 42, request.param, 0)
 
 
@@ -397,7 +399,7 @@ def test_invalid_source_oversampling_is_reported_without_retry(monkeypatch):
 
 
 def test_record_policy_preserves_low_oversampling_source_draw(supplied_author_modules):
-    directory = Path(os.environ["HIGH_STRAIN_AUTHOR_CODE_DIR"])
+    directory = supplied_author_directory()
     particle = create_paper_particle(directory, supplied_author_modules, 21260834,
                                      "winterbottom", 4)
     _, source, object_utilities = supplied_author_modules

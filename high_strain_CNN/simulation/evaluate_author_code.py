@@ -22,6 +22,7 @@ import numpy as np
 from .author_generator import (
     AUTHOR_GENERATOR_PROTOCOL,
     AUTHOR_PHASE_SAMPLING,
+    DEFAULT_AUTHOR_CODE_DIR,
     PAPER_SHAPES,
     PAPER_STRAINS,
     AuthorGeneratedSample,
@@ -59,8 +60,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--author-code-dir",
-        required=True,
-        help="Directory containing particle_and_diffraction.ipynb and its Python modules.",
+        default=str(DEFAULT_AUTHOR_CODE_DIR),
+        help="Author source directory; defaults to the bundled vendor copy.",
     )
     parser.add_argument("--model", default=str(DEFAULT_MODEL))
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))

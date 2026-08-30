@@ -1,0 +1,2 @@
+# Keep the supplied source/resource checksums stable across Windows and Linux.
+codes_for_BCDI_dataset_creation/** -text

@@ -23,6 +23,9 @@ PAPER_SHAPES = ("wulff", "winterbottom", "random")
 PAPER_STRAINS = ("gauss", "cosine", "random")
 AUTHOR_PHASE_SAMPLING = "author_function_defaults_v1"
 AUTHOR_GENERATOR_PROTOCOL = "author_calls_v2"
+DEFAULT_AUTHOR_CODE_DIR = (
+    Path(__file__).resolve().parents[1] / "vendor" / "codes_for_BCDI_dataset_creation"
+)
 
 
 @dataclass(frozen=True)
@@ -337,6 +340,7 @@ def load_author_modules(
         "particle_and_diffraction.ipynb",
         "ShapedParticle.py",
         "diffraction_noise_functions.py",
+        "Main_files/pot/GOLD/Au_GROCHOLA.eam",
     )
     missing = [name for name in required if not (author_code_dir / name).is_file()]
     if missing:
@@ -379,16 +383,17 @@ def file_sha256(path: Path) -> str:
 
 
 def author_source_manifest(author_code_dir: Path) -> list[dict[str, Any]]:
-    """Fingerprint every supplied Python/notebook source used by the adapter."""
+    """Fingerprint supplied source and potential resources used by the adapter."""
 
     paths = sorted(
-        path
-        for path in author_code_dir.iterdir()
-        if path.is_file() and path.suffix.lower() in {".py", ".ipynb"}
+        [path for path in author_code_dir.iterdir()
+         if path.is_file() and path.suffix.lower() in {".py", ".ipynb"}]
+        + [path for path in (author_code_dir / "Main_files" / "pot").rglob("*")
+           if path.is_file()]
     )
     return [
         {
-            "name": path.name,
+            "name": path.relative_to(author_code_dir).as_posix(),
             "bytes": path.stat().st_size,
             "sha256": file_sha256(path),
         }

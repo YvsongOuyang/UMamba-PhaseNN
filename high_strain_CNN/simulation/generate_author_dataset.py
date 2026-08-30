@@ -21,6 +21,7 @@ from .sample_io import COMPACT_STORAGE
 from .author_generator import (
     AUTHOR_GENERATOR_PROTOCOL,
     AUTHOR_PHASE_SAMPLING,
+    DEFAULT_AUTHOR_CODE_DIR,
     PAPER_SHAPES,
     PAPER_STRAINS,
     AuthorParticle,
@@ -42,7 +43,10 @@ LOGGER = logging.getLogger("high_strain.author_dataset")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--author-code-dir", required=True)
+    parser.add_argument(
+        "--author-code-dir", default=str(DEFAULT_AUTHOR_CODE_DIR),
+        help="Author source directory; defaults to the bundled vendor copy.",
+    )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--profile", choices=("notebook", "paper"), default="paper")
     counts = parser.add_mutually_exclusive_group()

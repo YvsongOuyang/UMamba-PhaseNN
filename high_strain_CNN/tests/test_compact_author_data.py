@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -244,3 +245,26 @@ def test_generation_cli_exact_split_counts(monkeypatch):
     assert args.num_samples == 102000 and args.storage == "compact"
     assert args.scattering_backend == "pynx_cuda"
     assert args.category_sampling == "random"
+
+
+def test_both_author_clis_default_to_bundled_source(monkeypatch):
+    from simulation.author_generator import DEFAULT_AUTHOR_CODE_DIR
+    from simulation.generate_author_dataset import parse_args as generation_args
+    from simulation.evaluate_author_code import parse_args as evaluation_args
+    monkeypatch.setattr(sys, "argv", ["author_cli"])
+    assert Path(generation_args().author_code_dir) == DEFAULT_AUTHOR_CODE_DIR
+    assert Path(evaluation_args().author_code_dir) == DEFAULT_AUTHOR_CODE_DIR
+    assert (DEFAULT_AUTHOR_CODE_DIR / "ShapedParticle.py").is_file()
+
+
+def test_bundled_source_bytes_and_potential_manifest():
+    from simulation.author_generator import DEFAULT_AUTHOR_CODE_DIR, author_source_manifest
+    expected = json.loads((DEFAULT_AUTHOR_CODE_DIR.parent / "author_source_manifest.json").read_text())
+    assert len(expected["files"]) == 11
+    recorded = {record["name"]: record for record in author_source_manifest(DEFAULT_AUTHOR_CODE_DIR)}
+    assert set(recorded) == {record["path"] for record in expected["files"]}
+    for record in expected["files"]:
+        content = (DEFAULT_AUTHOR_CODE_DIR / record["path"]).read_bytes()
+        assert len(content) == record["bytes"]
+        assert hashlib.sha256(content).hexdigest() == record["sha256"]
+        assert recorded[record["path"]]["sha256"] == record["sha256"]

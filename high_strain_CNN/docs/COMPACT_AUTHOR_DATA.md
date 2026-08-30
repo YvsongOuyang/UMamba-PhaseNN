@@ -40,6 +40,11 @@ Run from `high_strain_CNN/`. Use a fresh output directory. The manifest is
 written after successful completion; do not train on an incomplete directory.
 The generator currently refuses to overwrite or resume existing samples.
 
+The original author code and gold potential resources are bundled under
+`vendor/codes_for_BCDI_dataset_creation/` and selected by default. After pulling
+the repository, no separate source upload or `AUTHOR_CODE_DIR` variable is
+needed. `--author-code-dir` is only needed to override the bundled copy.
+
 Use an environment containing the author's scientific dependencies (NumPy,
 SciPy, ASE, matplotlib, scikit-image, scikit-learn) and a CUDA-enabled PyNX with
 PyCUDA and a working CUDA compiler; include `ipywidgets` for the source's
@@ -51,7 +56,6 @@ for the separate official-model evaluation workflow.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset \
-  --author-code-dir /path/to/codes_for_BCDI_dataset_creation \
   --output-dir /data_ssd/oyys/high_strain_cnn/dataset \
   --storage compact --scattering-backend pynx_cuda \
   --split-counts 95000 4000 3000 \
@@ -161,6 +165,7 @@ the original reference dataset/models remain untouched.
 ## File ownership and compatibility
 
 - `simulation/author_generator.py`: native/compat backend selection and writers.
+- `vendor/codes_for_BCDI_dataset_creation/`: unchanged author source and resources.
 - `simulation/generate_author_dataset.py`: generation CLI, split schedule, manifest.
 - `simulation/sample_io.py`: one shared legacy/compact phase reader.
 - `pytorch_autophasenn/author_data.py`: author dataset index and source preprocessing.

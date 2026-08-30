@@ -18,6 +18,7 @@ high_strain_CNN/
   tools/                  Conversion, parity checks, AutoPhaseNN export/validation
   configs/                AutoPhaseNN data schema
   requirements/           Separate backend environments
+  vendor/                 Unchanged author source/potentials with SHA-256 inventory
   tests/                  Active scientific and data-handling regression tests
   docs/                   Current map and historical paper/source audit
   artifacts/              Results separated by dataset and backend
@@ -26,7 +27,7 @@ high_strain_CNN/
 
 ## Routes
 
-1. Supplied-author simulation: external `codes_for_BCDI_dataset_creation` ->
+1. Supplied-author simulation: bundled `vendor/codes_for_BCDI_dataset_creation` ->
    `author_generator` -> NPZ -> official H5 inference -> WCA and figures.
 2. AutoPhaseNN/PyTorch: original memmaps -> `pytorch_autophasenn.data` ->
    training/checkpoint -> evaluation/reconstruction -> visualization.
@@ -42,11 +43,10 @@ online. See `COMPACT_AUTHOR_DATA.md` for generation, split, and worker commands.
 
 ## Supplied-author generation
 
-Run from `high_strain_CNN/`. Replace the source-directory path on the server:
+Run from `high_strain_CNN/`. The source directory defaults to the bundled copy:
 
 ```bash
 python -m simulation.generate_author_dataset \
-  --author-code-dir /path/to/codes_for_BCDI_dataset_creation \
   --output-dir /path/to/datasets/author_source_v2 \
   --profile paper --category-sampling random \
   --num-samples 900 --seed 20260830 \

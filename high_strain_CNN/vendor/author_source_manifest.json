@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "source": "User-supplied author codes_for_BCDI_dataset_creation directory",
+  "copied_on": "2026-08-30",
+  "content_policy": "Original source and potential resources copied byte-for-byte, without algorithm or notebook-output edits.",
+  "files": [
+    {
+      "path": "diffraction_noise_functions.py",
+      "bytes": 33600,
+      "sha256": "b18a7b8a55c1c59503ef0f87935be98c18e5df52021c866ef89b15077f5ef461"
+    },
+    {
+      "path": "Global_utilities.py",
+      "bytes": 11371,
+      "sha256": "4ff1efcada4e1299ff0c24f7eeae88c6bac9ccb80c01f3ec88fbd91b49cb6f52"
+    },
+    {
+      "path": "Object_utilities.py",
+      "bytes": 13832,
+      "sha256": "9b1b34b967bef872dd78392ad233e9252e0bc6b464c3f70ed65aa0c7df30f2c4"
+    },
+    {
+      "path": "particle_and_diffraction.ipynb",
+      "bytes": 334945,
+      "sha256": "08d2c63184b6c594be8a5dfffcad1664b95b131c8918d3b2e6b5c37ee6b157ab"
+    },
+    {
+      "path": "Particle.py",
+      "bytes": 7866,
+      "sha256": "588f7d4ce20bf0748ece92f7b7a7e618914dd1614a19b8d203b968ed4efbce9e"
+    },
+    {
+      "path": "Plot_utilities.py",
+      "bytes": 51508,
+      "sha256": "ca88879388aeb7986f9f7547f8473f1d6c15a83791459195df4189371ce8d092"
+    },
+    {
+      "path": "PostProcessing.py",
+      "bytes": 5785,
+      "sha256": "e88bb0cbccdb288c4df4660643c41b0e02aeb76382f10ec45ce521b41b5d3d5e"
+    },
+    {
+      "path": "rotation_matrices.py",
+      "bytes": 3113,
+      "sha256": "985b4b60718e507251908fa78f53ea443631d648d17a0d0a9d2035013ccb91ae"
+    },
+    {
+      "path": "ShapedParticle.py",
+      "bytes": 21082,
+      "sha256": "27985a1fb5d038ce9eb592470d281b7e7028f59cc320ccb3ad0ac2b8ed3eba68"
+    },
+    {
+      "path": "Main_files/pot/GOLD/Au_GROCHOLA.eam",
+      "bytes": 1380103,
+      "sha256": "10687fdd338b11ca9c480c00856bdd59fd32700a9f2ddb65f0319c6eda5b8398"
+    },
+    {
+      "path": "Main_files/pot/GOLD/Au-Grochola-JCP05.eam.alloy",
+      "bytes": 630452,
+      "sha256": "1c49ca7ef48df27f7cb371f44fb9b54d0a8359c69a4033e5f3f3ac2fc2b05b29"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "__pycache__/",
+      "reason": "Generated Python bytecode cache"
+    },
+    {
+      "path": "Main_files/atomsk",
+      "reason": "Unused platform-specific executable; current Python/ASE source path never calls it"
+    }
+  ],
+  "license_note": "No standalone license file was present in the supplied directory. Preserve existing authorship/notices; this manifest does not grant or replace upstream licensing."
+}

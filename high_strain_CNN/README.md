@@ -31,6 +31,7 @@ retrieval algorithm.
 - `tools/`: H5 conversion, TensorFlow/PyTorch parity, and data validation.
 - `artifacts/`: backend- and dataset-labelled experiment records and outputs.
 - `archive/`: recoverable retired continuum-simulator code and configuration.
+- `vendor/`: unchanged user-supplied author generator source and gold potentials.
 
 See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for the dependency
 graph, artifact policy, and planned TensorFlow evaluation layout.
@@ -189,14 +190,19 @@ orientation, phase variation from `2pi` to `5pi`, and Poisson noise. The public
 repository does **not** include the PyNX simulation program or the complete
 sampling distributions used for those variables.
 
-When the separately supplied `codes_for_BCDI_dataset_creation` directory is
-available, `simulation.author_generator` directly executes its atomic particle,
+The separately supplied author source is now bundled under
+`vendor/codes_for_BCDI_dataset_creation/`, with file hashes and original bytes
+preserved. `simulation.author_generator` directly executes its atomic particle,
 amplitude, phase-template, phase-ramp, and Poisson functions. The
 `simulation.evaluate_author_code --profile paper` route enables the full
 three-shape by three-phase distribution while retaining `--profile notebook`
 as an exact regression of the example notebook's Wulff/random-only execution.
 Random rotated reciprocal grids are evaluated with FINUFFT because PyNX is not
 available on the supported Windows parity environment.
+
+Both author-generator CLIs select the bundled directory by default. An explicit
+`--author-code-dir` can still select an external source copy for comparison.
+Python dependencies and a working PyNX CUDA environment are not bundled.
 
 Use `python -m simulation.generate_author_dataset --profile paper` for pure
 dataset generation. It writes one source-compatible NPZ per observation plus a
@@ -263,7 +269,6 @@ subproject directory):
 
 ```bash
 python -m simulation.evaluate_author_code \
-  --author-code-dir D:/code/PYTHON/codes_for_BCDI_dataset_creation \
   --profile paper --category-sampling random \
   --oversampling-policy record \
   --num-samples 900 --seed 20260830 --batch-size 1 \
@@ -294,7 +299,6 @@ Generate a small source-call dataset without loading a neural network:
 
 ```bash
 python -m simulation.generate_author_dataset \
-  --author-code-dir D:/code/PYTHON/codes_for_BCDI_dataset_creation \
   --output-dir artifacts/simulation/author_source_check \
   --profile paper --num-samples 9 --seed 20260830 \
   --oversampling-policy record --save-extras
@@ -304,8 +308,10 @@ For existing lean `I/phi` storage, pass `--no-save-extras` instead.
 Full extras currently include `object`, `support`, and `I_clean`.
 See [storage and online-generation notes](docs/PROJECT_STRUCTURE.md#server-storage-90-gb-available)
 before generating a large dataset: a complete paper-size lean dataset exceeds
-the server's 90 GB remaining space. Compact-object and seed-only training are
-proposals, not implemented training modes.
+the server's 90 GB remaining space. Compact-object training is implemented via
+`--storage compact` and `--data-format author_npz`; see
+[`docs/COMPACT_AUTHOR_DATA.md`](docs/COMPACT_AUTHOR_DATA.md). Seed-only online
+particle simulation is not an implemented training mode.
 
 Single-sample inference still supports either backend and preserves the current
 input preprocessing, WCA, inverse FFT, support handling, and 2D/3D figures:
