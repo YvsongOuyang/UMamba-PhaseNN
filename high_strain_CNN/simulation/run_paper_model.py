@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from .visualization import save_slice_overview, save_volume_overview
+from .sample_io import load_reciprocal_phase
 
 
 LOGGER = logging.getLogger("high_strain.paper_inference")
@@ -264,7 +265,7 @@ def main() -> int:
 
     with np.load(sample_path) as sample:
         intensity = np.asarray(sample["I"], dtype=np.float32)
-        target_phase = np.asarray(sample["phi"], dtype=np.float32)
+        target_phase = load_reciprocal_phase(sample)
         target_object = (
             np.asarray(sample["object"], dtype=np.complex64)
             if "object" in sample.files

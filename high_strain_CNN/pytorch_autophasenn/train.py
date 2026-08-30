@@ -1,4 +1,4 @@
-"""Train the PyTorch PhaseUNet on AutoPhaseNN memmap data."""
+"""Train PhaseUNet on AutoPhaseNN memmaps or fixed author simulation NPZs."""
 
 from __future__ import annotations
 
@@ -13,10 +13,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.data import DataLoader, Dataset
 
 from pytorch_autophasenn.data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
+from pytorch_autophasenn.author_data import AuthorNPZPhaseDataset, initialize_data_worker
 from pytorch_autophasenn.losses import phase_retrieval_wca_loss
 from pytorch_autophasenn.management import (
     DEFAULT_DATA_CONFIG,
@@ -71,6 +71,9 @@ def parse_args() -> argparse.Namespace:
         raise ValueError("HighStrainPhaseUNet requires a cubic data shape.")
 
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--data-format", choices=("autophasenn", "author_npz"), default="autophasenn"
+    )
     parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
     parser.add_argument("--data-dir", default=data_config["root"])
     parser.add_argument("--train-diff", default=train_config["diffraction"])
@@ -80,12 +83,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--num-samples-train",
         type=int,
-        default=int(train_config["num_samples"]),
+        default=None,
     )
     parser.add_argument(
         "--num-samples-val",
         type=int,
-        default=int(val_config["num_samples"]),
+        default=None,
     )
     parser.add_argument("--shape", type=int, default=configured_shape[0])
     parser.add_argument(
@@ -105,6 +108,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=240)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
+    parser.add_argument("--prefetch-factor", type=int, default=2)
     parser.add_argument(
         "--learning-rate",
         type=float,
@@ -134,13 +138,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pretrained", default="")
     parser.add_argument("--resume", default="")
     parser.add_argument("--run-name", default="")
-    parser.add_argument("--runs-dir", default=str(DEFAULT_RUNS_DIR))
+    parser.add_argument("--runs-dir", default=None)
     parser.add_argument("--checkpoint-root", default=str(DEFAULT_CHECKPOINT_ROOT))
-    parser.add_argument("--save-every", type=int, default=10)
+    parser.add_argument(
+        "--save-every", type=int, default=10,
+        help="Periodic checkpoint interval; 0 keeps only best/last.",
+    )
     parser.add_argument("--print-freq", type=int, default=50)
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     parser.add_argument("--fp16", action="store_true")
     args = parser.parse_args()
+    if args.num_workers < 0 or args.prefetch_factor < 1 or args.batch_size < 1 or args.save_every < 0:
+        parser.error("Invalid worker, prefetch, batch, or checkpoint interval.")
+    if args.data_format == "autophasenn":
+        if args.num_samples_train is None:
+            args.num_samples_train = int(train_config["num_samples"])
+        if args.num_samples_val is None:
+            args.num_samples_val = int(val_config["num_samples"])
+    if args.runs_dir is None:
+        args.runs_dir = str(
+            DEFAULT_RUNS_DIR if args.data_format == "autophasenn"
+            else PROJECT_DIR / "artifacts" / "training" / "pytorch_simulation"
+        )
     if args.learning_rate is None:
         args.learning_rate = (
             1e-3
@@ -251,15 +270,21 @@ def run_epoch(
     total_samples = 0
     processed_batches = 0
     started = time.monotonic()
+    data_wait_seconds = 0.0
+    batch_finished = started
     grad_context = torch.enable_grad() if training else torch.no_grad()
 
     with grad_context:
         for batch_index, batch in enumerate(loader, start=1):
             if batch_index > batch_limit:
                 break
+            data_wait_seconds += time.monotonic() - batch_finished
             model_input = batch["input"].to(device, non_blocking=True).float()
-            realspace = batch["realspace"].to(device, non_blocking=True)
-            target_phase = reciprocal_phase_from_realspace(realspace)
+            if "target_phase" in batch:
+                target_phase = batch["target_phase"].to(device, non_blocking=True).float()
+            else:
+                realspace = batch["realspace"].to(device, non_blocking=True)
+                target_phase = reciprocal_phase_from_realspace(realspace)
             weights = model_input[:, 0]
 
             if training:
@@ -294,7 +319,7 @@ def run_epoch(
                 )
                 LOGGER.info(
                     "%s | epoch=%03d/%03d | batch=%05d/%05d | loss=%.6e | "
-                    "stage_elapsed=%s | stage_eta=%s",
+                    "stage_elapsed=%s | stage_eta=%s | data_wait=%.2fs",
                     split,
                     epoch,
                     epochs,
@@ -303,7 +328,9 @@ def run_epoch(
                     float(loss.detach()),
                     format_duration(elapsed_seconds),
                     format_duration(remaining_seconds),
+                    data_wait_seconds,
                 )
+            batch_finished = time.monotonic()
 
     elapsed_seconds = time.monotonic() - started
     return {
@@ -311,39 +338,86 @@ def run_epoch(
         "samples": total_samples,
         "batches": processed_batches,
         "elapsed_seconds": elapsed_seconds,
+        "data_wait_seconds": data_wait_seconds,
     }
 
 
+def build_datasets(args: argparse.Namespace) -> tuple[Dataset, Dataset, dict]:
+    """Keep author labels separate from AutoPhaseNN's centering adaptation."""
+    shape = (args.shape,) * 3
+    if args.data_format == "author_npz":
+        kwargs = {"shape": shape, "input_log_data": args.input_log_data}
+        train = AuthorNPZPhaseDataset(
+            args.data_dir, "train", num_samples=args.num_samples_train, **kwargs
+        )
+        val = AuthorNPZPhaseDataset(
+            args.data_dir, "val", num_samples=args.num_samples_val, **kwargs
+        )
+        if train.manifest["manifest_sha256"] != val.manifest["manifest_sha256"]:
+            raise ValueError("Dataset manifest changed while initializing splits.")
+        args.num_samples_train, args.num_samples_val = len(train), len(val)
+        return train, val, {
+            "format": "author_npz", "splits": {"train": train.manifest, "val": val.manifest}
+        }
+    manifest = build_data_manifest(
+        config=load_data_config(args.data_config), root=args.data_dir, shape=shape,
+        diffraction_dtype=args.diffraction_dtype, realspace_dtype=args.realspace_dtype,
+        splits={
+            "train": {
+                "diffraction": args.train_diff, "realspace": args.train_real,
+                "num_samples": args.num_samples_train,
+            },
+            "val": {
+                "diffraction": args.val_diff, "realspace": args.val_real,
+                "num_samples": args.num_samples_val,
+            },
+        }, input_log_data=args.input_log_data,
+    )
+    manifest["file_status"] = require_data_files(manifest)
+    root = Path(args.data_dir)
+    kwargs = {
+        "shape": shape, "diffraction_dtype": args.diffraction_dtype,
+        "realspace_dtype": args.realspace_dtype, "input_log_data": args.input_log_data,
+    }
+    train = AutoPhaseNNPhaseDataset(
+        root / args.train_diff, root / args.train_real, args.num_samples_train, **kwargs
+    )
+    val = AutoPhaseNNPhaseDataset(
+        root / args.val_diff, root / args.val_real, args.num_samples_val, **kwargs
+    )
+    return train, val, manifest
+
+
+def build_loader(
+    dataset: Dataset, args: argparse.Namespace, device: torch.device, *, training: bool
+) -> DataLoader:
+    kwargs = {
+        "batch_size": args.batch_size, "num_workers": args.num_workers,
+        "pin_memory": device.type == "cuda", "persistent_workers": args.num_workers > 0,
+        "shuffle": training,
+        "drop_last": training or args.data_format == "autophasenn",
+    }
+    if args.num_workers > 0:
+        kwargs.update(prefetch_factor=args.prefetch_factor, worker_init_fn=initialize_data_worker)
+        if args.data_format == "author_npz":
+            # Never fork an initialized CUDA/PyNX context into author data workers.
+            kwargs["multiprocessing_context"] = "spawn"
+    loader = DataLoader(dataset, **kwargs)
+    if not len(loader):
+        raise ValueError("No batches: reduce --batch-size or increase the dataset split size.")
+    return loader
+
+
 def main() -> None:
+    from torch.utils.tensorboard import SummaryWriter
+
     configure_logging()
     args = parse_args()
     if args.pretrained and args.resume:
         raise ValueError("--pretrained and --resume cannot be used together.")
     set_seed(args.seed)
     device = choose_device(args.device)
-    data_config = load_data_config(args.data_config)
-    shape = (args.shape, args.shape, args.shape)
-    data_manifest = build_data_manifest(
-        config=data_config,
-        root=args.data_dir,
-        shape=shape,
-        diffraction_dtype=args.diffraction_dtype,
-        realspace_dtype=args.realspace_dtype,
-        splits={
-            "train": {
-                "diffraction": args.train_diff,
-                "realspace": args.train_real,
-                "num_samples": args.num_samples_train,
-            },
-            "val": {
-                "diffraction": args.val_diff,
-                "realspace": args.val_real,
-                "num_samples": args.num_samples_val,
-            },
-        },
-        input_log_data=args.input_log_data,
-    )
-    data_manifest["file_status"] = require_data_files(data_manifest)
+    train_dataset, val_dataset, data_manifest = build_datasets(args)
     run_manifest: dict[str, object] = {
         "schema_version": 1,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -377,34 +451,8 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    data_dir = Path(args.data_dir)
-    dataset_kwargs = {
-        "shape": shape,
-        "diffraction_dtype": args.diffraction_dtype,
-        "realspace_dtype": args.realspace_dtype,
-        "input_log_data": args.input_log_data,
-    }
-    train_dataset = AutoPhaseNNPhaseDataset(
-        data_dir / args.train_diff,
-        data_dir / args.train_real,
-        args.num_samples_train,
-        **dataset_kwargs,
-    )
-    val_dataset = AutoPhaseNNPhaseDataset(
-        data_dir / args.val_diff,
-        data_dir / args.val_real,
-        args.num_samples_val,
-        **dataset_kwargs,
-    )
-    loader_kwargs = {
-        "batch_size": args.batch_size,
-        "num_workers": args.num_workers,
-        "pin_memory": device.type == "cuda",
-        "drop_last": True,
-        "persistent_workers": args.num_workers > 0,
-    }
-    train_loader = DataLoader(train_dataset, shuffle=True, **loader_kwargs)
-    val_loader = DataLoader(val_dataset, shuffle=False, **loader_kwargs)
+    train_loader = build_loader(train_dataset, args, device, training=True)
+    val_loader = build_loader(val_dataset, args, device, training=False)
 
     model = HighStrainPhaseUNet(model_variant=args.model_variant).to(device)
     optimizer = torch.optim.Adam(
@@ -463,6 +511,11 @@ def main() -> None:
         checkpoint_dir,
     )
     writer = SummaryWriter(log_dir=str(tensorboard_dir))
+    LOGGER.info(
+        "Data=%s | workers=%d | prefetch/worker=%d | fixed samples | precision=%s",
+        args.data_format, args.num_workers, args.prefetch_factor if args.num_workers else 0,
+        "fp16" if args.fp16 and device.type == "cuda" else "float32",
+    )
     run_started = time.monotonic()
 
     for epoch in range(start_epoch, args.epochs + 1):
@@ -498,6 +551,8 @@ def main() -> None:
         )
         writer.add_scalar("train/loss", train_stats["loss"], epoch)
         writer.add_scalar("val/loss", val_stats["loss"], epoch)
+        writer.add_scalar("train/data_wait_seconds", train_stats["data_wait_seconds"], epoch)
+        writer.add_scalar("val/data_wait_seconds", val_stats["data_wait_seconds"], epoch)
         writer.add_scalar("learning_rate", optimizer.param_groups[0]["lr"], epoch)
         writer.flush()
 
@@ -529,7 +584,7 @@ def main() -> None:
                 args,
                 run_manifest,
             )
-        if epoch % args.save_every == 0:
+        if args.save_every > 0 and epoch % args.save_every == 0:
             save_checkpoint(
                 checkpoint_dir / f"checkpoint_epoch_{epoch:04d}.pt",
                 model,

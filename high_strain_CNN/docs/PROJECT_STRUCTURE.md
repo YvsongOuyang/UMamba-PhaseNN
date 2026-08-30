@@ -1,125 +1,159 @@
 # Project structure
 
-This project contains related but distinct implementations and experiments.
-Keeping the model backend, dataset, and artifact type visible in each path is
-important because their outputs are not interchangeable.
-
-## Source directories
+## Active code
 
 ```text
 high_strain_CNN/
-  tensorflow_reference/       Author TensorFlow reference implementation
-  pytorch_autophasenn/        PyTorch port and AutoPhaseNN workflow
-  simulation/                 Shared synthetic-data generation and inference
-  tools/                      Conversion, parity, and data-validation commands
-  configs/                    Versioned data and simulation configuration
-  requirements/               Backend-specific dependency files
-  tests/                      Fast source-level tests
-  artifacts/                  Training, evaluation, model, and figure outputs
+  tensorflow_reference/    Unmodified upstream TensorFlow training reference
+  pytorch_autophasenn/     Shared PyTorch models/trainer; separate memmap/author readers
+  simulation/
+    author_generator.py          Supplied-author geometry and perturbation calls
+    generate_author_dataset.py   Pure NPZ dataset generation
+    evaluate_author_code.py      Stream generation through the official H5
+    run_paper_model.py           Shared single-sample TF/PyTorch inference
+    evaluate_paper_model.py      Existing-NPZ evaluation and threshold calibration
+    visualization.py            Shared simulation figures
+    sample_io.py                 Shared standard/compact NPZ phase reader and export writer
+  experimental/           Official measured-data inference, without truth metrics
+  tools/                  Conversion, parity checks, AutoPhaseNN export/validation
+  configs/                AutoPhaseNN data schema
+  requirements/           Separate backend environments
+  tests/                  Active scientific and data-handling regression tests
+  docs/                   Current map and historical paper/source audit
+  artifacts/              Results separated by dataset and backend
+  archive/                Recoverable retired code; never imported by active code
 ```
 
-### TensorFlow reference
+## Routes
 
-`tensorflow_reference/train_upstream.py` is the vendored author training code.
-It expects author-style `.npz` files containing `I` and `phi`, and it defines
-the published TensorFlow architecture and WCA training objective. Keep this
-file close to upstream so that it remains a trustworthy reference.
+1. Supplied-author simulation: external `codes_for_BCDI_dataset_creation` ->
+   `author_generator` -> NPZ -> official H5 inference -> WCA and figures.
+2. AutoPhaseNN/PyTorch: original memmaps -> `pytorch_autophasenn.data` ->
+   training/checkpoint -> evaluation/reconstruction -> visualization.
+3. AutoPhaseNN/official TensorFlow: `tools.export_autophasenn_samples` -> NPZ ->
+   `simulation.evaluate_paper_model`. This is not the author-simulation dataset.
+4. Measured data: `experimental.run_official_data` -> reciprocal phase -> inverse
+   FFT -> figures. Without ground truth this route does not report WCA or IoU.
 
-The official `model_paper.h5` belongs in `artifacts/models/`. Future evaluation
-on AutoPhaseNN data should be added as a separate TensorFlow adapter under
-`tensorflow_reference/`, without folding adapter logic into the upstream file.
+The default PyTorch dataset reader remains the AutoPhaseNN memmap adapter.
+`--data-format author_npz` selects `pytorch_autophasenn/author_data.py`, which
+reads standard or compact fixed author samples. It does not simulate particles
+online. See `COMPACT_AUTHOR_DATA.md` for generation, split, and worker commands.
 
-### PyTorch and AutoPhaseNN
+## Supplied-author generation
 
-`pytorch_autophasenn/` is one complete workflow:
+Run from `high_strain_CNN/`. Replace the source-directory path on the server:
 
-```text
-AutoPhaseNN memmaps
-  -> data.py
-  -> model.py + losses.py
-  -> train.py
-  -> checkpoint
-  -> evaluate.py
-  -> reconstruction.py
-  -> shared AutoPhaseNN post-processing and metrics
-  -> visualize.py
+```bash
+python -m simulation.generate_author_dataset \
+  --author-code-dir /path/to/codes_for_BCDI_dataset_creation \
+  --output-dir /path/to/datasets/author_source_v2 \
+  --profile paper --category-sampling random \
+  --num-samples 900 --seed 20260830 \
+  --oversampling-policy record --no-save-extras
 ```
 
-The evaluation records currently checked into this project were all produced
-by this workflow. They are stored under
-`artifacts/evaluations/autophasenn_pytorch/`; they are not evaluations of the
-official TensorFlow H5 model.
+This command writes fixed `I`, `phi`, and metadata arrays. Omitting
+`--no-save-extras` also saves `object`, `support`, and `I_clean`; it is not the
+compact format proposed below. No TensorFlow import or training is required.
 
-### Simulation
+`record` preserves and flags all source draws, including oversampling violations.
+The default `error` stops on a violation. Neither mode resizes or retries a draw.
+Formal paper-condition training requires a separately agreed selection policy.
+Shape and phase probabilities and observations per particle remain explicit
+reproduction assumptions. The Windows scattering backend is FFT/NUFFT, not
+native PyNX. See `PAPER_PIPELINE_AUDIT_20260828.md` for numerical boundaries.
 
-`simulation/` is backend-neutral. It generates author-compatible `.npz`
-samples and can send the same sample through either the official TensorFlow H5
-model or the converted PyTorch `published` model:
+The latest completed source-call benchmark is
+`artifacts/evaluations/simulation_tensorflow/author_generator_author_calls_v2_record_seed20260830_n900/`.
+Earlier `author_generator_paper_*` results used retired sampling rules; preserve
+their labels rather than combining their statistics with the latest run.
 
-```text
-configs/simulation_paper.json
-  -> simulation/generate_dataset.py
-  -> sample_*.npz
-  -> simulation/run_paper_model.py
-  -> reciprocal phase, complex real-space reconstruction, metrics, figures
-```
-
-This path is also the right place to compare TensorFlow and PyTorch on exactly
-the same input before introducing AutoPhaseNN-specific post-processing.
-
-`simulation/evaluate_paper_model.py` provides the dataset-level official-H5
-workflow. Balanced generation uses the full shape/phase Cartesian product; one
-half calibrates support threshold and the other half reports held-out metrics.
-Large predictions and figures stay ignored, while lightweight reports live in
-`artifacts/evaluations/simulation_tensorflow/`.
-
-### Tools
-
-- `convert_keras_weights.py`: TensorFlow H5 to PyTorch checkpoint.
-- `export_tensorflow_reference.py`: deterministic TensorFlow tensors.
-- `verify_pytorch_parity.py`: numerical comparison with converted PyTorch.
-- `validate_data.py`: AutoPhaseNN memmap schema and finite-value validation.
-
-## Artifact directories
+## Artifact policy
 
 ```text
 artifacts/
-  training/pytorch_autophasenn/         tracked lightweight run records
-  evaluations/autophasenn_pytorch/      tracked PyTorch evaluation tables/logs
-  evaluations/simulation_tensorflow/    tracked official-H5 simulation reports
-  evaluations/autophasenn_tensorflow/   reserved for future TF evaluation
-  models/                               local H5/PT weights, ignored
-  parity/                               generated parity tensors, ignored
-  simulation/                           generated datasets/results, ignored
-  visualizations/simulation_tensorflow/ generated official-H5 figures, ignored
-  visualizations/autophasenn_pytorch/   generated PyTorch figures, ignored
-  visualizations/autophasenn_tensorflow/ reserved for future TF figures
+  training/pytorch_autophasenn/    Lightweight run manifests and histories
+  training/pytorch_simulation/    Author-dataset PyTorch run manifests/histories
+  evaluations/
+    autophasenn_pytorch/          AutoPhaseNN-trained PyTorch results
+    autophasenn_tensorflow/       Official H5 tested on AutoPhaseNN samples
+    simulation_tensorflow/       Official H5 tested on synthetic samples
+    experimental_tensorflow/     Official H5 tested on measured data
+  models/                        Downloaded/converted weights, local only
+  parity/                        Reproducible numerical references, local only
+  simulation/                    Generated datasets/caches, local only
+  upstream_data/                 Downloaded experimental data, local only
+  visualizations/                Rendered figures, local only
 ```
 
-Large checkpoints remain in the configured external checkpoint root. A run
-manifest stores their paths so the lightweight Git record remains traceable.
-Historical manifests and logs retain their original absolute server paths.
+Server checkpoints remain under the configured external checkpoint root.
+Never delete AutoPhaseNN source data, best/resumable checkpoints, or the latest
+900-sample reference to make a code cleanup look like a disk cleanup. Inspect
+large server files first; moving them on the same filesystem saves no space.
 
-## Planned TensorFlow evaluation
+## Server storage: 90 GB available
 
-The next addition should implement an AutoPhaseNN input adapter and TensorFlow
-inference entry point, then reuse common reconstruction, post-processing, and
-metric definitions. Recommended files and outputs are:
+Measured compressed sizes from the latest 900 samples, excluding checkpoints:
 
-```text
-tensorflow_reference/evaluate_autophasenn.py
-tensorflow_reference/visualize_autophasenn.py
-artifacts/evaluations/autophasenn_tensorflow/<run-name>/
-artifacts/visualizations/autophasenn_tensorflow/<run-name>/
+| Proposed contents | Estimated size for 102,000 samples | Status |
+| --- | ---: | --- |
+| `I + phi + metadata` | 107.6 GB | Existing lean NPZ output |
+| Above plus `object + support` | 117.8 GB | Size estimate; extras currently also include `I_clean` |
+| All current extras including `I_clean` | 217.2 GB | Existing full NPZ output |
+| `I + object + support + metadata`, derive `phi` by FFT | About 19 GB | Implemented via `--storage compact` / `--data-format author_npz` |
+
+The last estimate relies on the measured sparsity of these complex64 objects;
+it is not a guarantee for other distributions or complex128 storage. Keep the
+already sampled noisy `I` fixed; do not redraw Poisson noise during loading.
+Derive the clean reciprocal phase using the source convention:
+
+```python
+phi = np.angle(np.fft.ifftshift(np.fft.fftn(np.fft.fftshift(obj))))
 ```
 
-The TensorFlow and PyTorch reports should record at least: backend, model
-variant, weight source, dataset version, input preprocessing, ambiguity mode,
-support threshold, Git commit, and evaluator version. This makes comparisons
-meaningful without forcing both models to use the same support threshold.
+The current stored complex64 object has already been rounded relative to the
+source calculation. Deriving a label is numerically close, not bitwise identical
+to the existing stored `phi`. Regression tests compare the two label paths and
+their WCA losses; native Linux GPU generation still needs a server smoke test.
 
-## Naming rule
+An all-900-sample read-only check found a maximum intensity-weighted circular
+phase MAE of 1.12e-7 rad and a maximum WCA between the two label arrays of
+4.20e-14. This is label agreement, not a neural-network performance result.
+No regenerated label was byte-identical; the maximum phase error among voxels
+with nonzero measured intensity was 4.58e-5 rad. Mean FFT/angle time was 0.0104 s
+per sample, excluding file loading and decompression.
 
-Use `<dataset>_<backend>` in artifact namespaces, and include the model variant
-and important evaluation condition in the run name. Do not place generated
-weights, datasets, or images beside source files.
+A local CPU check of one sample from each of nine categories (`OMP_NUM_THREADS=2`)
+measured about 0.62-0.65 s per observation after geometry creation, versus about
+0.011 s for an FFT-derived label, excluding disk/decompression time. Wulff
+geometry construction took 2.8-4.0 s in this small selection; cache/reuse a
+particle for its observations. These are not server throughput measurements.
+
+## Reproducible online generation
+
+Seed-only regeneration is possible, but the fixed dataset manifest must include
+sample ID, particle ID, particle seed, observation seed, chosen shape/phase,
+rotation and oversampling policies, source/config hashes, backend, and library
+versions. Resolve category choices before workers start. Do not derive the
+sample seed from epoch, worker ID, or loading order when a fixed dataset is
+intended. Different seeds are not a mathematical guarantee of distinct arrays.
+
+The current source uses global NumPy/Python random states. Concurrent threads
+must not share those states; a future online loader should use separate worker
+processes and bounded particle caches. Frozen validation/test sets must be split
+by particle, not by observation. Seed repetition reproduced noisy intensities
+exactly in nine checks, but multithreaded NUFFT introduced reciprocal-phase
+differences up to 2.4e-7 rad. Cross-version/backend bitwise equality is not claimed.
+
+## Retired files
+
+The independent continuum generator and its guessed-distribution configs are
+preserved in `archive/20260830_legacy_continuum/`. Its manifest records eight
+original files and their hashes. The original mixed test file is stored with a
+`.py.txt` suffix; active I/O, reconstruction, threshold, and cache checks remain
+under `tests/`. Source cleanup did not delete or move experiment data/weights.
+
+Keep historical audit reports unchanged as provenance. Their old generator
+commands refer to the archived route; use the current entry points above for
+new author-source experiments.

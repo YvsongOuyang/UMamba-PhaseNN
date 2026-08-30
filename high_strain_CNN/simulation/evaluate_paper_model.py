@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
 import os
@@ -24,6 +25,7 @@ from .run_paper_model import (
     reconstruct_object,
 )
 from .visualization import save_slice_overview, save_volume_overview
+from .sample_io import load_reciprocal_phase
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -141,23 +143,27 @@ def configure_logging(output_dir: Path, level: str) -> None:
 
 def load_sample(path: Path) -> dict[str, Any]:
     with np.load(path) as stored:
+        if not {"object", "support"} <= set(stored.files):
+            raise ValueError(
+                f"{path} lacks clean object/support truth. Regenerate with --save-extras."
+            )
         intensity = np.asarray(stored["I"], dtype=np.float32)
-        target_phase = np.asarray(stored["phi"], dtype=np.float32)
-        target_object = (
-            np.asarray(stored["object"], dtype=np.complex64)
-            if "object" in stored.files
-            else reconstruct_object(intensity, target_phase)
-        )
-        target_support = (
-            np.asarray(stored["support"], dtype=bool)
-            if "support" in stored.files
-            else np.abs(target_object) > 0.5 * max(float(np.abs(target_object).max()), 1e-12)
-        )
+        target_phase = load_reciprocal_phase(stored)
+        target_object = np.asarray(stored["object"], dtype=np.complex64)
+        target_support = np.asarray(stored["support"], dtype=bool)
         metadata = (
             json.loads(str(stored["metadata_json"]))
             if "metadata_json" in stored.files
             else {}
         )
+    if intensity.ndim != 3 or any(
+        array.shape != intensity.shape for array in (target_phase, target_object, target_support)
+    ):
+        raise ValueError(f"{path} contains inconsistent 3D sample shapes.")
+    if any(not np.all(np.isfinite(array)) for array in (intensity, target_phase, target_object)):
+        raise ValueError(f"{path} contains non-finite sample values.")
+    if np.any(intensity < 0) or not np.any(intensity > 0) or not np.any(target_support):
+        raise ValueError(f"{path} has invalid intensity or an empty support.")
     center = tuple(size // 2 for size in intensity.shape)
     target_phase = target_phase - float(target_phase[center])
     return {
@@ -286,6 +292,25 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _prediction_identity(sample_paths: list[Path], model_path: Path) -> dict[str, Any]:
+    return {
+        "schema_version": 2,
+        "preprocessing_version": "log1p_float32_minmax_volume_ndhwc_v1",
+        "model_sha256": _file_sha256(model_path),
+        "samples": [
+            {"name": path.name, "sha256": _file_sha256(path)} for path in sample_paths
+        ],
+    }
+
+
 def run_tensorflow_predictions(
     sample_paths: list[Path],
     model_path: Path,
@@ -295,22 +320,30 @@ def run_tensorflow_predictions(
 ) -> tuple[np.ndarray, dict[str, Any]]:
     prediction_path = cache_dir / "predicted_reciprocal_phase.npy"
     manifest_path = cache_dir / "prediction_manifest.json"
+    identity = _prediction_identity(sample_paths, model_path)
+    shape = load_sample(sample_paths[0])["intensity"].shape
     if reuse:
         if not prediction_path.is_file() or not manifest_path.is_file():
             raise FileNotFoundError("--reuse-predictions requires prediction and manifest files.")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        expected_names = [path.name for path in sample_paths]
-        if manifest.get("sample_names") != expected_names:
-            raise ValueError("Cached predictions do not match the selected sample files.")
-        return np.load(prediction_path, mmap_mode="r"), manifest
+        if manifest.get("content_identity") != identity:
+            raise ValueError("Cached model/data/preprocessing identity differs; rerun inference.")
+        if manifest.get("prediction_sha256") != _file_sha256(prediction_path):
+            raise ValueError("Cached prediction content is incomplete or changed.")
+        predictions = np.load(prediction_path, mmap_mode="r")
+        if predictions.shape != (len(sample_paths),) + shape or predictions.dtype != np.float32:
+            raise ValueError("Cached prediction shape/dtype differs from selected samples.")
+        if any(not np.all(np.isfinite(prediction)) for prediction in predictions):
+            raise ValueError("Cached predictions contain non-finite values.")
+        return predictions, manifest
 
     import tensorflow as tf
 
     cache_dir.mkdir(parents=True, exist_ok=True)
+    # Invalidate a prior completion record before overwriting its prediction array.
+    manifest_path.unlink(missing_ok=True)
     LOGGER.info("Loading official TensorFlow model: %s", model_path)
     model = tf.keras.models.load_model(model_path, compile=False)
-    first = load_sample(sample_paths[0])
-    shape = first["intensity"].shape
     predictions = np.lib.format.open_memmap(
         prediction_path,
         mode="w+",
@@ -333,6 +366,8 @@ def run_tensorflow_predictions(
         inference_seconds += time.perf_counter() - inference_started
         if output.shape != (stop - start,) + shape + (1,):
             raise ValueError(f"Unexpected TensorFlow output shape: {output.shape}")
+        if not np.all(np.isfinite(output)):
+            raise ValueError("TensorFlow returned non-finite predictions.")
         predictions[start:stop] = output[..., 0].astype(np.float32)
         predictions.flush()
         elapsed = time.perf_counter() - started
@@ -351,6 +386,8 @@ def run_tensorflow_predictions(
         "python_version": platform.python_version(),
         "model": str(model_path),
         "model_file_bytes": model_path.stat().st_size,
+        "content_identity": identity,
+        "prediction_sha256": _file_sha256(prediction_path),
         "parameter_count": int(model.count_params()),
         "sample_names": [path.name for path in sample_paths],
         "num_samples": len(sample_paths),
@@ -431,9 +468,10 @@ def category_summary(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
 def render_markdown(report: dict[str, Any]) -> str:
     selected = report["selected_threshold"]
     stats = report["evaluation_statistics"]
+    dataset_name = (report.get("dataset_manifest") or {}).get("dataset_name", "Reproduced Simulations")
     return "\n".join(
         [
-            "# Official TensorFlow Model on Reproduced Simulations",
+            f"# Official TensorFlow Model on {dataset_name}",
             "",
             "## Protocol",
             "",
@@ -443,7 +481,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Selected support threshold: `{selected}`",
             f"- Selection rule: calibration IoU within {report['iou_tolerance']:.3g} "
             "of the maximum, then support-volume ratio closest to one.",
-            "- Target support: exact support saved by the simulation generator.",
+            f"- Target support: {report['target_support_definition']}.",
             "",
             "## Held-out Evaluation",
             "",
@@ -631,6 +669,7 @@ def main() -> int:
                 predicted_object=aligned,
                 destination=visualization_dir / f"{stem}_2d.png",
                 support_threshold=selected_threshold,
+                target_support=state["target_support"],
             )
             volume_path = save_volume_overview(
                 intensity=state["intensity"],
@@ -638,6 +677,7 @@ def main() -> int:
                 predicted_object=aligned,
                 destination=visualization_dir / f"{stem}_3d.png",
                 support_threshold=selected_threshold,
+                target_support=state["target_support"],
             )
             visualization_records.append(
                 {
@@ -650,15 +690,15 @@ def main() -> int:
             )
 
     evaluation_statistics = metric_statistics(final_rows)
+    dataset_manifest = (
+        json.loads((dataset_dir / "dataset_manifest.json").read_text(encoding="utf-8"))
+        if (dataset_dir / "dataset_manifest.json").is_file() else None
+    )
     report = {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "dataset_dir": str(dataset_dir),
-        "dataset_manifest": (
-            json.loads((dataset_dir / "dataset_manifest.json").read_text(encoding="utf-8"))
-            if (dataset_dir / "dataset_manifest.json").is_file()
-            else None
-        ),
+        "dataset_manifest": dataset_manifest,
         "num_samples": len(sample_paths),
         "calibration_samples": calibration_count,
         "evaluation_samples": len(final_rows),
@@ -670,7 +710,9 @@ def main() -> int:
         "iou_tolerance": args.iou_tolerance,
         "thresholds": list(args.thresholds),
         "selected_threshold": selected_threshold,
-        "target_support_definition": "exact boolean support saved by simulation generator",
+        "target_support_definition": (dataset_manifest or {}).get(
+            "target_support_definition", "exact boolean support saved by simulation generator"
+        ),
         "model_metadata": model_metadata,
         "evaluation_statistics": evaluation_statistics,
         "by_shape_type": category_summary(final_rows, "shape_type"),

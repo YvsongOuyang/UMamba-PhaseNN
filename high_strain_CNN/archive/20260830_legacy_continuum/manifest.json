@@ -1,0 +1,55 @@
+{
+  "date": "2026-08-30",
+  "scope": "high_strain_CNN only",
+  "policy": "Move, do not delete; preserve pre-cleanup file bytes, including uncommitted edits.",
+  "files": [
+    {
+      "original": "simulation/config.py",
+      "archived": "archive/20260830_legacy_continuum/simulation/config.py",
+      "bytes": 7480,
+      "sha256": "09dcd051747acbdc3586c08060725857a5ceca62b66ec4e32bb97eef14f0602f"
+    },
+    {
+      "original": "simulation/generator.py",
+      "archived": "archive/20260830_legacy_continuum/simulation/generator.py",
+      "bytes": 25509,
+      "sha256": "a5271e191c74188ef52257b8a9642a0cd7c16b6224330a6d24f9f6787ded43ff"
+    },
+    {
+      "original": "simulation/generate_dataset.py",
+      "archived": "archive/20260830_legacy_continuum/simulation/generate_dataset.py",
+      "bytes": 8735,
+      "sha256": "920b6c00ad243c5ab2f8408ee659309a3ed1c39f490502dc06aeeef0216fd8ec"
+    },
+    {
+      "original": "simulation/__init__.py",
+      "archived": "archive/20260830_legacy_continuum/simulation/__init__.py",
+      "bytes": 343,
+      "sha256": "0f76631cc57be58d5e76cd895a63e7331daa642d855015352981488ece151dc6"
+    },
+    {
+      "original": "configs/simulation_paper.json",
+      "archived": "archive/20260830_legacy_continuum/configs/simulation_paper.json",
+      "bytes": 1799,
+      "sha256": "f37abffcbe1ad77c9c275db772e04f664003c200f78c6942714b7acb8f221010"
+    },
+    {
+      "original": "configs/simulation_reproduction_v2.json",
+      "archived": "archive/20260830_legacy_continuum/configs/simulation_reproduction_v2.json",
+      "bytes": 3600,
+      "sha256": "f91cde215f0e8599b8a0b27182123de53010a8a73087b76d16c3c3f0ce448e9a"
+    },
+    {
+      "original": "tests/test_simulation.py",
+      "archived": "archive/20260830_legacy_continuum/tests/test_simulation.py.txt",
+      "bytes": 20378,
+      "sha256": "f15b5789e1158a6712b8926f93b25ae1c3e1c007dada1a4f06d4dbbb9bdd9362"
+    },
+    {
+      "original": "docs/PROJECT_STRUCTURE.md",
+      "archived": "archive/20260830_legacy_continuum/docs/PROJECT_STRUCTURE.before_cleanup.md",
+      "bytes": 19181,
+      "sha256": "295f2656bbca4127e4e7d820e76bd3b426e4816c915f0f217d4a09aba9bccabb"
+    }
+  ]
+}

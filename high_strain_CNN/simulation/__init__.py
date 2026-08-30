@@ -1,12 +1,5 @@
-"""Paper-style synthetic data generation for the HighStrain phase network."""
+"""Author-source simulation, shared NPZ handling, and model evaluation tools."""
 
-from .config import SimulationConfig, load_simulation_config
-from .generator import SimulatedSample, generate_sample, save_sample
+from .sample_io import SimulatedSample, save_sample
 
-__all__ = [
-    "SimulatedSample",
-    "SimulationConfig",
-    "generate_sample",
-    "load_simulation_config",
-    "save_sample",
-]
+__all__ = ["SimulatedSample", "save_sample"]

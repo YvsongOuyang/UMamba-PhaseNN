@@ -1,0 +1,415 @@
+"""Numerical checks for the paper-style synthetic data generator."""
+
+from __future__ import annotations
+
+import unittest
+import json
+import tempfile
+from dataclasses import replace
+from itertools import product
+from pathlib import Path
+from unittest.mock import patch
+
+import numpy as np
+
+from simulation.config import load_simulation_config
+from simulation.generate_dataset import main as generate_dataset_main
+from scipy.signal import convolve
+
+from simulation.evaluate_paper_model import (
+    _file_sha256,
+    _prediction_identity,
+    choose_threshold,
+    load_sample,
+    realspace_metrics,
+    run_tensorflow_predictions,
+)
+from simulation.generator import (
+    _author_correlated_noise,
+    _center_diffraction,
+    generate_sample,
+    generate_unstrained_control,
+    save_sample,
+    support_extent,
+)
+from simulation.run_paper_model import prepare_model_input, reconstruct_object
+
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+CONFIG_PATH = PROJECT_DIR / "configs" / "simulation_paper.json"
+REPRODUCTION_CONFIG_PATH = PROJECT_DIR / "configs" / "simulation_reproduction_v2.json"
+
+
+class SimulationTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.config = load_simulation_config(CONFIG_PATH)
+
+    def test_all_paper_shape_and_phase_families(self) -> None:
+        rng = np.random.default_rng(12345)
+        for shape_type, phase_type in product(
+            self.config.shape.types,
+            self.config.phase.types,
+        ):
+            with self.subTest(shape=shape_type, phase=phase_type):
+                sample = generate_sample(
+                    self.config,
+                    rng,
+                    shape_type=shape_type,
+                    phase_type=phase_type,
+                )
+                expected_shape = (self.config.grid_size,) * 3
+                self.assertEqual(sample.intensity.shape, expected_shape)
+                self.assertEqual(sample.reciprocal_phase.shape, expected_shape)
+                self.assertTrue(np.all(sample.intensity >= 0))
+                self.assertGreater(np.count_nonzero(sample.support), 0)
+                self.assertGreater(sample.metadata["oversampling_ratio"], 2.0)
+                center = np.asarray(sample.metadata["final_support_center_of_mass"])
+                np.testing.assert_allclose(
+                    center,
+                    np.full(3, self.config.grid_size // 2),
+                    atol=0.75,
+                )
+                phase_span = np.ptp(sample.object_phase[sample.support])
+                self.assertGreaterEqual(phase_span, 2.0 * np.pi - 1e-5)
+                self.assertLessEqual(phase_span, 5.0 * np.pi + 1e-5)
+
+    def test_reproduction_all_categories_and_seeds(self) -> None:
+        config = load_simulation_config(REPRODUCTION_CONFIG_PATH)
+        for seed, shape_type, phase_type in product(
+            (1, 27, 12345), config.shape.types, config.phase.types
+        ):
+            with self.subTest(seed=seed, shape=shape_type, phase=phase_type):
+                sample = generate_sample(
+                    config, np.random.default_rng(seed),
+                    shape_type=shape_type, phase_type=phase_type,
+                )
+                measured = config.grid_size / support_extent(sample.support)
+                self.assertTrue(np.all(measured > 2.0))
+                self.assertTrue(np.all(measured >= sample.metadata["oversampling_ratio"]))
+                np.testing.assert_allclose(measured, sample.metadata["actual_oversampling_ratio"])
+                np.testing.assert_allclose(
+                    sample.metadata["final_support_center_of_mass"], [32, 32, 32], atol=0.51
+                )
+                shift = sample.metadata["diffraction_centering"]["shift_voxels"]
+                coordinates = np.indices(sample.support.shape) - config.grid_size // 2
+                ramp = 2 * np.pi * np.einsum("i,idhw->dhw", shift, coordinates) / config.grid_size
+                original_span = np.ptp((sample.object_phase - ramp)[sample.support])
+                self.assertGreaterEqual(original_span, 2 * np.pi - 1e-5)
+                self.assertLessEqual(original_span, 5 * np.pi + 1e-5)
+                np.testing.assert_allclose(
+                    original_span,
+                    sample.metadata["phase_parameters"]["actual_peak_to_peak_rad"], atol=2e-5,
+                )
+                np.testing.assert_allclose(
+                    reconstruct_object(sample.clean_intensity, sample.reciprocal_phase),
+                    sample.realspace_object, rtol=2e-5, atol=2e-5,
+                )
+                self.assertTrue(np.all(np.isfinite(sample.intensity)))
+                self.assertTrue(np.all(sample.intensity == np.floor(sample.intensity)))
+
+    def test_author_random_field_matches_direct_convolution(self) -> None:
+        white = np.random.default_rng(3).standard_normal((8, 8, 8))
+        sigma = 0.2
+        x, y, z = np.meshgrid(*([np.linspace(-1, 1, 8)] * 3), indexing="ij")
+        kernel = np.exp(-(x*x + y*y + z*z) / (2 * sigma**2))
+        expected = convolve(kernel, white, mode="same", method="direct")
+        expected /= expected.max()
+        np.testing.assert_allclose(_author_correlated_noise(white, sigma), expected, atol=1e-12)
+
+    def test_centered_fft_matches_kinematic_sum(self) -> None:
+        size = 4
+        coordinates = (np.indices((size,) * 3) - size // 2).reshape(3, -1).T
+        rng = np.random.default_rng(4)
+        obj = rng.normal(size=(size,) * 3) + 1j * rng.normal(size=(size,) * 3)
+        direct = np.exp(-2j * np.pi * (coordinates @ coordinates.T) / size) @ obj.ravel()
+        fft = np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(obj)))
+        np.testing.assert_allclose(fft.ravel(), direct, atol=1e-12)
+
+    def test_reciprocal_centering_preserves_fourier_pair(self) -> None:
+        size = 16
+        support = np.zeros((size,) * 3, dtype=bool)
+        support[5:12, 6:11, 6:11] = True
+        coordinates = np.indices(support.shape) - size // 2
+        phase = 2 * np.pi * (3*coordinates[0] - 2*coordinates[1]) / size
+        obj = support * np.exp(1j * phase)
+        spectrum = np.fft.fftshift(np.fft.fftn(np.fft.ifftshift(obj)))
+        shifted, shifted_phase, metadata = _center_diffraction(spectrum, phase, support)
+        self.assertNotEqual(metadata["shift_voxels"], [0, 0, 0])
+        expected = support * np.exp(1j * shifted_phase)
+        np.testing.assert_allclose(
+            reconstruct_object(np.abs(shifted)**2, np.angle(shifted)), expected, atol=2e-6
+        )
+        self.assertAlmostEqual(float(np.sum(np.abs(shifted)**2)), float(np.sum(np.abs(spectrum)**2)))
+
+    def test_config_round_trip_and_invalid_parameters(self) -> None:
+        config = load_simulation_config(REPRODUCTION_CONFIG_PATH)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "config.json"
+            path.write_text(json.dumps(config.to_dict()), encoding="utf-8")
+            self.assertEqual(load_simulation_config(path), config)
+            for section, key, value in (
+                ("phase", "gaussian_sigma_fraction", [0, 1]),
+                ("phase", "correlation_length_fraction", [0.1, float("nan")]),
+                ("shape", "oversampling_mode", "unknown"),
+                ("noise", "peak_photons", [-1, 10]),
+            ):
+                raw = config.to_dict()
+                raw[section][key] = value
+                path.write_text(json.dumps(raw), encoding="utf-8")
+                with self.subTest(section=section, key=key), self.assertRaises(ValueError):
+                    load_simulation_config(path)
+
+    def test_clean_modulus_and_phase_reconstruct_object(self) -> None:
+        sample = generate_sample(
+            self.config,
+            np.random.default_rng(7),
+            shape_type="wulff",
+            phase_type="double_gaussian",
+        )
+        reconstruction = reconstruct_object(
+            sample.clean_intensity,
+            sample.reciprocal_phase,
+        )
+        np.testing.assert_allclose(
+            reconstruction,
+            sample.realspace_object,
+            rtol=2e-5,
+            atol=2e-5,
+        )
+
+    def test_saved_npz_matches_official_loader_schema(self) -> None:
+        sample = generate_sample(
+            self.config,
+            np.random.default_rng(19),
+            shape_type="random_polyhedron",
+            phase_type="gaussian_correlated",
+        )
+        destination = (
+            PROJECT_DIR
+            / "artifacts"
+            / "simulation"
+            / "test_sample_schema.npz"
+        )
+        try:
+            destination = save_sample(sample, destination, save_extras=True)
+            with np.load(destination) as stored:
+                self.assertIn("I", stored.files)
+                self.assertIn("phi", stored.files)
+                self.assertEqual(stored["I"].dtype, np.float32)
+                self.assertEqual(stored["phi"].dtype, np.float32)
+                model_input = prepare_model_input(stored["I"])
+                self.assertEqual(model_input.shape, (1, 64, 64, 64, 1))
+                self.assertEqual(model_input.dtype, np.float32)
+                self.assertGreaterEqual(float(model_input.min()), 0.0)
+                self.assertLessEqual(float(model_input.max()), 1.0)
+        finally:
+            destination.unlink(missing_ok=True)
+
+    def test_support_threshold_uses_exact_generated_support(self) -> None:
+        target_support = np.zeros((6, 6, 6), dtype=bool)
+        target_support[2:4, 2:4, 2:4] = True
+        target = target_support.astype(np.complex64)
+        prediction_amplitude = target_support.astype(np.float32)
+        prediction_amplitude[1:5, 1:5, 1:5] += 0.2
+        prediction = prediction_amplitude.astype(np.complex64)
+        low = realspace_metrics(target, prediction, target_support, 0.1)
+        high = realspace_metrics(target, prediction, target_support, 0.3)
+        self.assertLess(low["support_iou"], high["support_iou"])
+        self.assertAlmostEqual(high["support_iou"], 1.0)
+
+    def test_unstrained_control_preserves_geometry_and_photon_peak(self) -> None:
+        config = load_simulation_config(REPRODUCTION_CONFIG_PATH)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "sample_00000.npz"
+            for shape_type, noisy in product(config.shape.types, (True, False)):
+                with self.subTest(shape=shape_type, noisy=noisy):
+                    reference = generate_sample(
+                        replace(config, noise=replace(config.noise, enabled=noisy)),
+                        np.random.default_rng(34), shape_type=shape_type,
+                    )
+                    save_sample(reference, path, save_extras=True)
+                    reference_hash = _file_sha256(path)
+                    control = generate_unstrained_control(path, np.random.default_rng(9))
+                    repeated = generate_unstrained_control(path, np.random.default_rng(9))
+                    np.testing.assert_array_equal(control.support, reference.support)
+                    np.testing.assert_array_equal(control.object_phase, 0.0)
+                    np.testing.assert_array_equal(control.realspace_object, reference.support)
+                    np.testing.assert_array_equal(control.intensity, repeated.intensity)
+                    self.assertEqual(control.metadata["phase_type"], "unstrained")
+                    self.assertEqual(control.metadata["shape_parameters"], reference.metadata["shape_parameters"])
+                    self.assertEqual(control.metadata["noise"]["peak_photons"], reference.metadata["noise"]["peak_photons"])
+                    self.assertEqual(control.metadata["actual_oversampling_ratio"], reference.metadata["actual_oversampling_ratio"])
+                    self.assertEqual(control.metadata["control"]["reference_sha256"], reference_hash)
+                    self.assertEqual(_file_sha256(path), reference_hash)
+                    np.testing.assert_allclose(
+                        reconstruct_object(control.clean_intensity, control.reciprocal_phase),
+                        control.realspace_object, atol=2e-6,
+                    )
+                    self.assertGreater(float(np.max(np.abs(control.reciprocal_phase))), 1.0)
+                    self.assertFalse(np.array_equal(control.clean_intensity, reference.clean_intensity))
+                    if not noisy:
+                        np.testing.assert_array_equal(control.intensity, control.clean_intensity)
+                    else:
+                        np.testing.assert_array_equal(control.intensity, np.floor(control.intensity))
+
+    def test_unstrained_control_rejects_missing_truth_or_nonunit_amplitude(self) -> None:
+        reference = generate_sample(self.config, np.random.default_rng(2))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "sample_00000.npz"
+            save_sample(reference, path)
+            with self.assertRaisesRegex(ValueError, "--save-extras"):
+                generate_unstrained_control(path, np.random.default_rng(9))
+            save_sample(replace(reference, realspace_object=2 * reference.realspace_object), path, save_extras=True)
+            with self.assertRaisesRegex(ValueError, "unit-amplitude"):
+                generate_unstrained_control(path, np.random.default_rng(9))
+
+    def test_unstrained_cli_pairs_names_and_protects_reference(self) -> None:
+        reference = generate_sample(self.config, np.random.default_rng(2))
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "reference"
+            destination = Path(temporary) / "control"
+            save_sample(reference, source / "sample_00007.npz", save_extras=True)
+            (source / "dataset_manifest.json").write_text(
+                json.dumps({"config": self.config.to_dict()}), encoding="utf-8"
+            )
+            arguments = ["generate_dataset", "--unstrained-from", str(source), "--output-dir", str(destination)]
+            with patch("sys.argv", arguments):
+                self.assertEqual(generate_dataset_main(), 0)
+            manifest = json.loads((destination / "dataset_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["num_samples"], 1)
+            self.assertTrue(manifest["save_extras"])
+            self.assertIsNone(manifest["config"])
+            self.assertEqual(manifest["samples"][0]["file"], "sample_00007.npz")
+            self.assertEqual(manifest["samples"][0]["control"]["reference_phase_type"], reference.metadata["phase_type"])
+            self.assertEqual(load_sample(destination / "sample_00007.npz")["metadata"]["phase_type"], "unstrained")
+            with patch("sys.argv", arguments[:-1] + [str(source), "--overwrite"]):
+                with self.assertRaisesRegex(ValueError, "must not overwrite"):
+                    generate_dataset_main()
+            self.assertTrue((source / "sample_00007.npz").is_file())
+
+    def test_generation_cli_can_fix_shape_and_phase_families(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "fixed_family"
+            arguments = [
+                "generate_dataset", "--config", str(CONFIG_PATH),
+                "--output-dir", str(output), "--num-samples", "2", "--seed", "27",
+                "--shape-type", "wulff", "--phase-type", "double_gaussian",
+                "--save-extras",
+            ]
+            with patch("sys.argv", arguments):
+                self.assertEqual(generate_dataset_main(), 0)
+            manifest = json.loads((output / "dataset_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["fixed_shape_type"], "wulff")
+            self.assertEqual(manifest["fixed_phase_type"], "double_gaussian")
+            self.assertTrue(all(row["shape_type"] == "wulff" for row in manifest["samples"]))
+            self.assertTrue(all(row["phase_type"] == "double_gaussian" for row in manifest["samples"]))
+            self.assertEqual(len(list(output.glob("sample_*.npz"))), 2)
+            with patch("sys.argv", arguments + ["--balanced-categories"]):
+                with self.assertRaisesRegex(ValueError, "either"):
+                    generate_dataset_main()
+
+    def test_threshold_selection_uses_calibration_iou(self) -> None:
+        summaries = [
+            {
+                "threshold": 0.1,
+                "calibration_support_iou_mean": 0.7,
+                "calibration_support_dice_mean": 0.8,
+                "calibration_support_volume_ratio_mean": 1.0,
+            },
+            {
+                "threshold": 0.3,
+                "calibration_support_iou_mean": 0.9,
+                "calibration_support_dice_mean": 0.94,
+                "calibration_support_volume_ratio_mean": 1.1,
+            },
+        ]
+        self.assertEqual(choose_threshold(summaries), 0.3)
+
+    def test_threshold_selection_uses_volume_ratio_inside_iou_plateau(self) -> None:
+        summaries = [
+            {
+                "threshold": 0.145,
+                "calibration_support_iou_mean": 0.57326,
+                "calibration_support_dice_mean": 0.7232,
+                "calibration_support_volume_ratio_mean": 1.023,
+            },
+            {
+                "threshold": 0.15,
+                "calibration_support_iou_mean": 0.57325,
+                "calibration_support_dice_mean": 0.7227,
+                "calibration_support_volume_ratio_mean": 0.989,
+            },
+        ]
+        self.assertEqual(choose_threshold(summaries, iou_tolerance=1e-3), 0.15)
+
+
+class PredictionCacheTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.directory = Path(self.temporary.name)
+        self.sample = self.directory / "sample_00000.npz"
+        self.model = self.directory / "model.h5"
+        self.model.write_bytes(b"test-model-a")
+        self.write_sample(1.0)
+        self.prediction = self.directory / "predicted_reciprocal_phase.npy"
+        np.save(self.prediction, np.zeros((1, 4, 4, 4), dtype=np.float32))
+        self.manifest = {
+            "content_identity": _prediction_identity([self.sample], self.model),
+            "prediction_sha256": _file_sha256(self.prediction),
+        }
+        self.write_manifest()
+
+    def write_sample(self, intensity: float) -> None:
+        np.savez_compressed(
+            self.sample, I=np.full((4, 4, 4), intensity, dtype=np.float32),
+            phi=np.zeros((4, 4, 4), dtype=np.float32),
+            object=np.ones((4, 4, 4), dtype=np.complex64),
+            support=np.ones((4, 4, 4), dtype=np.uint8),
+        )
+
+    def write_manifest(self) -> None:
+        (self.directory / "prediction_manifest.json").write_text(
+            json.dumps(self.manifest), encoding="utf-8"
+        )
+
+    def reuse(self) -> None:
+        predictions, _ = run_tensorflow_predictions(
+            [self.sample], self.model, self.directory, 1, True
+        )
+        self.assertEqual(predictions.shape, (1, 4, 4, 4))
+        del predictions
+
+    def test_matching_cache_is_usable_without_tensorflow(self) -> None:
+        self.reuse()
+
+    def test_same_name_changed_sample_is_rejected(self) -> None:
+        self.write_sample(2.0)
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            self.reuse()
+
+    def test_same_path_changed_model_is_rejected(self) -> None:
+        self.model.write_bytes(b"test-model-b")
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            self.reuse()
+
+    def test_corrupt_prediction_is_rejected(self) -> None:
+        np.save(self.prediction, np.ones((1, 4, 4, 4), dtype=np.float32))
+        with self.assertRaisesRegex(ValueError, "incomplete or changed"):
+            self.reuse()
+
+    def test_legacy_cache_requires_fresh_inference(self) -> None:
+        self.manifest.pop("content_identity")
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "identity differs"):
+            self.reuse()
+
+    def test_noisy_inverse_fft_is_not_accepted_as_clean_truth(self) -> None:
+        np.savez(self.sample, I=np.ones((4, 4, 4)), phi=np.zeros((4, 4, 4)))
+        with self.assertRaisesRegex(ValueError, "--save-extras"):
+            load_sample(self.sample)
+
+
+if __name__ == "__main__":
+    unittest.main()

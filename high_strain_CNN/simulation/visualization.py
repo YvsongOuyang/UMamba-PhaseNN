@@ -27,6 +27,7 @@ def save_slice_overview(
     predicted_object: np.ndarray,
     destination: str | Path,
     support_threshold: float = 0.1,
+    target_support: np.ndarray | None = None,
 ) -> Path:
     """Save matched center slices in reciprocal and real space."""
 
@@ -37,7 +38,10 @@ def save_slice_overview(
     reciprocal_mask = normalized_intensity > 1e-3
     target_amplitude = np.abs(target_object)
     predicted_amplitude = np.abs(predicted_object)
-    target_mask = target_amplitude > 0.5 * max(float(target_amplitude.max()), 1e-12)
+    target_mask = (
+        np.asarray(target_support, dtype=bool) if target_support is not None
+        else target_amplitude > 0.5 * max(float(target_amplitude.max()), 1e-12)
+    )
     predicted_mask = predicted_amplitude > support_threshold * max(
         float(predicted_amplitude.max()), 1e-12
     )
@@ -70,7 +74,8 @@ def save_slice_overview(
             "coolwarm",
             (-np.pi, np.pi),
         ),
-        (target_amplitude[:, :, center], "Target amplitude", "viridis", (0.0, 1.0)),
+        (target_amplitude[:, :, center], "Target amplitude", "viridis",
+         (0.0, max(1.0, float(target_amplitude.max())))),
         (
             predicted_amplitude[:, :, center],
             "Predicted amplitude",
@@ -146,6 +151,7 @@ def save_volume_overview(
     support_threshold: float = 0.1,
     max_surface_points: int = 7000,
     max_diffraction_points: int = 5000,
+    target_support: np.ndarray | None = None,
 ) -> Path:
     """Save phase-colored object surfaces and a reciprocal-space point cloud."""
 
@@ -155,9 +161,9 @@ def save_volume_overview(
     target_amplitude = np.abs(target_object)
     predicted_amplitude = np.abs(predicted_object)
     target_points, target_phase = _surface_points(
-        target_amplitude,
+        np.asarray(target_support, dtype=np.float32) if target_support is not None else target_amplitude,
         np.angle(target_object),
-        support_threshold,
+        0.5 if target_support is not None else support_threshold,
         max_surface_points,
     )
     predicted_points, predicted_phase = _surface_points(

@@ -20,17 +20,24 @@ retrieval algorithm.
 - `pytorch_autophasenn/losses.py`: equivalent weighted circular-average (WCA) loss,
   including global-phase and conjugate/twin ambiguity handling.
 - `pytorch_autophasenn/data.py`: AutoPhaseNN raw-memmap adapter.
+- `pytorch_autophasenn/author_data.py`: fixed author NPZ training adapter,
+  including compact object-to-phase FFT labels.
 - `pytorch_autophasenn/reconstruction.py`: combines measured diffraction modulus and
   predicted reciprocal phase, then reconstructs a complex real-space object.
 - `pytorch_autophasenn/train.py`, `evaluate.py`, and `visualize.py`: the full
   PyTorch workflow on AutoPhaseNN data.
-- `simulation/`: configurable paper-style Wulff/Winterbottom/random-particle
-  simulation, official TensorFlow inference, reconstruction, and 2D/3D plots.
+- `simulation/`: supplied-author particle generation, shared TensorFlow/PyTorch
+  inference, reconstruction, and 2D/3D plots.
 - `tools/`: H5 conversion, TensorFlow/PyTorch parity, and data validation.
 - `artifacts/`: backend- and dataset-labelled experiment records and outputs.
+- `archive/`: recoverable retired continuum-simulator code and configuration.
 
 See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for the dependency
 graph, artifact policy, and planned TensorFlow evaluation layout.
+
+For the compact author-generated dataset, Linux PyNX CUDA generation, and
+4-worker PyTorch loading, see [`docs/COMPACT_AUTHOR_DATA.md`](docs/COMPACT_AUTHOR_DATA.md).
+This is a separate dataset route; the AutoPhaseNN commands below retain their defaults.
 
 ## PyTorch architecture
 
@@ -172,7 +179,7 @@ smaller `reduced` variant. Training a new model on a different dataset cannot
 guarantee identical paper metrics because the data distribution, hardware
 kernels, shuffling, and optimization trajectory are different.
 
-## Paper-style simulated data
+## Author-source simulated data
 
 The article states that its synthetic objects combine Wulff, Winterbottom, and
 randomly plane-cut particle shapes with one of three real-space phase fields:
@@ -182,119 +189,148 @@ orientation, phase variation from `2pi` to `5pi`, and Poisson noise. The public
 repository does **not** include the PyNX simulation program or the complete
 sampling distributions used for those variables.
 
-`configs/simulation_paper.json` therefore separates the paper-fixed conditions
-from configurable replication assumptions. The NumPy FFT evaluates the same
-kinematic far-field transform on a regular cubic grid; it is not presented as
-the missing original PyNX source. Every sample records its exact random shape,
-phase, rotation, photon level, centering shift, and assumption notes in
-`metadata_json`, while retaining the official loader's required keys:
+When the separately supplied `codes_for_BCDI_dataset_creation` directory is
+available, `simulation.author_generator` directly executes its atomic particle,
+amplitude, phase-template, phase-ramp, and Poisson functions. The
+`simulation.evaluate_author_code --profile paper` route enables the full
+three-shape by three-phase distribution while retaining `--profile notebook`
+as an exact regression of the example notebook's Wulff/random-only execution.
+Random rotated reciprocal grids are evaluated with FINUFFT because PyNX is not
+available on the supported Windows parity environment.
+
+Use `python -m simulation.generate_author_dataset --profile paper` for pure
+dataset generation. It writes one source-compatible NPZ per observation plus a
+hash-tracked `dataset_manifest.json`, without importing TensorFlow.
+
+Author-generator entry points now default to random category sampling. Shapes
+are drawn once per particle and phase families independently per observation;
+`--category-sampling balanced` remains available only for deliberate coverage
+diagnostics. Equal category probabilities and three observations per particle
+remain explicit assumptions, not known original training proportions.
+
+The `paper` profile now calls the supplied phase functions with their defaults,
+recorded as `phase_sampling=author_function_defaults_v1`. It does not rescale,
+reject, or filter by the final support-phase span. The old small-template plus
+`Uniform(2pi, 5pi)` scaling has been removed; historical reports retain their
+old protocol and must not be relabeled as source-default results.
+
+The seven named ingredients are **three alternative shapes, three alternative
+phase families, and one shared rotation operation**, not seven stacked fields:
+
+| Shape | Double Gaussian | Double cosine | Correlated random |
+| --- | --- | --- | --- |
+| Wulff | Wulff + Gaussian | Wulff + cosine | Wulff + random |
+| Winterbottom | Winterbottom + Gaussian | Winterbottom + cosine | Winterbottom + random |
+| Random planar cuts | Cuts + Gaussian | Cuts + cosine | Cuts + random |
+
+Every observation in the default `paper` profile gets its own source q rotation.
+The phase-parameter table below aggregates across the three shape families; it
+does not reduce the dataset to three combinations. Random sampling need not
+cover all nine pairs in a nine-sample batch or give equal pair counts.
+
+`generator_protocol=author_calls_v2` also delegates random planar cutting and
+q-grid construction directly to the supplied source. It removes the adapter's
+zero-direction redraw and geometry-dependent nstep lower bound. nstep is drawn
+once from `[80, 160)`. If measured oversampling violates the paper's `>2`
+condition, the default `--oversampling-policy error` stops and reports the seed.
+The explicit `--oversampling-policy record` instead retains every source draw
+unchanged, warns, records per-sample compliance, and reports separate diagnostic
+WCA statistics for the compliant/noncompliant subsets. This is not a source
+rejection rule: the supplied code itself does not reject these draws. Neither
+mode modifies or retries a draw. Amplitude perturbation and Poisson scale are likewise
+sampled inside source functions, with no adapter parameter overrides.
+
+This is source-operation fidelity with a documented computational boundary:
+Windows still uses an FFT/NUFFT atomic-sum backend, not native PyNX, and bypasses
+the notebook's eight-decimal LMP coordinate serialization. Native PyNX numerical
+parity has not been measured. See audit section 20 for the comparison tests.
+
+| Source phase family | Default parameter draws |
+| --- | --- |
+| Gaussian-correlated random | `phase_range ~ Uniform(1.5pi, 5pi)`; source scales the random field over the entire array |
+| Double Gaussian | `phase_range1 ~ Uniform(3pi, 4pi)`, `phase_range2 ~ Uniform(2.5pi, 3.5pi)`; source `sigma1 ~ Uniform(60, 300)`, `sigma2 ~ Uniform(70, 200)` |
+| Double cosine | Same amplitude draws; four source frequency coefficients independently `Uniform(0.5, 2) / avg_side` |
+
+Centers, orientations, correlation length and phase-ramp removal also follow
+the supplied functions. These coefficients are not the final unwrapped phase
+span inside the particle. The source returns a complex object, so author NPZ
+extras contain `support`, `object`, and `I_clean`, not a claimed unwrapped
+`object_phase`. The separate `notebook` profile still preserves its explicit
+`Uniform(5, 18)` radian overrides and effective random-phase-only branch.
+
+Run a larger check with the unchanged official TensorFlow model (from this
+subproject directory):
+
+```bash
+python -m simulation.evaluate_author_code \
+  --author-code-dir D:/code/PYTHON/codes_for_BCDI_dataset_creation \
+  --profile paper --category-sampling random \
+  --oversampling-policy record \
+  --num-samples 900 --seed 20260830 --batch-size 1 \
+  --output-dir artifacts/evaluations/simulation_tensorflow/author_generator_author_calls_v2_record_seed20260830_n900
+```
+
+Evaluation generates and infers one batch at a time, flushes per-sample WCA to
+CSV, and retains NPZ inputs and raw phase predictions. Reports include a full
+3-by-3 count matrix (including zero-count pairs), per-observation rotation flags,
+shape, phase-family and pair groups, plus a particle-cluster bootstrap
+interval (observations from one particle are not independent). No WCA-based
+sample filtering is performed. An existing result directory is never overwritten.
+
+The earlier independently implemented continuum simulator and its two configs
+are now recoverably archived under
+[`archive/20260830_legacy_continuum/`](archive/20260830_legacy_continuum/README.md).
+Do not use its phase-span scaling or old `simulation.generate_dataset` commands
+for new author-source datasets. Historical results remain in place.
+
+The source-compatible NPZ schema is:
 
 ```text
 I       float32 [64, 64, 64]  noisy linear diffraction intensity
 phi     float32 [64, 64, 64]  wrapped reciprocal-space phase
 ```
 
-Generate a small full-factorial diagnostic set with all optional truth arrays.
-`--balanced-categories` cycles through every one of the three-shape by
-three-phase combinations:
+Generate a small source-call dataset without loading a neural network:
 
 ```bash
-python -m simulation.generate_dataset \
-  --config configs/simulation_paper.json \
-  --output-dir artifacts/simulation/dataset \
-  --num-samples 9 \
-  --balanced-categories \
-  --save-extras
+python -m simulation.generate_author_dataset \
+  --author-code-dir D:/code/PYTHON/codes_for_BCDI_dataset_creation \
+  --output-dir artifacts/simulation/author_source_check \
+  --profile paper --num-samples 9 --seed 20260830 \
+  --oversampling-policy record --save-extras
 ```
 
-Omit `--save-extras` when generating a larger training set. Those lean files
-still work directly with the original `load_and_process_file()` function in
-`tensorflow_reference/train_upstream.py`; extras are only needed for direct real-space accuracy analysis and
-visualization.
+For existing lean `I/phi` storage, pass `--no-save-extras` instead.
+Full extras currently include `object`, `support`, and `I_clean`.
+See [storage and online-generation notes](docs/PROJECT_STRUCTURE.md#server-storage-90-gb-available)
+before generating a large dataset: a complete paper-size lean dataset exceeds
+the server's 90 GB remaining space. Compact-object and seed-only training are
+proposals, not implemented training modes.
 
-For the strongest fidelity check, run the author's TensorFlow 2.10.1 H5 model
-rather than the converted network. The command saves the exact NDHWC input,
-raw TensorFlow phase, twin-aligned phase, reconstructed complex object, metrics,
-and both center-slice and 3D figures:
+Single-sample inference still supports either backend and preserves the current
+input preprocessing, WCA, inverse FFT, support handling, and 2D/3D figures:
 
 ```bash
 python -m simulation.run_paper_model \
-  --sample artifacts/simulation/dataset/sample_00000.npz \
-  --backend tensorflow \
-  --model artifacts/models/model_paper.h5 \
+  --sample artifacts/simulation/author_source_check/sample_00000.npz \
+  --backend tensorflow --model artifacts/models/model_paper.h5 \
   --output-dir artifacts/simulation/official_tensorflow
 ```
 
-The runner applies the documented `log1p` and per-volume min-max input
-preprocessing. It reconstructs with
-`sqrt(I) * exp(1j * predicted_phase)` followed by the centered inverse FFT. For
-simulation evaluation only, the known target phase selects the direct or
-conjugate/twin-equivalent solution before real-space metrics are computed; the
-raw model output is always saved separately.
+Use `--backend pytorch --model artifacts/models/model_paper_pytorch.pt` for the
+converted published model. Both use the same NPZ input.
 
-The same entry point can consume the converted checkpoint:
+`simulation.evaluate_paper_model` remains the shared existing-dataset evaluator
+and support-threshold calibration tool. Always pass the intended
+`--dataset-dir` explicitly; source-generated and AutoPhaseNN-exported datasets
+must have separate output/cache directories. Ground-truth extras are required
+for real-space metrics. Threshold changes do not affect reciprocal-phase WCA.
 
-```bash
-python -m simulation.run_paper_model \
-  --sample artifacts/simulation/dataset/sample_00000.npz \
-  --backend pytorch \
-  --model artifacts/models/model_paper_pytorch.pt \
-  --device cuda \
-  --output-dir artifacts/simulation/converted_pytorch
-```
-
-The published TensorFlow model contains `143,759,937` trainable parameters. A
-numerical test of the simulator is available without loading that large model:
+Run active source and evaluation checks with:
 
 ```bash
-python -m unittest tests.test_simulation
+python -m pytest tests
 ```
-
-### Evaluate the official model on reproduced simulations
-
-For threshold calibration and held-out evaluation, generate 72 samples. This
-gives 36 calibration and 36 evaluation samples, with every shape/phase pair
-appearing exactly four times in each half:
-
-```bash
-python -m simulation.generate_dataset \
-  --output-dir artifacts/simulation/paper_evaluation \
-  --num-samples 72 \
-  --seed 20260828 \
-  --balanced-categories \
-  --save-extras \
-  --overwrite
-```
-
-Run the official TensorFlow H5 once and perform the broad support-threshold
-scan. Model predictions are cached under the ignored `artifacts/simulation/`
-tree so later threshold scans do not repeat inference:
-
-```bash
-python -m simulation.evaluate_paper_model \
-  --dataset-dir artifacts/simulation/paper_evaluation \
-  --batch-size 1
-```
-
-Refine the near-optimal interval while reusing those predictions:
-
-```bash
-python -m simulation.evaluate_paper_model \
-  --dataset-dir artifacts/simulation/paper_evaluation \
-  --output-dir artifacts/evaluations/simulation_tensorflow/official_published_calibrated \
-  --visualization-dir artifacts/visualizations/simulation_tensorflow/official_published_calibrated \
-  --thresholds 0.125 0.13 0.135 0.14 0.145 0.15 0.155 0.16 0.165 0.17 0.175 \
-  --batch-size 1 \
-  --reuse-predictions
-```
-
-Threshold selection uses only the calibration half. It first identifies the
-IoU plateau within `0.001` of the highest mean support IoU, then selects the
-threshold whose predicted/true support-volume ratio is closest to one. The
-reported final metrics use only the held-out half and the exact boolean support
-saved by the simulator. The evaluator writes JSON, CSV, Markdown, and log files
-under `artifacts/evaluations/simulation_tensorflow/` and creates representative
-2D/3D figures under `artifacts/visualizations/simulation_tensorflow/`.
 
 ## AutoPhaseNN data mapping
 
