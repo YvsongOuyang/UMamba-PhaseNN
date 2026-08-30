@@ -38,7 +38,8 @@ Compression is distribution-dependent. Keeping only best/last checkpoints via
 
 Run from `high_strain_CNN/`. Use a fresh output directory. The manifest is
 written after successful completion; do not train on an incomplete directory.
-The generator currently refuses to overwrite or resume existing samples.
+The generator refuses to overwrite existing samples. An interrupted paper-profile
+run can be resumed explicitly using its saved configuration, as described below.
 
 The original author code and gold potential resources are bundled under
 `vendor/codes_for_BCDI_dataset_creation/` and selected by default. After pulling
@@ -65,6 +66,7 @@ nohup env CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset
   --storage compact --scattering-backend pynx_cuda \
   --split-counts 95000 4000 3000 \
   --seed 20260830 --oversampling-policy record \
+  --workers 4 --print-freq 50 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
 PID=$!
@@ -73,8 +75,9 @@ echo "Submitted PID=${PID}; data=${DATA_DIR}; logs=${RUN_DIR}"
 tail -f "${RUN_DIR}/console.log"
 ```
 
-`--output-dir` holds only the sample NPZs and `dataset_manifest.json`, which the
-training reader needs alongside the data. `--log-dir` holds `generation.log`
+`--output-dir` holds the sample NPZs, `dataset_manifest.json`, and a small
+`.generation.lock` file preventing concurrent writers. The training reader needs
+the manifest alongside the data. `--log-dir` holds `generation.log`
 and `config.json`; the shell command above places `console.log` and
 `generate.pid` there too. Without `--log-dir`, a timestamped directory under
 the subproject's `artifacts/generation/` is selected automatically. Existing
@@ -104,6 +107,89 @@ their measured oversampling is <=2. It does not filter, rescale, or retry them.
 The alternative/default `error` stops on such a draw. This preserves the
 previous source-call experiment policy; it is not a claim that all samples
 satisfy the paper's oversampling condition.
+
+### GPU execution and bounded concurrency
+
+The supplied author notebook generates one observation, not a batched dataset.
+Its `Create_diffraction` calls `Fhkl_thread(..., language="cuda", gpu_name="")`.
+Neither that wrapper nor the documented PyNX scattering API exposes a dataset
+`batch_size`. PyNX's `nbCPUthread` applies to its CPU backend, not GPU batches.
+`sizeQ=64` is spatial resolution and `nstep` is reciprocal sampling; neither is
+a batch setting. Do not change them to increase throughput.
+
+Our CPU compatibility route uses FFT/NUFFT rather than PyNX's direct atomic sum;
+similar CPU/GPU end-to-end times do not by themselves imply CUDA is inactive.
+Both routes still perform geometry, grid rotation, amplitude/phase processing,
+noise and compression on the CPU. In a local CPU profile, constructing the first
+Wulff particle took about 4.0 seconds while its observation took about 0.8 seconds,
+including about 0.33 seconds for the source's point-by-point grid rotation. These
+are one-sample local timings, not a server CUDA benchmark.
+
+`--workers` defaults to **1**. Try **2 or 4**, using the same seed and counts in
+separate small test directories before selecting the faster setting. Each worker
+is a spawned process with its own source RNGs and native CUDA context. This can
+overlap CPU preparation and processing, but a single GPU may serialize concurrent
+calls; increasing worker count or VRAM use is not a guarantee of higher throughput.
+Do not start 50 CUDA processes as a substitute for a batch-size setting.
+
+Each task retains the original three observations per particle. Shape/phase
+choices are drawn centrally in the original order. Particle and observation seeds
+and split boundaries do not depend on scheduling. The queue is bounded to twice
+the worker count; workers write their own samples and send only metadata back.
+`--worker-threads 1` limits numeric CPU threads in each spawned worker, avoiding
+nested thread oversubscription. The serial route preserves its existing thread
+environment. Author source files and scientific function calls are unchanged.
+
+`--print-freq 50` controls **logging only**. Progress shows new/reused counts,
+wall-clock throughput and an HH:MM:SS ETA. Mean worker times separate `geometry`,
+`q_grid`, `scattering`, `reconstruction`, `amplitude`, `phase`, `noise_and_labels`,
+`write` and `hash`. Geometry is charged once per particle, not once per observation.
+Parallel stage times overlap; do not sum them to estimate wall-clock elapsed time.
+`scattering` includes the source wrapper and transfers, not just CUDA kernel time.
+Startup and old-file validation can inflate the initial ETA.
+
+### Resume an interrupted generation run
+
+**Stop the previous generator and wait for it (and its workers) to exit first.**
+Never run the old serial script and the new script against the same output folder.
+New versions hold an OS lock; legacy versions did not. Resume also checks the
+legacy run's recorded Linux PID. A completed manifest is never overwritten.
+
+Use a **new** log directory and pass the **previous** run's `config.json`. All
+dataset settings, including the output directory, seed, backend, categories and
+split counts, are inherited. Conflicting dataset overrides are rejected. Only
+execution/logging options such as worker count should change:
+
+```bash
+OLD_RUN="$PWD/artifacts/generation/author_compact_seed20260830_20260830_235306"
+RUN_DIR="$PWD/artifacts/generation/author_compact_resume_w4_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset \
+  --resume-from "${OLD_RUN}/config.json" \
+  --log-dir "${RUN_DIR}" --workers 4 --print-freq 50 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/generate.pid"
+echo "Submitted PID=${PID}; logs=${RUN_DIR}"
+```
+
+Existing samples are checked against the deterministic schedule (seeds, particle
+IDs, shapes, phases, rotation, oversampling and backend), array schemas/values and
+ZIP CRCs. They are reused without overwriting or redrawing their noise. Missing
+observations, including partial particles, are generated with their original seeds.
+Malformed files stop resume with a named error; they are not silently deleted.
+After confirming an old interrupted file is incomplete, move only that file out
+of the dataset and retry. New writes use a temporary file followed by an atomic
+rename, so interruption does not publish a half-written sample.
+
+New run configs record author-source hashes and the generator protocol. Older
+configs without source hashes produce a provenance warning: metadata and file
+integrity are checked, but historical source identity cannot be verified from
+those configs. Keep the same software environment and visible GPU when resuming;
+matching seeds does not promise bitwise results across library/hardware changes.
+The final manifest is sorted by sample index, regardless of completion order.
 
 One shape and one phase family are selected per observation, with a shape
 reused for the particle's observations. Category sampling defaults to random,
@@ -161,6 +247,14 @@ the useful check. Time spent loading can overlap GPU training through prefetch.
 
 ## Local verification
 
+Parallel generation verification (Windows CPU compatibility backend, 2026-08-31):
+12 actual author-generated observations covering all nine shape/phase categories
+took about 13.9 seconds with one worker and 7.2 seconds with four workers, including
+worker/module startup. Intensity and support arrays matched exactly; complex objects
+matched at `rtol=atol=2e-6`; physical metadata matched after excluding timers. Resuming
+with two workers preserved nine existing files and reproduced three missing samples'
+intensities exactly. This small CPU test is not a native CUDA speedup claim.
+
 Local verification (Windows CPU, 2026-08-30): 12 newly generated compact samples
 completed the generation-to-training route, including a full reduced model
 training/validation batch with four workers and normal-precision checkpoints.
@@ -185,11 +279,13 @@ the original reference dataset/models remain untouched.
 - `simulation/author_generator.py`: native/compat backend selection and writers.
 - `vendor/codes_for_BCDI_dataset_creation/`: unchanged author source and resources.
 - `simulation/generate_author_dataset.py`: generation CLI, split schedule, manifest.
+- `simulation/generation_execution.py`: deterministic jobs, bounded workers, validated reuse, atomic writes and dataset lock.
 - `simulation/sample_io.py`: one shared legacy/compact phase reader.
 - `pytorch_autophasenn/author_data.py`: author dataset index and source preprocessing.
 - `pytorch_autophasenn/train.py`: selects dataset, worker setup, existing trainer.
 - `tools/benchmark_author_loader.py`: model-free server throughput check.
 - `tests/test_compact_author_data.py`: schema, label/loss, split and worker tests.
+- `tests/test_generation_execution.py`: original category order, serial/spawn parity, partial resume and write safety.
 
 Author training records go to `artifacts/training/pytorch_simulation/<run-name>`;
 AutoPhaseNN records keep their existing directory. Large checkpoints keep the

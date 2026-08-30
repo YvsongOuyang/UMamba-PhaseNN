@@ -273,6 +273,7 @@ def test_bundled_source_bytes_and_potential_manifest():
 @pytest.mark.parametrize("explicit_log_dir", [False, True])
 def test_generation_keeps_logs_separate_from_samples(tmp_path, monkeypatch, explicit_log_dir):
     import simulation.generate_author_dataset as generation
+    import simulation.generation_execution as execution
     data_dir = tmp_path / "ssd" / "dataset"
     log_root = tmp_path / "project" / "artifacts" / "generation"
     log_dir = log_root / "custom_run"
@@ -283,16 +284,16 @@ def test_generation_keeps_logs_separate_from_samples(tmp_path, monkeypatch, expl
     monkeypatch.setattr(sys, "argv", argv)
     sample = make_sample()
     sample.metadata.update(shape="wulff", strain_argument="random", nstep=120, generation_seconds=0.001)
-    monkeypatch.setattr(generation, "load_author_modules", lambda *a, **kw: (None, None, None))
-    monkeypatch.setattr(generation, "create_paper_particle", lambda *a, **kw: None)
-    monkeypatch.setattr(generation, "generate_paper_observation", lambda *a, **kw: sample)
+    monkeypatch.setattr(execution, "load_author_modules", lambda *a, **kw: (None, None, None))
+    monkeypatch.setattr(execution, "create_paper_particle", lambda *a, **kw: None)
+    monkeypatch.setattr(execution, "generate_paper_observation", lambda *a, **kw: sample)
     try:
         assert generation.main() == 0
         if not explicit_log_dir:
             directories = list(log_root.iterdir())
             assert len(directories) == 1
             log_dir = directories[0]
-        assert {path.name for path in data_dir.iterdir()} == {"sample_00000.npz", "dataset_manifest.json"}
+        assert {path.name for path in data_dir.iterdir()} == {"sample_00000.npz", "dataset_manifest.json", ".generation.lock"}
         assert {path.name for path in log_dir.iterdir()} == {"generation.log", "config.json"}
         config = json.loads((log_dir / "config.json").read_text())
         manifest = json.loads((data_dir / "dataset_manifest.json").read_text())
@@ -307,17 +308,18 @@ def test_generation_keeps_logs_separate_from_samples(tmp_path, monkeypatch, expl
 
 def test_backend_failure_leaves_config_and_logs_in_run_directory(tmp_path, monkeypatch):
     import simulation.generate_author_dataset as generation
+    import simulation.generation_execution as execution
     data_dir, log_dir = tmp_path / "dataset", tmp_path / "logs"
     monkeypatch.setattr(sys, "argv", ["generate", "--output-dir", str(data_dir), "--log-dir", str(log_dir)])
     def fail_backend(*args, **kwargs):
         raise RuntimeError("backend preflight failed")
-    monkeypatch.setattr(generation, "load_author_modules", fail_backend)
+    monkeypatch.setattr(execution, "load_author_modules", fail_backend)
     try:
         with pytest.raises(RuntimeError, match="backend preflight failed"):
             generation.main()
         assert (log_dir / "generation.log").is_file()
         assert (log_dir / "config.json").is_file()
-        assert list(data_dir.iterdir()) == []
+        assert {path.name for path in data_dir.iterdir()} == {".generation.lock"}
     finally:
         for handler in generation.LOGGER.handlers:
             handler.close()

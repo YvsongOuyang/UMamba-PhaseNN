@@ -724,10 +724,13 @@ def generate_paper_observation(
     random.seed(seed)
     started = time.perf_counter()
     positions = particle.positions
+    stage_started = time.perf_counter()
     qx, qy, qz, nstep, dq, rotation = _create_rotated_q_grid(
         diffraction,
         random_q_rotation=random_q_rotation,
     )
+    stage_seconds = {"q_grid": time.perf_counter() - stage_started}
+    stage_started = time.perf_counter()
     diffracted_amplitude = diffraction.Create_diffraction(
         qx,
         qy,
@@ -739,6 +742,8 @@ def generate_paper_observation(
         "Au",
         center_the_center_of_mass=False,
     )
+    stage_seconds["scattering"] = time.perf_counter() - stage_started
+    stage_started = time.perf_counter()
     obj = np.fft.ifftshift(np.fft.fftn(np.fft.fftshift(diffracted_amplitude)))
     obj_centered = object_utilities.center_object(obj)
     measured_oversampling = np.asarray(
@@ -752,12 +757,18 @@ def generate_paper_observation(
             "The source draw was not rescaled or retried."
         )
 
+    stage_seconds["reconstruction"] = time.perf_counter() - stage_started
+    stage_started = time.perf_counter()
     amplitude_object, amplitude_parameters = _author_amplitude_object(
         diffraction, obj_centered
     )
+    stage_seconds["amplitude"] = time.perf_counter() - stage_started
+    stage_started = time.perf_counter()
     realspace_object, phase_parameters = _author_phase_object(
         diffraction, amplitude_object, strain
     )
+    stage_seconds["phase"] = time.perf_counter() - stage_started
+    stage_started = time.perf_counter()
     support = np.abs(amplitude_object) > 0.3 * float(np.max(np.abs(amplitude_object)))
     clean_reciprocal = np.fft.ifftshift(
         np.fft.fftn(np.fft.fftshift(realspace_object))
@@ -770,6 +781,7 @@ def generate_paper_observation(
     intensity = np.asarray(intensity, dtype=np.float32)
     reciprocal_phase = np.asarray(reciprocal_phase, dtype=np.float32)
     _validate_generated_arrays(intensity, reciprocal_phase)
+    stage_seconds["noise_and_labels"] = time.perf_counter() - stage_started
     metadata = dict(particle.metadata)
     metadata.update(
         {
@@ -794,6 +806,7 @@ def generate_paper_observation(
             "satisfies_paper_oversampling": satisfies_paper_oversampling,
             "oversampling_policy": oversampling_policy,
             "support_voxels": int(np.count_nonzero(support)),
+            "stage_seconds": stage_seconds,
             "generation_seconds": time.perf_counter() - started,
         }
     )

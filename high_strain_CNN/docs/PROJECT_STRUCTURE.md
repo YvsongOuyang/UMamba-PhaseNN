@@ -9,6 +9,7 @@ high_strain_CNN/
   simulation/
     author_generator.py          Supplied-author geometry and perturbation calls
     generate_author_dataset.py   Pure NPZ dataset generation
+    generation_execution.py      Bounded particle workers, validated resume and atomic output
     evaluate_author_code.py      Stream generation through the official H5
     run_paper_model.py           Shared single-sample TF/PyTorch inference
     evaluate_paper_model.py      Existing-NPZ evaluation and threshold calibration
