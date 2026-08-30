@@ -52,7 +52,7 @@ for the separate official-model evaluation workflow.
 ```bash
 CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset \
   --author-code-dir /path/to/codes_for_BCDI_dataset_creation \
-  --output-dir /data_ssd/oyys/high_strain_author_compact \
+  --output-dir /data_ssd/oyys/high_strain_cnn/dataset \
   --storage compact --scattering-backend pynx_cuda \
   --split-counts 95000 4000 3000 \
   --seed 20260830 --oversampling-policy record
@@ -99,7 +99,7 @@ existing default reduced model and unchanged optimizer/loss/scheduler defaults:
 ```bash
 python -u -m pytorch_autophasenn.train \
   --data-format author_npz \
-  --data-dir /data_ssd/oyys/high_strain_author_compact \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
   --run-name author_compact_reduced_scratch \
   --num-workers 4 --save-every 0
 ```
@@ -125,7 +125,7 @@ plus worker, decompression, FFT, active-batch, and pinned-memory overhead.
 ```bash
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 python -u -m tools.benchmark_author_loader \
-  --data-dir /data_ssd/oyys/high_strain_author_compact \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
   --num-samples 1024 --num-workers 4
 ```
 
