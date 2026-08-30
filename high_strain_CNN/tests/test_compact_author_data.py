@@ -268,3 +268,70 @@ def test_bundled_source_bytes_and_potential_manifest():
         assert len(content) == record["bytes"]
         assert hashlib.sha256(content).hexdigest() == record["sha256"]
         assert recorded[record["path"]]["sha256"] == record["sha256"]
+
+
+@pytest.mark.parametrize("explicit_log_dir", [False, True])
+def test_generation_keeps_logs_separate_from_samples(tmp_path, monkeypatch, explicit_log_dir):
+    import simulation.generate_author_dataset as generation
+    data_dir = tmp_path / "ssd" / "dataset"
+    log_root = tmp_path / "project" / "artifacts" / "generation"
+    log_dir = log_root / "custom_run"
+    monkeypatch.setattr(generation, "DEFAULT_LOG_ROOT", log_root)
+    argv = ["generate", "--output-dir", str(data_dir), "--storage", "compact", "--num-samples", "1"]
+    if explicit_log_dir:
+        argv += ["--log-dir", str(log_dir)]
+    monkeypatch.setattr(sys, "argv", argv)
+    sample = make_sample()
+    sample.metadata.update(shape="wulff", strain_argument="random", nstep=120, generation_seconds=0.001)
+    monkeypatch.setattr(generation, "load_author_modules", lambda *a, **kw: (None, None, None))
+    monkeypatch.setattr(generation, "create_paper_particle", lambda *a, **kw: None)
+    monkeypatch.setattr(generation, "generate_paper_observation", lambda *a, **kw: sample)
+    try:
+        assert generation.main() == 0
+        if not explicit_log_dir:
+            directories = list(log_root.iterdir())
+            assert len(directories) == 1
+            log_dir = directories[0]
+        assert {path.name for path in data_dir.iterdir()} == {"sample_00000.npz", "dataset_manifest.json"}
+        assert {path.name for path in log_dir.iterdir()} == {"generation.log", "config.json"}
+        config = json.loads((log_dir / "config.json").read_text())
+        manifest = json.loads((data_dir / "dataset_manifest.json").read_text())
+        assert config["args"]["output_dir"] == str(data_dir.resolve())
+        assert config["args"]["log_dir"] == manifest["generation_log_dir"] == str(log_dir.resolve())
+        assert "Generated 1/1" in (log_dir / "generation.log").read_text()
+    finally:
+        for handler in generation.LOGGER.handlers:
+            handler.close()
+        generation.LOGGER.handlers.clear()
+
+
+def test_backend_failure_leaves_config_and_logs_in_run_directory(tmp_path, monkeypatch):
+    import simulation.generate_author_dataset as generation
+    data_dir, log_dir = tmp_path / "dataset", tmp_path / "logs"
+    monkeypatch.setattr(sys, "argv", ["generate", "--output-dir", str(data_dir), "--log-dir", str(log_dir)])
+    def fail_backend(*args, **kwargs):
+        raise RuntimeError("backend preflight failed")
+    monkeypatch.setattr(generation, "load_author_modules", fail_backend)
+    try:
+        with pytest.raises(RuntimeError, match="backend preflight failed"):
+            generation.main()
+        assert (log_dir / "generation.log").is_file()
+        assert (log_dir / "config.json").is_file()
+        assert list(data_dir.iterdir()) == []
+    finally:
+        for handler in generation.LOGGER.handlers:
+            handler.close()
+        generation.LOGGER.handlers.clear()
+
+
+def test_existing_dataset_is_not_overwritten_when_log_dir_changes(tmp_path, monkeypatch):
+    import simulation.generate_author_dataset as generation
+    data_dir, log_dir = tmp_path / "dataset", tmp_path / "logs"
+    data_dir.mkdir()
+    marker = data_dir / "dataset_manifest.json"
+    marker.write_text("existing dataset")
+    monkeypatch.setattr(sys, "argv", ["generate", "--output-dir", str(data_dir), "--log-dir", str(log_dir)])
+    with pytest.raises(FileExistsError, match="already contains"):
+        generation.main()
+    assert marker.read_text() == "existing dataset"
+    assert not log_dir.exists()

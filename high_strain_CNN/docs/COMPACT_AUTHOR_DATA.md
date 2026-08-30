@@ -55,12 +55,30 @@ listed in `requirements/author-simulation.txt`; it also includes TensorFlow
 for the separate official-model evaluation workflow.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset \
-  --output-dir /data_ssd/oyys/high_strain_cnn/dataset \
+DATA_DIR="/data_ssd/oyys/high_strain_cnn/dataset"
+RUN_NAME="author_compact_seed20260830_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/artifacts/generation/${RUN_NAME}"
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u -m simulation.generate_author_dataset \
+  --output-dir "${DATA_DIR}" --log-dir "${RUN_DIR}" \
   --storage compact --scattering-backend pynx_cuda \
   --split-counts 95000 4000 3000 \
-  --seed 20260830 --oversampling-policy record
+  --seed 20260830 --oversampling-policy record \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/generate.pid"
+echo "Submitted PID=${PID}; data=${DATA_DIR}; logs=${RUN_DIR}"
+tail -f "${RUN_DIR}/console.log"
 ```
+
+`--output-dir` holds only the sample NPZs and `dataset_manifest.json`, which the
+training reader needs alongside the data. `--log-dir` holds `generation.log`
+and `config.json`; the shell command above places `console.log` and
+`generate.pid` there too. Without `--log-dir`, a timestamped directory under
+the subproject's `artifacts/generation/` is selected automatically. Existing
+logs in older dataset directories are not moved or deleted.
 
 For an initial smoke test use `--split-counts 48 12 12` and a different output
 directory. Choose GPUs through the CUDA environment/device visibility settings

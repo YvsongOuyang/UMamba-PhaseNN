@@ -12,6 +12,7 @@ import time
 from collections import Counter
 from collections.abc import Iterator
 from dataclasses import replace
+from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,7 @@ from .author_generator import (
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = PROJECT_DIR / "artifacts" / "simulation" / "author_generator_paper"
+DEFAULT_LOG_ROOT = PROJECT_DIR / "artifacts" / "generation"
 LOGGER = logging.getLogger("high_strain.author_dataset")
 
 
@@ -48,6 +50,10 @@ def parse_args() -> argparse.Namespace:
         help="Author source directory; defaults to the bundled vendor copy.",
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))
+    parser.add_argument(
+        "--log-dir", default=None,
+        help="Run logs/config directory; defaults to artifacts/generation/<timestamped-run>.",
+    )
     parser.add_argument("--profile", choices=("notebook", "paper"), default="paper")
     counts = parser.add_mutually_exclusive_group()
     counts.add_argument("--num-samples", type=int, default=None)
@@ -141,8 +147,10 @@ def backend_manifest(backend: str) -> dict[str, Any]:
     return manifest
 
 
-def _configure_logging(output_dir: Path, level: str) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
+def _configure_logging(log_dir: Path, level: str) -> None:
+    log_dir.mkdir(parents=True, exist_ok=True)
+    for handler in LOGGER.handlers:
+        handler.close()
     LOGGER.handlers.clear()
     LOGGER.setLevel(getattr(logging, level))
     LOGGER.propagate = False
@@ -152,7 +160,7 @@ def _configure_logging(output_dir: Path, level: str) -> None:
     )
     for handler in (
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(output_dir / "generation.log", mode="w", encoding="utf-8"),
+        logging.FileHandler(log_dir / "generation.log", mode="w", encoding="utf-8"),
     ):
         handler.setFormatter(formatter)
         LOGGER.addHandler(handler)
@@ -169,7 +177,27 @@ def main() -> int:
         raise FileExistsError(
             f"Output directory already contains a generated dataset: {output_dir}"
         )
-    _configure_logging(output_dir, args.log_level)
+    run_name = (
+        f"author_{args.profile}_{args.storage}_seed{args.seed}_"
+        f"{datetime.now():%Y%m%d_%H%M%S_%f}"
+    )
+    log_dir = (
+        Path(args.log_dir).expanduser() if args.log_dir else DEFAULT_LOG_ROOT / run_name
+    ).resolve()
+    _configure_logging(log_dir, args.log_level)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    args.author_code_dir = str(author_code_dir)
+    args.output_dir = str(output_dir)
+    args.log_dir = str(log_dir)
+    (log_dir / "config.json").write_text(
+        json.dumps({
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "pid": os.getpid(),
+            "args": vars(args),
+        }, indent=2), encoding="utf-8",
+    )
+    LOGGER.info("Data directory: %s", output_dir)
+    LOGGER.info("Run logs/config: %s", log_dir)
     modules = load_author_modules(author_code_dir, scattering_backend=args.scattering_backend)
     random_q_rotation = (
         args.random_q_rotation
@@ -274,6 +302,7 @@ def main() -> int:
         "split_unit": "particle",
         "splits": dict(zip(("train", "val", "test"), args.split_counts)) if args.split_counts is not None else {},
         "author_code_dir": str(author_code_dir),
+        "generation_log_dir": str(log_dir),
         "author_source_manifest": author_source_manifest(author_code_dir),
         "seed": args.seed,
         "num_samples": args.num_samples,

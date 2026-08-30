@@ -4,8 +4,8 @@ __pycache__/
 *.pt
 *.pth
 
-# Managed local artifacts. Lightweight records under artifacts/training and
-# artifacts/evaluations remain trackable for experiment provenance.
+# Managed local artifacts. Lightweight records under artifacts/generation,
+# artifacts/training and artifacts/evaluations remain trackable for provenance.
 /artifacts/models/
 /artifacts/parity/
 /artifacts/simulation/

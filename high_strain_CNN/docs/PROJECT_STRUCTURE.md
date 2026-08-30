@@ -73,6 +73,7 @@ their labels rather than combining their statistics with the latest run.
 
 ```text
 artifacts/
+  generation/<run-name>/          Generation console/log/PID/config, not sample arrays
   training/pytorch_autophasenn/    Lightweight run manifests and histories
   training/pytorch_simulation/    Author-dataset PyTorch run manifests/histories
   evaluations/
