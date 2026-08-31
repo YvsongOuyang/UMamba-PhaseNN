@@ -124,6 +124,8 @@ class AuthorNPZPhaseDataset(Dataset):
                 json.dumps(filenames, separators=(",", ":")).encode("utf-8")
             ).hexdigest(),
             "shape": list(self.shape), "manifest_sha256": hashlib.sha256(raw).hexdigest(),
+            "index_filter": {key: value for key, value in manifest.get("index_filter", {}).items()
+                             if key != "excluded_filenames"} or None,
             "storage_schema": manifest.get("storage_schema", "author_standard"),
             "generator_protocol": manifest.get("generator_protocol"),
             "source": manifest.get("author_source_manifest"),

@@ -44,6 +44,7 @@ def make_dataset(root: Path, counts=(8, 5, 3), storage="compact"):
             "filename": name, "split": split,
             "metadata": {
                 "particle_seed": 1000 + category_index // 3, "shape": "wulff",
+                "strain_argument": "random",
                 "measured_object_oversampling_xyz": [4.0, 4.0, 4.0],
             },
         })
@@ -242,6 +243,111 @@ def test_filter_does_not_hide_particle_leakage(tmp_path):
     (tmp_path / "dataset_manifest.json").write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="Particle leakage"):
         AuthorNPZPhaseDataset(tmp_path, "train", min_oversampling=2)
+
+
+def test_persistent_manifest_filter_preserves_data_and_split_membership(tmp_path):
+    from tools.filter_author_manifest import BACKUP_NAME, filter_manifest
+    manifest = make_dataset(tmp_path)
+    for index, value in ((0, 2), (2, 1.9), (8, 1.9), (13, 2)):
+        manifest["samples"][index]["metadata"]["measured_object_oversampling_xyz"] = [3, value, 3]
+    path = tmp_path / "dataset_manifest.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    original_raw = path.read_bytes()
+    original_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in tmp_path.glob("*.npz")}
+    expected = {split: AuthorNPZPhaseDataset(tmp_path, split, shape=(8,) * 3, min_oversampling=2).filenames
+                for split in ("train", "val", "test")}
+    filter_manifest(tmp_path, dry_run=True)
+    assert path.read_bytes() == original_raw and not (tmp_path / BACKUP_NAME).exists()
+    selection = filter_manifest(tmp_path)
+    updated = json.loads(path.read_bytes())
+    assert (tmp_path / BACKUP_NAME).read_bytes() == original_raw
+    assert updated["splits"] == {"train": 6, "val": 4, "test": 2}
+    assert updated["num_samples"] == sum(updated["category_counts"].values()) == 12
+    assert selection["excluded_counts"] == {"train": 2, "val": 1, "test": 1}
+    assert selection["original_splits"] == manifest["splits"]
+    original_records = {record["filename"]: record for record in manifest["samples"]}
+    assert all(record == original_records[record["filename"]] for record in updated["samples"])
+    for split in ("train", "val", "test"):
+        dataset = AuthorNPZPhaseDataset(tmp_path, split, shape=(8,) * 3)
+        assert dataset.filenames == expected[split]
+        assert dataset.manifest["index_filter"]["original_splits"] == manifest["splits"]
+        assert "excluded_filenames" not in dataset.manifest["index_filter"]
+        assert dataset[0]["input"].shape == (1, 8, 8, 8)
+    assert original_hashes == {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in tmp_path.glob("*.npz")}
+    filtered_raw = path.read_bytes()
+    assert filter_manifest(tmp_path) == selection
+    assert path.read_bytes() == filtered_raw and (tmp_path / BACKUP_NAME).read_bytes() == original_raw
+    with pytest.raises(ValueError, match="different threshold"):
+        filter_manifest(tmp_path, 3)
+
+
+@pytest.mark.parametrize("defect", ["missing_metadata", "equal_two_only", "leakage", "count", "duplicate", "missing_file"])
+def test_manifest_filter_rejects_invalid_source_without_replacing_it(tmp_path, defect):
+    from tools.filter_author_manifest import BACKUP_NAME, filter_manifest
+    manifest = make_dataset(tmp_path)
+    if defect == "missing_metadata":
+        manifest["samples"][0]["metadata"].pop("measured_object_oversampling_xyz")
+    elif defect == "equal_two_only":
+        for record in manifest["samples"]:
+            record["metadata"]["measured_object_oversampling_xyz"] = [3, 2, 3]
+    elif defect == "leakage":
+        manifest["samples"][8]["metadata"]["particle_seed"] = manifest["samples"][0]["metadata"]["particle_seed"]
+        manifest["samples"][8]["metadata"]["measured_object_oversampling_xyz"] = [1, 1, 1]
+    elif defect == "count":
+        manifest["splits"]["test"] += 1
+    elif defect == "duplicate":
+        manifest["samples"][1]["filename"] = manifest["samples"][0]["filename"]
+    else:
+        manifest["samples"][0]["filename"] = "missing.npz"
+    path = tmp_path / "dataset_manifest.json"
+    path.write_text(json.dumps(manifest))
+    before = path.read_bytes()
+    with pytest.raises(ValueError):
+        filter_manifest(tmp_path)
+    assert path.read_bytes() == before and not (tmp_path / BACKUP_NAME).exists()
+
+
+def test_manifest_filter_refuses_conflicting_backup(tmp_path):
+    from tools.filter_author_manifest import BACKUP_NAME, filter_manifest
+    make_dataset(tmp_path)
+    (tmp_path / BACKUP_NAME).write_text("different original dataset")
+    path = tmp_path / "dataset_manifest.json"
+    before = path.read_bytes()
+    with pytest.raises(FileExistsError, match="different backup"):
+        filter_manifest(tmp_path)
+    assert path.read_bytes() == before
+    assert (tmp_path / BACKUP_NAME).read_text() == "different original dataset"
+
+
+def test_manifest_filter_atomic_replace_failure_is_recoverable(tmp_path, monkeypatch):
+    import tools.filter_author_manifest as module
+    make_dataset(tmp_path)
+    path = tmp_path / "dataset_manifest.json"
+    before = path.read_bytes()
+    def fail_replace(*args):
+        raise OSError("simulated replace failure")
+    with monkeypatch.context() as patch:
+        patch.setattr(module.os, "replace", fail_replace)
+        with pytest.raises(OSError, match="simulated replace"):
+            module.filter_manifest(tmp_path)
+    assert path.read_bytes() == before
+    assert (tmp_path / module.BACKUP_NAME).read_bytes() == before
+    assert not list(tmp_path.glob(".dataset_manifest.*.tmp"))
+    module.filter_manifest(tmp_path)
+    assert json.loads(path.read_bytes())["index_filter"]["min_exclusive_per_axis"] == 2
+
+
+def test_manifest_filter_cli_default_threshold(tmp_path, monkeypatch):
+    from tools.filter_author_manifest import main
+    make_dataset(tmp_path)
+    path = tmp_path / "dataset_manifest.json"
+    before = path.read_bytes()
+    monkeypatch.setattr(sys, "argv", ["filter", "--data-dir", str(tmp_path), "--dry-run"])
+    main()
+    assert path.read_bytes() == before
+    monkeypatch.setattr(sys, "argv", ["filter", "--data-dir", str(tmp_path)])
+    main()
+    assert json.loads(path.read_bytes())["index_filter"]["min_exclusive_per_axis"] == 2
 
 
 def test_short_epochs_reshuffle_full_pool_and_keep_small_validation_complete(tmp_path):

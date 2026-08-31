@@ -235,7 +235,45 @@ Train/val counts come from `dataset_manifest.json`; optional
 Author-data validation keeps its final partial batch. Training retains the
 existing `drop_last=True` behavior; its split must contain at least one batch.
 
-### Read-time sampling check
+### Persist the filtered split lists
+
+All NPZs live in one directory. `dataset_manifest.json` records each filename
+and its `train`, `val` or `test` split; there are no physical split directories.
+To persist the strict >2 selection on the server, stop any reader/training job
+first, then run this once from `high_strain_CNN/`:
+
+```bash
+python -m tools.filter_author_manifest \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset
+```
+
+The default cutoff is 2 on **every** axis. Add `--dry-run` to validate and show
+counts without updating the manifest. This only edits metadata: it does not
+read array contents, resimulate, move, copy or delete any NPZ. It does check file
+existence and the entire original manifest for duplicate entries and particle
+leakage before filtering. Exact-boundary values of 2 are excluded.
+
+The original manifest is kept byte-for-byte as `dataset_manifest.unfiltered.json`.
+The active manifest loses excluded `samples` entries and updates `num_samples`,
+`splits` and `category_counts`. Retained filenames, ordering, split assignments,
+sample metadata and hashes are unchanged. `index_filter` records the cutoff,
+backup hash, original/excluded split counts and excluded filenames per split.
+Generation timing and execution fields still describe the original generation.
+Updates use the existing dataset writer lock and an atomic file replacement;
+repeating the same command checks the backup and makes no further changes.
+
+The existing `AuthorNPZPhaseDataset` automatically reads the revised train/val/test
+lists without `--author-min-oversampling`. Supplying that option again is harmless.
+Run manifests also retain the persistent filter's provenance. Do not limit
+`--num-samples-train` or `--max-batches-per-epoch` for a full eligible-pool epoch.
+This does not replenish removed examples or mix any held-out particle into training.
+
+Tools that simply glob all `sample_*.npz` still see excluded files. In particular,
+the older standalone TensorFlow threshold-sweep script does not use these split
+lists; do not use its directory scan as the filtered dataset's held-out test.
+Held-out readers must select `split="test"` from this active manifest.
+
+### Optional read-time filter
 
 `--author-min-oversampling 2` requires all three recorded oversampling values to
 be strictly greater than 2. This is an optional **index filter**, disabled by
@@ -259,13 +297,18 @@ The existing `reduced` model caps the bottleneck at 1024 channels and has
 39,160,897 parameters. It can read compact author data without model changes.
 The separate `reduced_bn_no_outer_skip` variant is not implicitly selected.
 
-Prefer keeping the entire eligible training pool, reshuffling it each epoch,
-and limiting work per epoch, rather than permanently restricting training to
-the first 25000 observations. At batch size 16, a limit of 1563 batches processes
-up to 25008 observations per epoch. There is no replacement within an epoch;
-different epochs can overlap and do not guarantee full coverage in four epochs.
-This is a short training round, not a full pass over the dataset. Compare total
-optimizer steps or processed observations, not epoch numbers alone, with the paper.
+Prefer full passes through the entire eligible training pool, reshuffling each
+epoch, rather than permanently restricting training to the first 25000 observations.
+Leave `--max-batches-per-epoch` at its default 0. At batch size 16, 80531 eligible
+observations give 5033 training batches per full epoch (the final three are dropped).
+The example below uses 20 full epochs as an initial compute budget, not a claim
+that 20 epochs are enough to converge.
+
+For shorter feedback cycles only, the optional limit of 1563 batches processes
+25008 observations per short epoch. Short epochs reshuffle the full pool and
+can overlap across epochs, so four short rounds do not guarantee full coverage.
+They do not save training compute at equal total updates. Compare optimizer
+steps or processed observations, not epoch numbers alone, with the paper.
 
 The existing `--max-batches-per-epoch` caps **both** train and validation. With
 at most 4000 validation observations and batch size 16, validation needs at most
@@ -276,7 +319,7 @@ startup now reports actual batch budgets and warns about that case.
 Example background pilot, from `high_strain_CNN/` in the PyTorch environment:
 
 ```bash
-RUN_NAME="author_reduced_osgt2_short25k_bs16_$(date +%Y%m%d_%H%M%S)"
+RUN_NAME="author_reduced_osgt2_full_bs16_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$PWD/artifacts/training/pytorch_simulation/${RUN_NAME}"
 mkdir -p "${RUN_DIR}"
 
@@ -285,7 +328,7 @@ nohup env CUDA_VISIBLE_DEVICES=0 python -u -m pytorch_autophasenn.train \
   --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
   --author-min-oversampling 2 \
   --model-variant reduced --run-name "${RUN_NAME}" \
-  --epochs 60 --batch-size 16 --max-batches-per-epoch 1563 \
+  --epochs 20 --batch-size 16 \
   --save-every 0 \
   > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
 
@@ -296,13 +339,14 @@ echo "Submitted PID=${PID}; logs=${RUN_DIR}/console.log"
 
 This starts from scratch, with default float32, four loader workers, Adam at
 1e-4 and ReduceLROnPlateau (factor 0.5, patience 5, minimum LR 1e-6). The scheduler
-uses fixed-validation WCA after each short round; this is not identical to a
-full-pass training schedule. Defaults retain best/last checkpoints under
+uses fixed-validation WCA after each full epoch. Changing to short rounds also
+changes scheduler and validation frequency. Defaults retain best/last checkpoints under
 `/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/<run-name>`.
 If the measured training-only throughput is 25000 observations in 15 minutes,
-60 short rounds cost about 15 training hours, plus validation/loading/checkpoint
-overhead. A 95000-observation full round costs about 57 minutes at the same rate;
-actual filtered pool size and server timings determine the real budget.
+a filtered full epoch costs about 48 minutes, and 20 full epochs cost about
+16 training hours, plus validation/loading/checkpoint overhead. The previous
+60-short-round budget is approximately 18.63 full epochs. Actual filtered pool
+size and server timings determine the real budget.
 
 The default is **4 worker processes per loader**, with one Torch compute thread
 per worker and `--prefetch-factor 2`. Workers only decompress NPZs and do a CPU
