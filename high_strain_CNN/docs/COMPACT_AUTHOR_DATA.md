@@ -201,6 +201,18 @@ disjoint, and the training reader checks this across the entire manifest.
 
 ## Train and measure loading
 
+The synced server run `author_compact_seed20260830_20260831_001855` completed
+102000 observations and logged a final manifest on 2026-08-31 at 04:00:58.
+Its original train/val/test counts are 95000/4000/3000. Counting unique warning
+indices in its complete generation log gives the following expected filtered
+counts; the training reader verifies the actual manifest on the server:
+
+| Split | Original | Excluded at <=2 on any axis | Eligible |
+| --- | ---: | ---: | ---: |
+| Train | 95000 | 14469 | 80531 |
+| Validation | 4000 | 617 | 3383 |
+| Test | 3000 | 476 | 2524 |
+
 Use the existing PyTorch training environment. Example, from scratch with the
 existing default reduced model and unchanged optimizer/loss/scheduler defaults:
 
@@ -208,6 +220,7 @@ existing default reduced model and unchanged optimizer/loss/scheduler defaults:
 python -u -m pytorch_autophasenn.train \
   --data-format author_npz \
   --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --author-min-oversampling 2 \
   --run-name author_compact_reduced_scratch \
   --num-workers 4 --save-every 0
 ```
@@ -217,9 +230,79 @@ Model variants and their learning-rate defaults are unchanged. Select a
 different existing variant explicitly when running an ablation.
 
 Train/val counts come from `dataset_manifest.json`; optional
-`--num-samples-train`/`--num-samples-val` limit those splits for smoke tests.
+`--num-samples-train`/`--num-samples-val` select a **fixed prefix** of those splits
+(after any filter). Omitting them keeps the full eligible pools.
 Author-data validation keeps its final partial batch. Training retains the
 existing `drop_last=True` behavior; its split must contain at least one batch.
+
+### Read-time sampling check
+
+`--author-min-oversampling 2` requires all three recorded oversampling values to
+be strictly greater than 2. This is an optional **index filter**, disabled by
+default to preserve prior runs. It does not rewrite NPZs or the source manifest,
+rescale particles, redraw noise, or look at model performance. Missing/invalid
+oversampling metadata causes an explicit error when filtering is enabled.
+The same rule is applied to train and validation. The shared dataset class also
+supports `split="test", min_oversampling=2` for a held-out evaluation reader.
+
+Splits remain particle-disjoint: leakage checks inspect the entire unfiltered
+manifest before an index can be used. Run metadata records the source manifest
+hash, threshold, original/eligible/excluded counts for every split and a hash of
+the selected filenames. Startup logs print these counts. This does not replenish
+excluded observations: a 4000-observation validation split may yield fewer eligible
+observations. Keep the test split out of model selection; filling splits back to
+paper counts is separate work, not required for a compute-limited pilot.
+
+### Compute-limited training
+
+The existing `reduced` model caps the bottleneck at 1024 channels and has
+39,160,897 parameters. It can read compact author data without model changes.
+The separate `reduced_bn_no_outer_skip` variant is not implicitly selected.
+
+Prefer keeping the entire eligible training pool, reshuffling it each epoch,
+and limiting work per epoch, rather than permanently restricting training to
+the first 25000 observations. At batch size 16, a limit of 1563 batches processes
+up to 25008 observations per epoch. There is no replacement within an epoch;
+different epochs can overlap and do not guarantee full coverage in four epochs.
+This is a short training round, not a full pass over the dataset. Compare total
+optimizer steps or processed observations, not epoch numbers alone, with the paper.
+
+The existing `--max-batches-per-epoch` caps **both** train and validation. With
+at most 4000 validation observations and batch size 16, validation needs at most
+250 batches, so the 1563 limit still evaluates the complete fixed eligible
+validation split every epoch. A smaller limit or batch size may truncate validation;
+startup now reports actual batch budgets and warns about that case.
+
+Example background pilot, from `high_strain_CNN/` in the PyTorch environment:
+
+```bash
+RUN_NAME="author_reduced_osgt2_short25k_bs16_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/artifacts/training/pytorch_simulation/${RUN_NAME}"
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u -m pytorch_autophasenn.train \
+  --data-format author_npz \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --author-min-oversampling 2 \
+  --model-variant reduced --run-name "${RUN_NAME}" \
+  --epochs 60 --batch-size 16 --max-batches-per-epoch 1563 \
+  --save-every 0 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+echo "Submitted PID=${PID}; logs=${RUN_DIR}/console.log"
+```
+
+This starts from scratch, with default float32, four loader workers, Adam at
+1e-4 and ReduceLROnPlateau (factor 0.5, patience 5, minimum LR 1e-6). The scheduler
+uses fixed-validation WCA after each short round; this is not identical to a
+full-pass training schedule. Defaults retain best/last checkpoints under
+`/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/<run-name>`.
+If the measured training-only throughput is 25000 observations in 15 minutes,
+60 short rounds cost about 15 training hours, plus validation/loading/checkpoint
+overhead. A 95000-observation full round costs about 57 minutes at the same rate;
+actual filtered pool size and server timings determine the real budget.
 
 The default is **4 worker processes per loader**, with one Torch compute thread
 per worker and `--prefetch-factor 2`. Workers only decompress NPZs and do a CPU
@@ -246,6 +329,15 @@ startup; it is not a CUDA-kernel idle-time profiler. Low steady-state wait is
 the useful check. Time spent loading can overlap GPU training through prefetch.
 
 ## Local verification
+
+Filtered-training verification (2026-08-31): 104 project tests passed, including
+strict per-axis filtering before subset selection, missing-metadata rejection,
+particle leakage checks even for excluded observations, four-worker loading and
+reshuffled short training rounds with complete fixed validation. A full `reduced`
+model also completed one real 64-cubed compact training/validation sample on CPU
+with four loader workers, normal float32 and the filter enabled. Best/last
+checkpoints reloaded strictly with 39,160,897 finite model parameters and optimizer
+state. This smoke test verifies execution, not model convergence or server speed.
 
 Parallel generation verification (Windows CPU compatibility backend, 2026-08-31):
 12 actual author-generated observations covering all nine shape/phase categories

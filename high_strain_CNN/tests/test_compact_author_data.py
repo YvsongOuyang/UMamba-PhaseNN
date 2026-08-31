@@ -42,7 +42,10 @@ def make_dataset(root: Path, counts=(8, 5, 3), storage="compact"):
         save_author_sample(root / name, make_sample(index), storage=storage)
         records.append({
             "filename": name, "split": split,
-            "metadata": {"particle_seed": 1000 + category_index // 3, "shape": "wulff"},
+            "metadata": {
+                "particle_seed": 1000 + category_index // 3, "shape": "wulff",
+                "measured_object_oversampling_xyz": [4.0, 4.0, 4.0],
+            },
         })
     manifest = {
         "route": "author_generator", "split_unit": "particle", "num_samples": sum(counts),
@@ -162,7 +165,7 @@ def test_bad_manifests_are_rejected(tmp_path, defect):
 
 def test_four_spawn_workers_two_epochs(tmp_path):
     make_dataset(tmp_path)
-    dataset = AuthorNPZPhaseDataset(tmp_path, "val", shape=(8,) * 3)
+    dataset = AuthorNPZPhaseDataset(tmp_path, "val", shape=(8,) * 3, min_oversampling=2)
     args = Namespace(batch_size=2, num_workers=4, prefetch_factor=2, data_format="author_npz")
     loader = build_loader(dataset, args, torch.device("cpu"), training=False)
     assert loader.persistent_workers and loader.num_workers == 4
@@ -197,6 +200,89 @@ def test_train_and_val_use_author_phase_without_com_correction(tmp_path, monkeyp
     assert not torch.equal(model.weight.detach(), old_weight)
     assert not model.training
     assert validated["data_wait_seconds"] >= 0
+
+
+def test_oversampling_filter_is_strict_and_precedes_subset_limit(tmp_path):
+    manifest = make_dataset(tmp_path)
+    manifest["samples"][0]["metadata"]["measured_object_oversampling_xyz"] = [3, 2, 3]
+    manifest["samples"][2]["metadata"]["measured_object_oversampling_xyz"] = [3, 1.9, 3]
+    manifest["samples"][8]["metadata"]["measured_object_oversampling_xyz"] = [1.9, 3, 3]
+    manifest["samples"][13]["metadata"]["measured_object_oversampling_xyz"] = [3, 3, 2]
+    path = tmp_path / "dataset_manifest.json"
+    path.write_text(json.dumps(manifest))
+    before = {name.name: hashlib.sha256(name.read_bytes()).hexdigest() for name in tmp_path.iterdir()}
+    train = AuthorNPZPhaseDataset(tmp_path, "train", shape=(8,) * 3, min_oversampling=2, num_samples=3)
+    assert train.filenames == ("sample_00001.npz", "sample_00003.npz", "sample_00004.npz")
+    assert train.manifest["available_samples"] == 6
+    assert train.manifest["unfiltered_samples"] == 8
+    assert train.manifest["oversampling_filter"]["eligible_split_counts"] == {"train": 6, "val": 4, "test": 2}
+    assert train.manifest["oversampling_filter"]["excluded_split_counts"] == {"train": 2, "val": 1, "test": 1}
+    for split, count in (("val", 4), ("test", 2)):
+        assert len(AuthorNPZPhaseDataset(tmp_path, split, shape=(8,) * 3, min_oversampling=2)) == count
+    assert len(AuthorNPZPhaseDataset(tmp_path, "train", shape=(8,) * 3)) == 8
+    after = {name.name: hashlib.sha256(name.read_bytes()).hexdigest() for name in tmp_path.iterdir()}
+    assert before == after
+    with pytest.raises(ValueError, match="6 eligible"):
+        AuthorNPZPhaseDataset(tmp_path, "train", min_oversampling=2, num_samples=7)
+
+
+@pytest.mark.parametrize("measured", [None, [3, 3], [3, float("nan"), 3], [3, 0, 3]])
+def test_filter_rejects_unknown_oversampling(tmp_path, measured):
+    manifest = make_dataset(tmp_path)
+    manifest["samples"][0]["metadata"]["measured_object_oversampling_xyz"] = measured
+    (tmp_path / "dataset_manifest.json").write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="oversampling metadata"):
+        AuthorNPZPhaseDataset(tmp_path, "train", min_oversampling=2)
+
+
+def test_filter_does_not_hide_particle_leakage(tmp_path):
+    manifest = make_dataset(tmp_path)
+    manifest["samples"][8]["metadata"] = dict(manifest["samples"][0]["metadata"])
+    manifest["samples"][8]["metadata"]["measured_object_oversampling_xyz"] = [1, 1, 1]
+    (tmp_path / "dataset_manifest.json").write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="Particle leakage"):
+        AuthorNPZPhaseDataset(tmp_path, "train", min_oversampling=2)
+
+
+def test_short_epochs_reshuffle_full_pool_and_keep_small_validation_complete(tmp_path):
+    make_dataset(tmp_path, counts=(24, 5, 3))
+    class TrackedDataset(AuthorNPZPhaseDataset):
+        def __getitem__(self, index):
+            self.requested.append(index)
+            return super().__getitem__(index)
+    train, val = [TrackedDataset(tmp_path, split, shape=(8,) * 3, min_oversampling=2) for split in ("train", "val")]
+    args = Namespace(batch_size=2, num_workers=0, prefetch_factor=2, data_format="author_npz")
+    loaders = [build_loader(dataset, args, torch.device("cpu"), training=training)
+               for dataset, training in ((train, True), (val, False))]
+    torch.manual_seed(42)
+    model = torch.nn.Conv3d(1, 1, 1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    memberships = []
+    for epoch in (1, 2):
+        train.requested, val.requested = [], []
+        stats = run_epoch(model, loaders[0], torch.device("cpu"), epoch, 2, 50, 3, optimizer=optimizer)
+        validation = run_epoch(model, loaders[1], torch.device("cpu"), epoch, 2, 50, 3)
+        assert stats["samples"] == len(train.requested) == 6
+        assert len(set(train.requested)) == 6
+        assert validation["samples"] == 5 and val.requested == list(range(5))
+        memberships.append(set(train.requested))
+    assert memberships[0] != memberships[1]
+
+
+def test_training_cli_oversampling_filter_and_batch_limit(monkeypatch, tmp_path):
+    from pytorch_autophasenn.train import parse_args, build_datasets
+    make_dataset(tmp_path)
+    monkeypatch.setattr(sys, "argv", [
+        "train", "--data-format", "author_npz", "--data-dir", str(tmp_path),
+        "--author-min-oversampling", "2", "--max-batches-per-epoch", "1563", "--shape", "8",
+    ])
+    args = parse_args()
+    train, val, _ = build_datasets(args)
+    assert args.max_batches_per_epoch == 1563 and args.num_samples_train == 8
+    assert train.manifest["oversampling_filter"] == val.manifest["oversampling_filter"]
+    monkeypatch.setattr(sys, "argv", ["train", "--author-min-oversampling", "2"])
+    with pytest.raises(SystemExit):
+        parse_args()
 
 
 def test_native_backend_dispatch_and_cuda_preflight(monkeypatch):

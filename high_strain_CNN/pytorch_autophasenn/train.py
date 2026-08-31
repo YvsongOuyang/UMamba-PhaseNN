@@ -9,6 +9,7 @@ import random
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from itertools import islice
 from pathlib import Path
 
 import numpy as np
@@ -76,6 +77,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
     parser.add_argument("--data-dir", default=data_config["root"])
+    parser.add_argument(
+        "--author-min-oversampling", type=float, default=None,
+        help="Author NPZ only: retain observations with every recorded axis strictly above this value (e.g. 2).",
+    )
     parser.add_argument("--train-diff", default=train_config["diffraction"])
     parser.add_argument("--train-real", default=train_config["realspace"])
     parser.add_argument("--val-diff", default=val_config["diffraction"])
@@ -145,11 +150,21 @@ def parse_args() -> argparse.Namespace:
         help="Periodic checkpoint interval; 0 keeps only best/last.",
     )
     parser.add_argument("--print-freq", type=int, default=50)
-    parser.add_argument("--max-batches-per-epoch", type=int, default=0)
+    parser.add_argument(
+        "--max-batches-per-epoch", type=int, default=0,
+        help="Cap batches in BOTH train and validation; 0 uses full loaders. Training reshuffles each epoch.",
+    )
     parser.add_argument("--fp16", action="store_true")
     args = parser.parse_args()
     if args.num_workers < 0 or args.prefetch_factor < 1 or args.batch_size < 1 or args.save_every < 0:
         parser.error("Invalid worker, prefetch, batch, or checkpoint interval.")
+    if args.max_batches_per_epoch < 0 or args.epochs < 1:
+        parser.error("Epoch count must be positive and batch limit nonnegative.")
+    if args.author_min_oversampling is not None:
+        if args.data_format != "author_npz":
+            parser.error("--author-min-oversampling requires --data-format author_npz.")
+        if not np.isfinite(args.author_min_oversampling) or args.author_min_oversampling <= 0:
+            parser.error("Minimum oversampling must be finite and positive.")
     if args.data_format == "autophasenn":
         if args.num_samples_train is None:
             args.num_samples_train = int(train_config["num_samples"])
@@ -275,9 +290,7 @@ def run_epoch(
     grad_context = torch.enable_grad() if training else torch.no_grad()
 
     with grad_context:
-        for batch_index, batch in enumerate(loader, start=1):
-            if batch_index > batch_limit:
-                break
+        for batch_index, batch in enumerate(islice(loader, batch_limit), start=1):
             data_wait_seconds += time.monotonic() - batch_finished
             model_input = batch["input"].to(device, non_blocking=True).float()
             if "target_phase" in batch:
@@ -346,7 +359,10 @@ def build_datasets(args: argparse.Namespace) -> tuple[Dataset, Dataset, dict]:
     """Keep author labels separate from AutoPhaseNN's centering adaptation."""
     shape = (args.shape,) * 3
     if args.data_format == "author_npz":
-        kwargs = {"shape": shape, "input_log_data": args.input_log_data}
+        kwargs = {
+            "shape": shape, "input_log_data": args.input_log_data,
+            "min_oversampling": getattr(args, "author_min_oversampling", None),
+        }
         train = AuthorNPZPhaseDataset(
             args.data_dir, "train", num_samples=args.num_samples_train, **kwargs
         )
@@ -512,10 +528,26 @@ def main() -> None:
     )
     writer = SummaryWriter(log_dir=str(tensorboard_dir))
     LOGGER.info(
-        "Data=%s | workers=%d | prefetch/worker=%d | fixed samples | precision=%s",
+        "Data=%s | workers=%d | prefetch/worker=%d | fixed stored observations | precision=%s",
         args.data_format, args.num_workers, args.prefetch_factor if args.num_workers else 0,
         "fp16" if args.fp16 and device.type == "cuda" else "float32",
     )
+    if args.data_format == "author_npz":
+        selection = train_dataset.manifest["oversampling_filter"]
+        LOGGER.info(
+            "Author splits | original=%s | eligible=%s | excluded=%s | min oversampling (exclusive)=%s",
+            selection["original_split_counts"], selection["eligible_split_counts"],
+            selection["excluded_split_counts"], selection["min_exclusive_per_axis"],
+        )
+    train_batch_limit = min(len(train_loader), args.max_batches_per_epoch or len(train_loader))
+    val_batch_limit = min(len(val_loader), args.max_batches_per_epoch or len(val_loader))
+    LOGGER.info(
+        "Epoch budget | train=%d/%d batches (%d observations), reshuffled each epoch | val=%d/%d batches, fixed order",
+        train_batch_limit, len(train_loader), train_batch_limit * args.batch_size,
+        val_batch_limit, len(val_loader),
+    )
+    if val_batch_limit < len(val_loader):
+        LOGGER.warning("Validation is truncated by --max-batches-per-epoch; reported WCA is not full-validation WCA.")
     run_started = time.monotonic()
 
     for epoch in range(start_epoch, args.epochs + 1):

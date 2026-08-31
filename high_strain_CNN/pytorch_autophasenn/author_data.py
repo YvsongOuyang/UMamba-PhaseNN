@@ -47,10 +47,13 @@ class AuthorNPZPhaseDataset(Dataset):
     def __init__(
         self, root: str | Path, split: str, *, num_samples: int | None = None,
         shape: tuple[int, int, int] = (64, 64, 64), input_log_data: bool = True,
+        min_oversampling: float | None = None,
     ) -> None:
         self.root = Path(root).expanduser().resolve()
         self.shape = tuple(shape)
         self.input_log_data = input_log_data
+        if min_oversampling is not None and (not np.isfinite(min_oversampling) or min_oversampling <= 0):
+            raise ValueError("Minimum oversampling must be finite and positive.")
         manifest_path = self.root / "dataset_manifest.json"
         raw = manifest_path.read_bytes()
         manifest = json.loads(raw)
@@ -62,6 +65,7 @@ class AuthorNPZPhaseDataset(Dataset):
         if len(records) != manifest["num_samples"]:
             raise ValueError("Dataset manifest is incomplete.")
         filenames, seen_files, particles, counts = [], set(), {}, {}
+        eligible_counts: dict[str, int] = {}
         for record in records:
             name, record_split = record["filename"], record["split"]
             relative = Path(name)
@@ -77,7 +81,15 @@ class AuthorNPZPhaseDataset(Dataset):
             if previous != record_split:
                 raise ValueError(f"Particle leakage between {previous} and {record_split}.")
             counts[record_split] = counts.get(record_split, 0) + 1
-            if record_split == split:
+            eligible = True
+            if min_oversampling is not None:
+                measured = np.asarray(metadata.get("measured_object_oversampling_xyz"), dtype=np.float64)
+                if measured.shape != (3,) or not np.isfinite(measured).all() or np.any(measured <= 0):
+                    raise ValueError(f"Missing or invalid oversampling metadata for {name}; cannot apply filter.")
+                eligible = bool(np.all(measured > min_oversampling))
+            if eligible:
+                eligible_counts[record_split] = eligible_counts.get(record_split, 0) + 1
+            if record_split == split and eligible:
                 filenames.append(name)
         declared = manifest["splits"]
         if (
@@ -87,10 +99,10 @@ class AuthorNPZPhaseDataset(Dataset):
             raise ValueError("Declared split sizes disagree with sample records.")
         if num_samples is not None:
             if not 0 < num_samples <= len(filenames):
-                raise ValueError(f"Requested {num_samples} samples but {split} has {len(filenames)}.")
+                raise ValueError(f"Requested {num_samples} samples but {split} has {len(filenames)} eligible samples.")
             filenames = filenames[:num_samples]
         if not filenames:
-            raise ValueError(f"Empty {split} split.")
+            raise ValueError(f"Empty {split} split after selection/filtering.")
         for name in filenames:
             path = (self.root / name).resolve()
             if self.root not in path.parents or not path.is_file():
@@ -98,7 +110,19 @@ class AuthorNPZPhaseDataset(Dataset):
         self.filenames = tuple(filenames)
         self.manifest = {
             "format": "author_npz", "root": str(self.root), "split": split,
-            "num_samples": len(self), "available_samples": declared[split],
+            "num_samples": len(self), "available_samples": eligible_counts[split],
+            "unfiltered_samples": declared[split],
+            "oversampling_filter": {
+                "min_exclusive_per_axis": min_oversampling,
+                "source": "manifest measured_object_oversampling_xyz; no array modification",
+                "original_split_counts": declared,
+                "eligible_split_counts": {key: eligible_counts.get(key, 0) for key in declared},
+                "excluded_split_counts": {key: count - eligible_counts.get(key, 0) for key, count in declared.items()},
+            },
+            "selection": "manifest_order_prefix" if num_samples is not None else "all_eligible",
+            "selected_filenames_sha256": hashlib.sha256(
+                json.dumps(filenames, separators=(",", ":")).encode("utf-8")
+            ).hexdigest(),
             "shape": list(self.shape), "manifest_sha256": hashlib.sha256(raw).hexdigest(),
             "storage_schema": manifest.get("storage_schema", "author_standard"),
             "generator_protocol": manifest.get("generator_protocol"),
