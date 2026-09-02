@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-31T15:40:44.409227+00:00",
+  "runtime": {
+    "project_version": "1.7.0",
+    "git_commit": "b12b8be13de4fc76790fa2c2d59c57df81597d98",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "data": {
+    "format": "author_npz",
+    "splits": {
+      "train": {
+        "format": "author_npz",
+        "root": "/data_ssd/oyys/high_strain_cnn/dataset",
+        "split": "train",
+        "num_samples": 80531,
+        "available_samples": 80531,
+        "unfiltered_samples": 80531,
+        "oversampling_filter": {
+          "min_exclusive_per_axis": null,
+          "source": "manifest measured_object_oversampling_xyz; no array modification",
+          "original_split_counts": {
+            "train": 80531,
+            "val": 3383,
+            "test": 2524
+          },
+          "eligible_split_counts": {
+            "train": 80531,
+            "val": 3383,
+            "test": 2524
+          },
+          "excluded_split_counts": {
+            "train": 0,
+            "val": 0,
+            "test": 0
+          }
+        },
+        "selection": "all_eligible",
+        "selected_filenames_sha256": "d0007df3fbe7ae320f4cf3eaf43726202fcaac2b7efc3c82b209c4488698cde1",
+        "shape": [
+          64,
+          64,
+          64
+        ],
+        "manifest_sha256": "f493eb3c51bf5373cdcbee71362c24fe3afc98d7998b13d0f4b3958109db1ce2",
+        "index_filter": {
+          "min_exclusive_per_axis": 2.0,
+          "source": "metadata.measured_object_oversampling_xyz",
+          "original_manifest": "dataset_manifest.unfiltered.json",
+          "original_manifest_sha256": "e484dbb704eeeec92833ffdf0610ac6af35e9ddd6f3f6313c7a55eac581ef933",
+          "original_num_samples": 102000,
+          "original_splits": {
+            "train": 95000,
+            "val": 4000,
+            "test": 3000
+          },
+          "excluded_counts": {
+            "train": 14469,
+            "val": 617,
+            "test": 476
+          },
+          "created_at_utc": "2026-08-31T15:28:24.931441+00:00"
+        },
+        "storage_schema": "author_compact_v1",
+        "generator_protocol": "author_calls_v2",
+        "source": [
+          {
+            "name": "Global_utilities.py",
+            "bytes": 11371,
+            "sha256": "4ff1efcada4e1299ff0c24f7eeae88c6bac9ccb80c01f3ec88fbd91b49cb6f52"
+          },
+          {
+            "name": "Main_files/pot/GOLD/Au-Grochola-JCP05.eam.alloy",
+            "bytes": 630452,
+            "sha256": "1c49ca7ef48df27f7cb371f44fb9b54d0a8359c69a4033e5f3f3ac2fc2b05b29"
+          },
+          {
+            "name": "Main_files/pot/GOLD/Au_GROCHOLA.eam",
+            "bytes": 1380103,
+            "sha256": "10687fdd338b11ca9c480c00856bdd59fd32700a9f2ddb65f0319c6eda5b8398"
+          },
+          {
+            "name": "Object_utilities.py",
+            "bytes": 13832,
+            "sha256": "9b1b34b967bef872dd78392ad233e9252e0bc6b464c3f70ed65aa0c7df30f2c4"
+          },
+          {
+            "name": "Particle.py",
+            "bytes": 7866,
+            "sha256": "588f7d4ce20bf0748ece92f7b7a7e618914dd1614a19b8d203b968ed4efbce9e"
+          },
+          {
+            "name": "Plot_utilities.py",
+            "bytes": 51508,
+            "sha256": "ca88879388aeb7986f9f7547f8473f1d6c15a83791459195df4189371ce8d092"
+          },
+          {
+            "name": "PostProcessing.py",
+            "bytes": 5785,
+            "sha256": "e88bb0cbccdb288c4df4660643c41b0e02aeb76382f10ec45ce521b41b5d3d5e"
+          },
+          {
+            "name": "ShapedParticle.py",
+            "bytes": 21082,
+            "sha256": "27985a1fb5d038ce9eb592470d281b7e7028f59cc320ccb3ad0ac2b8ed3eba68"
+          },
+          {
+            "name": "diffraction_noise_functions.py",
+            "bytes": 33600,
+            "sha256": "b18a7b8a55c1c59503ef0f87935be98c18e5df52021c866ef89b15077f5ef461"
+          },
+          {
+            "name": "particle_and_diffraction.ipynb",
+            "bytes": 334945,
+            "sha256": "08d2c63184b6c594be8a5dfffcad1664b95b131c8918d3b2e6b5c37ee6b157ab"
+          },
+          {
+            "name": "rotation_matrices.py",
+            "bytes": 3113,
+            "sha256": "985b4b60718e507251908fa78f53ea443631d648d17a0d0a9d2035013ccb91ae"
+          }
+        ],
+        "backend": {
+          "name": "pynx_cuda",
+          "python": "3.10.18 (main, Jun  5 2025, 13:14:17) [GCC 11.2.0]",
+          "packages": {
+            "numpy": "1.26.4",
+            "scipy": "1.12.0",
+            "ase": "3.29.0",
+            "pynx": "2026.2b0",
+            "pycuda": "2026.1"
+          },
+          "scattering": "native PyNX CUDA",
+          "thomson_factor": "native PyNX",
+          "coordinate_io": "in-memory positions; no eight-decimal LMP roundtrip",
+          "visible_devices": [
+            "NVIDIA GeForce RTX 4090"
+          ],
+          "CUDA_VISIBLE_DEVICES": "0"
+        },
+        "input": "minmax(log1p(I))",
+        "target": "stored phi or clean object FFT; subtract central phase; no COM correction",
+        "noise": "fixed stored I; no resampling",
+        "split_unit": "particle"
+      },
+      "val": {
+        "format": "author_npz",
+        "root": "/data_ssd/oyys/high_strain_cnn/dataset",
+        "split": "val",
+        "num_samples": 3383,
+        "available_samples": 3383,
+        "unfiltered_samples": 3383,
+        "oversampling_filter": {
+          "min_exclusive_per_axis": null,
+          "source": "manifest measured_object_oversampling_xyz; no array modification",
+          "original_split_counts": {
+            "train": 80531,
+            "val": 3383,
+            "test": 2524
+          },
+          "eligible_split_counts": {
+            "train": 80531,
+            "val": 3383,
+            "test": 2524
+          },
+          "excluded_split_counts": {
+            "train": 0,
+            "val": 0,
+            "test": 0
+          }
+        },
+        "selection": "all_eligible",
+        "selected_filenames_sha256": "c1f8092831529a82aae0810ee3e4e9dcf8f747f2decfd9d6c07da4009a7ae38c",
+        "shape": [
+          64,
+          64,
+          64
+        ],
+        "manifest_sha256": "f493eb3c51bf5373cdcbee71362c24fe3afc98d7998b13d0f4b3958109db1ce2",
+        "index_filter": {
+          "min_exclusive_per_axis": 2.0,
+          "source": "metadata.measured_object_oversampling_xyz",
+          "original_manifest": "dataset_manifest.unfiltered.json",
+          "original_manifest_sha256": "e484dbb704eeeec92833ffdf0610ac6af35e9ddd6f3f6313c7a55eac581ef933",
+          "original_num_samples": 102000,
+          "original_splits": {
+            "train": 95000,
+            "val": 4000,
+            "test": 3000
+          },
+          "excluded_counts": {
+            "train": 14469,
+            "val": 617,
+            "test": 476
+          },
+          "created_at_utc": "2026-08-31T15:28:24.931441+00:00"
+        },
+        "storage_schema": "author_compact_v1",
+        "generator_protocol": "author_calls_v2",
+        "source": [
+          {
+            "name": "Global_utilities.py",
+            "bytes": 11371,
+            "sha256": "4ff1efcada4e1299ff0c24f7eeae88c6bac9ccb80c01f3ec88fbd91b49cb6f52"
+          },
+          {
+            "name": "Main_files/pot/GOLD/Au-Grochola-JCP05.eam.alloy",
+            "bytes": 630452,
+            "sha256": "1c49ca7ef48df27f7cb371f44fb9b54d0a8359c69a4033e5f3f3ac2fc2b05b29"
+          },
+          {
+            "name": "Main_files/pot/GOLD/Au_GROCHOLA.eam",
+            "bytes": 1380103,
+            "sha256": "10687fdd338b11ca9c480c00856bdd59fd32700a9f2ddb65f0319c6eda5b8398"
+          },
+          {
+            "name": "Object_utilities.py",
+            "bytes": 13832,
+            "sha256": "9b1b34b967bef872dd78392ad233e9252e0bc6b464c3f70ed65aa0c7df30f2c4"
+          },
+          {
+            "name": "Particle.py",
+            "bytes": 7866,
+            "sha256": "588f7d4ce20bf0748ece92f7b7a7e618914dd1614a19b8d203b968ed4efbce9e"
+          },
+          {
+            "name": "Plot_utilities.py",
+            "bytes": 51508,
+            "sha256": "ca88879388aeb7986f9f7547f8473f1d6c15a83791459195df4189371ce8d092"
+          },
+          {
+            "name": "PostProcessing.py",
+            "bytes": 5785,
+            "sha256": "e88bb0cbccdb288c4df4660643c41b0e02aeb76382f10ec45ce521b41b5d3d5e"
+          },
+          {
+            "name": "ShapedParticle.py",
+            "bytes": 21082,
+            "sha256": "27985a1fb5d038ce9eb592470d281b7e7028f59cc320ccb3ad0ac2b8ed3eba68"
+          },
+          {
+            "name": "diffraction_noise_functions.py",
+            "bytes": 33600,
+            "sha256": "b18a7b8a55c1c59503ef0f87935be98c18e5df52021c866ef89b15077f5ef461"
+          },
+          {
+            "name": "particle_and_diffraction.ipynb",
+            "bytes": 334945,
+            "sha256": "08d2c63184b6c594be8a5dfffcad1664b95b131c8918d3b2e6b5c37ee6b157ab"
+          },
+          {
+            "name": "rotation_matrices.py",
+            "bytes": 3113,
+            "sha256": "985b4b60718e507251908fa78f53ea443631d648d17a0d0a9d2035013ccb91ae"
+          }
+        ],
+        "backend": {
+          "name": "pynx_cuda",
+          "python": "3.10.18 (main, Jun  5 2025, 13:14:17) [GCC 11.2.0]",
+          "packages": {
+            "numpy": "1.26.4",
+            "scipy": "1.12.0",
+            "ase": "3.29.0",
+            "pynx": "2026.2b0",
+            "pycuda": "2026.1"
+          },
+          "scattering": "native PyNX CUDA",
+          "thomson_factor": "native PyNX",
+          "coordinate_io": "in-memory positions; no eight-decimal LMP roundtrip",
+          "visible_devices": [
+            "NVIDIA GeForce RTX 4090"
+          ],
+          "CUDA_VISIBLE_DEVICES": "0"
+        },
+        "input": "minmax(log1p(I))",
+        "target": "stored phi or clean object FFT; subtract central phase; no COM correction",
+        "noise": "fixed stored I; no resampling",
+        "split_unit": "particle"
+      }
+    }
+  },
+  "training": {
+    "data_format": "author_npz",
+    "data_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "data_dir": "/data_ssd/oyys/high_strain_cnn/dataset",
+    "author_min_oversampling": null,
+    "train_diff": "train_diff.npy",
+    "train_real": "train_real.npy",
+    "val_diff": "val_diff.npy",
+    "val_real": "val_real.npy",
+    "num_samples_train": 80531,
+    "num_samples_val": 3383,
+    "shape": 64,
+    "diffraction_dtype": "float32",
+    "realspace_dtype": "complex64",
+    "input_log_data": true,
+    "epochs": 30,
+    "batch_size": 16,
+    "num_workers": 4,
+    "prefetch_factor": 2,
+    "learning_rate": 0.001,
+    "model_variant": "reduced_bn_no_outer_skip",
+    "lr_scheduler": "plateau",
+    "device": "cuda",
+    "seed": 42,
+    "pretrained": "",
+    "resume": "",
+    "run_name": "author_bn_no_outer_skip_full_bs16_lr1e-3_20260831_234036",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/pytorch_simulation",
+    "checkpoint_root": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn",
+    "save_every": 0,
+    "print_freq": 50,
+    "max_batches_per_epoch": 0,
+    "fp16": false,
+    "run_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/pytorch_simulation/author_bn_no_outer_skip_full_bs16_lr1e-3_20260831_234036",
+    "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/author_bn_no_outer_skip_full_bs16_lr1e-3_20260831_234036"
+  }
+}

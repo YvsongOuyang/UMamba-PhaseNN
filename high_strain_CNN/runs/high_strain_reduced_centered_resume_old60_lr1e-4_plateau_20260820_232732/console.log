@@ -2430,3 +2430,25 @@ echo "已提交后台生成任务：PID=${PID}"
 echo "数据：${DATA_DIR}"
 echo "日志：${RUN_DIR}/console.log"
 echo "运行记录：${RUN_DIR}"
+
+
+
+RUN_NAME="author_bn_no_outer_skip_full_bs16_lr1e-3_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/artifacts/training/pytorch_simulation/${RUN_NAME}"
+
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u \
+  -m pytorch_autophasenn.train \
+  --data-format author_npz \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --model-variant reduced_bn_no_outer_skip \
+  --run-name "${RUN_NAME}" \
+  --epochs 30 \
+  --save-every 0 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+echo "已提交：PID=${PID}"
+echo "日志：${RUN_DIR}/console.log"
