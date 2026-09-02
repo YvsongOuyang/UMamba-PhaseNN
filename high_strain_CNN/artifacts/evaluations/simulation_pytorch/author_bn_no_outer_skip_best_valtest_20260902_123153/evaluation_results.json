@@ -94706,67 +94706,94 @@
   ],
   "visualizations": [
     {
-      "index": 4096,
-      "name": "sample_99837.npz",
-      "support_iou": 0.12960467205750226,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04096_representative_1_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04096_representative_1_3d.png"
+      "index": 5254,
+      "name": "sample_101219.npz",
+      "shape_phase": "random/cosine",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.598660409450531,
+      "support_iou": 0.7628576153464528,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/random_cosine_sample_05254_representative_1_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 4960,
-      "name": "sample_100863.npz",
-      "support_iou": 0.6803647416413374,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04960_representative_2_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04960_representative_2_3d.png"
+      "index": 3637,
+      "name": "sample_99302.npz",
+      "shape_phase": "random/gauss",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.6010794639587402,
+      "support_iou": 0.7113499841922226,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/random_gauss_sample_03637_representative_2_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 5724,
-      "name": "sample_101777.npz",
-      "support_iou": 0.7446808510638298,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05724_representative_3_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05724_representative_3_3d.png"
+      "index": 4397,
+      "name": "sample_100202.npz",
+      "shape_phase": "random/random",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.7009016871452332,
+      "support_iou": 0.5928955866523143,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/random_random_sample_04397_representative_3_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 5358,
-      "name": "sample_101343.npz",
-      "support_iou": 0.7825159914712153,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05358_representative_4_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05358_representative_4_3d.png"
+      "index": 3900,
+      "name": "sample_99608.npz",
+      "shape_phase": "winterbottom/cosine",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.3992612957954407,
+      "support_iou": 0.8327956989247312,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/winterbottom_cosine_sample_03900_representative_4_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 4149,
-      "name": "sample_99905.npz",
-      "support_iou": 0.8120984278879015,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04149_representative_5_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04149_representative_5_3d.png"
+      "index": 5250,
+      "name": "sample_101214.npz",
+      "shape_phase": "winterbottom/gauss",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.4214690327644348,
+      "support_iou": 0.7400847131305353,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/winterbottom_gauss_sample_05250_representative_5_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 3498,
-      "name": "sample_99135.npz",
-      "support_iou": 0.8403920843351211,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_03498_representative_6_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_03498_representative_6_3d.png"
+      "index": 4182,
+      "name": "sample_99948.npz",
+      "shape_phase": "winterbottom/random",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.5427315831184387,
+      "support_iou": 0.8485543827443781,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/winterbottom_random_sample_04182_representative_6_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 5468,
-      "name": "sample_101479.npz",
-      "support_iou": 0.8739205526770294,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05468_representative_7_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_05468_representative_7_3d.png"
+      "index": 4420,
+      "name": "sample_100227.npz",
+      "shape_phase": "wulff/cosine",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.257904052734375,
+      "support_iou": 0.8850954478707783,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/wulff_cosine_sample_04420_representative_7_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 4085,
-      "name": "sample_99826.npz",
-      "support_iou": 0.9132870266636791,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04085_representative_8_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_04085_representative_8_3d.png"
+      "index": 5249,
+      "name": "sample_101213.npz",
+      "shape_phase": "wulff/gauss",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.2550392150878906,
+      "support_iou": 0.837517115472387,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/wulff_gauss_sample_05249_representative_8_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     },
     {
-      "index": 3597,
-      "name": "sample_99254.npz",
-      "support_iou": 0.973568281938326,
-      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_03597_representative_9_2d.png",
-      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/sample_03597_representative_9_3d.png"
+      "index": 5409,
+      "name": "sample_101407.npz",
+      "shape_phase": "wulff/random",
+      "selection": "pair_median_wca",
+      "phase_wca": 0.4175412654876709,
+      "support_iou": 0.809614340032591,
+      "slice_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/wulff_random_sample_05409_representative_9_2d.png",
+      "volume_overview": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153/representative_amplitude_3d.png"
     }
   ],
   "configuration": {
@@ -94808,5 +94835,6 @@
     "visualize_samples": 9,
     "reuse_predictions": false,
     "log_level": "INFO"
-  }
+  },
+  "visualizations_updated_at": "2026-09-02T06:41:38.107277+00:00"
 }

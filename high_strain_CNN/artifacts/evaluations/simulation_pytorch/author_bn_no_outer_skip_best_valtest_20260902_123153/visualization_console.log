@@ -1,0 +1,3 @@
+2026-09-02 14:41:21 | INFO    | Dataset: /data_ssd/oyys/high_strain_cnn/dataset | samples=5907 | calibration/evaluation=3383/2524 | manifest particle-disjoint splits: val calibrates; test reports final metrics
+2026-09-02 14:41:21 | INFO    | Thresholds: 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6
+2026-09-02 14:41:38 | INFO    | Redrew 9 representative sample(s): /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153
