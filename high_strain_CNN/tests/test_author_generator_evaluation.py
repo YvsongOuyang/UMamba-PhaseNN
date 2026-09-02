@@ -223,6 +223,38 @@ def test_paper_evaluator_uses_manifest_val_and_test_without_particle_leakage(tmp
     assert "test reports" in split_rule
 
 
+def test_visualization_selection_covers_each_shape_phase_pair() -> None:
+    from simulation.evaluate_paper_model import select_visualization_rows
+
+    rows = []
+    index = 0
+    for shape in ("random", "winterbottom", "wulff"):
+        for phase in ("cosine", "gauss", "random"):
+            for wca in (0.2, 0.5, 0.8):
+                rows.append(
+                    {
+                        "index": index,
+                        "name": f"sample_{index:05d}.npz",
+                        "shape_phase": f"{shape}/{phase}",
+                        "phase_wca": wca,
+                        "support_iou": 1.0 - wca / 2.0,
+                        "support_volume_ratio": 1.0,
+                    }
+                )
+                index += 1
+    selected = select_visualization_rows(rows, 9)
+    assert len(selected) == 9
+    assert {row["shape_phase"] for row in selected} == {
+        f"{shape}/{phase}"
+        for shape in ("random", "winterbottom", "wulff")
+        for phase in ("cosine", "gauss", "random")
+    }
+    assert {row["phase_wca"] for row in selected} == {0.5}
+    assert {row["visualization_selection"] for row in selected} == {
+        "pair_median_wca"
+    }
+
+
 def test_coverage_lists_all_nine_pairs_even_for_small_random_sample():
     from simulation.evaluate_author_code import _category_coverage
 

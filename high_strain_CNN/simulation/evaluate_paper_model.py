@@ -119,6 +119,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--visualize-samples", type=int, default=3)
     parser.add_argument("--reuse-predictions", action="store_true")
     parser.add_argument(
+        "--visualize-only",
+        action="store_true",
+        help=(
+            "Reuse an existing prediction cache and evaluation_results.json to "
+            "redraw representative samples without recomputing all metrics."
+        ),
+    )
+    parser.add_argument(
         "--log-level",
         choices=("DEBUG", "INFO", "WARNING", "ERROR"),
         default="INFO",
@@ -139,6 +147,10 @@ def parse_args() -> argparse.Namespace:
         parser.error("Calibration and evaluation manifest splits must differ.")
     if args.calibration_split is not None and args.num_samples:
         parser.error("--num-samples is only available with the legacy fraction split.")
+    if args.visualize_only and not args.reuse_predictions:
+        parser.error("--visualize-only requires --reuse-predictions.")
+    if args.visualize_only and args.visualize_samples < 1:
+        parser.error("--visualize-only requires at least one visualization sample.")
     if args.iou_tolerance < 0.0:
         parser.error("--iou-tolerance cannot be negative.")
     if any(not np.isfinite(value) or not 0.0 < value < 1.0 for value in args.thresholds):
@@ -147,7 +159,11 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def configure_logging(output_dir: Path, level: str) -> None:
+def configure_logging(
+    output_dir: Path,
+    level: str,
+    filename: str = "evaluation.log",
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     LOGGER.handlers.clear()
     LOGGER.setLevel(getattr(logging, level))
@@ -159,7 +175,7 @@ def configure_logging(output_dir: Path, level: str) -> None:
     for handler in (
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(
-            output_dir / "evaluation.log",
+            output_dir / filename,
             mode="w",
             encoding="utf-8",
         ),
@@ -763,6 +779,155 @@ def select_evaluation_samples(
     )
 
 
+def select_visualization_rows(
+    rows: list[dict[str, Any]],
+    count: int,
+) -> list[dict[str, Any]]:
+    """Prefer one median-WCA example per shape/phase pair, then fill by IoU."""
+
+    if count <= 0 or not rows:
+        return []
+    count = min(count, len(rows))
+    groups = sorted({str(row.get("shape_phase", "unknown/unknown")) for row in rows})
+    selected: list[dict[str, Any]] = []
+    selected_indices: set[int] = set()
+    if count >= len(groups):
+        for group in groups:
+            candidates = [row for row in rows if str(row.get("shape_phase")) == group]
+            median_wca = float(np.median([float(row["phase_wca"]) for row in candidates]))
+            representative = min(
+                candidates,
+                key=lambda row: (
+                    abs(float(row["phase_wca"]) - median_wca),
+                    abs(float(row["support_volume_ratio"]) - 1.0),
+                    str(row["name"]),
+                ),
+            )
+            selected.append({**representative, "visualization_selection": "pair_median_wca"})
+            selected_indices.add(int(representative["index"]))
+            if len(selected) == count:
+                return selected
+
+    remaining = count - len(selected)
+    candidates = sorted(
+        (row for row in rows if int(row["index"]) not in selected_indices),
+        key=lambda row: float(row["support_iou"]),
+    )
+    if remaining > 0 and candidates:
+        positions = np.linspace(
+            0,
+            len(candidates) - 1,
+            min(remaining, len(candidates)),
+            dtype=int,
+        )
+        for position in positions:
+            selected.append(
+                {
+                    **candidates[int(position)],
+                    "visualization_selection": "support_iou_quantile",
+                }
+            )
+    return selected
+
+
+def _visualization_model_label(model_metadata: dict[str, Any]) -> str:
+    backend = str(model_metadata.get("backend", "model"))
+    if backend == "pytorch":
+        variant = str(model_metadata.get("model_variant", "phase model"))
+        return f"PyTorch {variant}"
+    if backend == "tensorflow":
+        return "Official TensorFlow HighStrain model"
+    return backend.replace("_", " ").title()
+
+
+def render_visualizations(
+    *,
+    rows: list[dict[str, Any]],
+    sample_paths: list[Path],
+    predictions: np.ndarray,
+    selected_threshold: float,
+    visualization_dir: Path,
+    model_metadata: dict[str, Any],
+    count: int,
+) -> list[dict[str, Any]]:
+    """Render representative held-out samples without retaining volumes in memory."""
+
+    selected_rows = select_visualization_rows(rows, count)
+    if not selected_rows:
+        return []
+    visualization_dir.mkdir(parents=True, exist_ok=True)
+    for pattern in ("*_representative_*_2d.png", "*_representative_*_3d.png"):
+        for stale_path in visualization_dir.glob(pattern):
+            stale_path.unlink()
+
+    model_label = _visualization_model_label(model_metadata)
+    records: list[dict[str, Any]] = []
+    for rank, row in enumerate(selected_rows, start=1):
+        index = int(row["index"])
+        sample = load_sample(sample_paths[index])
+        raw_prediction = predictions[index]
+        selected_phase = (
+            -raw_prediction if bool(row["twin_flip_selected"]) else raw_prediction
+        )
+        reconstruction = reconstruct_object(sample["intensity"], selected_phase)
+        geometry_aligned, _, _ = align_geometry(
+            reconstruction,
+            sample["target_object"],
+        )
+        aligned, _ = align_global_phase(
+            geometry_aligned,
+            sample["target_object"],
+            sample["target_support"],
+            selected_threshold,
+        )
+        pair = str(row.get("shape_phase", "unknown/unknown"))
+        pair_token = "_".join(
+            "".join(character for character in part if character.isalnum() or character == "_")
+            or "unknown"
+            for part in pair.split("/")
+        )
+        stem = f"{pair_token}_sample_{index:05d}_representative_{rank}"
+        sample_label = (
+            f"{pair} | WCA={float(row['phase_wca']):.4f} | "
+            f"support IoU={float(row['support_iou']):.4f} | threshold={selected_threshold:g}"
+        )
+        slice_path = save_slice_overview(
+            intensity=sample["intensity"],
+            target_reciprocal_phase=sample["target_phase"],
+            predicted_reciprocal_phase=selected_phase,
+            target_object=sample["target_object"],
+            predicted_object=aligned,
+            destination=visualization_dir / f"{stem}_2d.png",
+            support_threshold=selected_threshold,
+            target_support=sample["target_support"],
+            model_label=model_label,
+            sample_label=sample_label,
+        )
+        volume_path = save_volume_overview(
+            intensity=sample["intensity"],
+            target_object=sample["target_object"],
+            predicted_object=aligned,
+            destination=visualization_dir / f"{stem}_3d.png",
+            support_threshold=selected_threshold,
+            target_support=sample["target_support"],
+            model_label=model_label,
+            sample_label=sample_label,
+        )
+        records.append(
+            {
+                "index": index,
+                "name": row["name"],
+                "shape_phase": pair,
+                "selection": row["visualization_selection"],
+                "phase_wca": row["phase_wca"],
+                "support_iou": row["support_iou"],
+                "slice_overview": str(slice_path),
+                "volume_overview": str(volume_path),
+            }
+        )
+    return records
+
+
 def main() -> int:
     args = parse_args()
     if args.backend == "tensorflow" and args.device == "cpu":
@@ -773,7 +938,11 @@ def main() -> int:
     output_dir = Path(args.output_dir).expanduser().resolve()
     cache_dir = Path(args.cache_dir).expanduser().resolve()
     visualization_dir = Path(args.visualization_dir).expanduser().resolve()
-    configure_logging(output_dir, args.log_level)
+    configure_logging(
+        output_dir,
+        args.log_level,
+        filename="visualization.log" if args.visualize_only else "evaluation.log",
+    )
     if not model_path.is_file():
         raise FileNotFoundError(f"Model not found: {model_path}")
     sample_paths, calibration_count, dataset_manifest, split_rule = (
@@ -806,6 +975,40 @@ def main() -> int:
             args.reuse_predictions,
             args.device,
         )
+    if args.visualize_only:
+        report_path = output_dir / "evaluation_results.json"
+        if not report_path.is_file():
+            raise FileNotFoundError(
+                "--visualize-only requires evaluation_results.json in --output-dir."
+            )
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        previous_identity = report.get("model_metadata", {}).get("content_identity")
+        if previous_identity != model_metadata.get("content_identity"):
+            raise ValueError("Evaluation report and prediction cache identities differ.")
+        final_rows = report.get("evaluation_per_sample", [])
+        selected_threshold = float(report["selected_threshold"])
+        visualization_records = render_visualizations(
+            rows=final_rows,
+            sample_paths=sample_paths,
+            predictions=predictions,
+            selected_threshold=selected_threshold,
+            visualization_dir=visualization_dir,
+            model_metadata=model_metadata,
+            count=args.visualize_samples,
+        )
+        report["visualizations"] = visualization_records
+        report["visualizations_updated_at"] = datetime.now(timezone.utc).isoformat()
+        report_path.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False),
+            encoding="utf-8",
+        )
+        LOGGER.info(
+            "Redrew %d representative sample(s): %s",
+            len(visualization_records),
+            visualization_dir,
+        )
+        return 0
+
     sweep_rows: list[dict[str, Any]] = []
     sample_state: dict[int, dict[str, Any]] = {}
     for index, (sample_path, raw_prediction) in enumerate(zip(sample_paths, predictions)):
@@ -905,70 +1108,15 @@ def main() -> int:
             }
         )
 
-    visualization_records = []
-    if args.visualize_samples:
-        ranked = sorted(final_rows, key=lambda row: row["support_iou"])
-        positions = np.linspace(
-            0,
-            len(ranked) - 1,
-            min(args.visualize_samples, len(ranked)),
-            dtype=int,
-        )
-        visualization_dir.mkdir(parents=True, exist_ok=True)
-        for pattern in (
-            "sample_*_representative_*_2d.png",
-            "sample_*_representative_*_3d.png",
-        ):
-            for stale_path in visualization_dir.glob(pattern):
-                stale_path.unlink()
-        for rank, position in enumerate(positions):
-            row = ranked[int(position)]
-            index = int(row["index"])
-            state = sample_state[index]
-            sample = load_sample(sample_paths[index])
-            raw_prediction = predictions[index]
-            selected_phase = (
-                -raw_prediction if state["twin_flip_selected"] else raw_prediction
-            )
-            reconstruction = reconstruct_object(sample["intensity"], selected_phase)
-            geometry_aligned, _, _ = align_geometry(
-                reconstruction,
-                sample["target_object"],
-            )
-            aligned, _ = align_global_phase(
-                geometry_aligned,
-                sample["target_object"],
-                sample["target_support"],
-                selected_threshold,
-            )
-            stem = f"sample_{index:05d}_representative_{rank + 1}"
-            slice_path = save_slice_overview(
-                intensity=sample["intensity"],
-                target_reciprocal_phase=sample["target_phase"],
-                predicted_reciprocal_phase=selected_phase,
-                target_object=sample["target_object"],
-                predicted_object=aligned,
-                destination=visualization_dir / f"{stem}_2d.png",
-                support_threshold=selected_threshold,
-                target_support=sample["target_support"],
-            )
-            volume_path = save_volume_overview(
-                intensity=sample["intensity"],
-                target_object=sample["target_object"],
-                predicted_object=aligned,
-                destination=visualization_dir / f"{stem}_3d.png",
-                support_threshold=selected_threshold,
-                target_support=sample["target_support"],
-            )
-            visualization_records.append(
-                {
-                    "index": index,
-                    "name": row["name"],
-                    "support_iou": row["support_iou"],
-                    "slice_overview": str(slice_path),
-                    "volume_overview": str(volume_path),
-                }
-            )
+    visualization_records = render_visualizations(
+        rows=final_rows,
+        sample_paths=sample_paths,
+        predictions=predictions,
+        selected_threshold=selected_threshold,
+        visualization_dir=visualization_dir,
+        model_metadata=model_metadata,
+        count=args.visualize_samples,
+    )
 
     evaluation_statistics = metric_statistics(final_rows)
     dataset_manifest_summary = (

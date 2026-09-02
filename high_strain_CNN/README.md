@@ -350,6 +350,17 @@ test split contributes the final metrics. PyTorch and TensorFlow both reuse the
 same WCA, inverse FFT, real-space alignment, exact simulated support, category
 summaries, and 2D/3D visualization code.
 
+To redraw visualizations after evaluation without recomputing all metrics, rerun
+the same command with the same model, data, output, cache and visualization
+directories, plus:
+
+```text
+--reuse-predictions --visualize-only --visualize-samples 9
+```
+
+Nine requested images select the median-WCA sample from each of the nine
+shape/phase groups. Smaller requests retain the support-IoU quantile overview.
+
 Run active source and evaluation checks with:
 
 ```bash

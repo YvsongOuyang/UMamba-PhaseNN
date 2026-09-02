@@ -28,6 +28,8 @@ def save_slice_overview(
     destination: str | Path,
     support_threshold: float = 0.1,
     target_support: np.ndarray | None = None,
+    model_label: str = "HighStrain model",
+    sample_label: str = "",
 ) -> Path:
     """Save matched center slices in reciprocal and real space."""
 
@@ -106,7 +108,10 @@ def save_slice_overview(
         axis.set_xticks([])
         axis.set_yticks([])
         figure.colorbar(artist, ax=axis, fraction=0.046, pad=0.02)
-    figure.suptitle("HighStrain simulated sample and official-model reconstruction")
+    title = f"Author simulation | {model_label}"
+    if sample_label:
+        title = f"{title}\n{sample_label}"
+    figure.suptitle(title)
     figure.savefig(destination, dpi=180)
     plt.close(figure)
     return destination
@@ -152,6 +157,8 @@ def save_volume_overview(
     max_surface_points: int = 7000,
     max_diffraction_points: int = 5000,
     target_support: np.ndarray | None = None,
+    model_label: str = "HighStrain model",
+    sample_label: str = "",
 ) -> Path:
     """Save phase-colored object surfaces and a reciprocal-space point cloud."""
 
@@ -242,7 +249,10 @@ def save_volume_overview(
         pad=0.04,
         label="wrapped phase (rad)",
     )
-    figure.suptitle("3D simulation and official HighStrain model output")
+    title = f"3D author simulation | {model_label}"
+    if sample_label:
+        title = f"{title}\n{sample_label}"
+    figure.suptitle(title)
     figure.savefig(destination, dpi=180)
     plt.close(figure)
     return destination
