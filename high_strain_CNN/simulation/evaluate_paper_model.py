@@ -24,7 +24,11 @@ from .run_paper_model import (
     prepare_model_input,
     reconstruct_object,
 )
-from .visualization import save_amplitude_volume_comparison, save_slice_overview
+from .visualization import (
+    save_amplitude_volume_comparison,
+    save_phase_volume_comparison,
+    save_slice_overview,
+)
 from .sample_io import load_reciprocal_phase
 
 
@@ -882,12 +886,15 @@ def render_visualizations(
         prediction_before_shift = (reconstruction * amplitude_scale).astype(
             np.complex64
         )
-        aligned, _ = align_global_phase(
+        aligned, phase_offset = align_global_phase(
             geometry_aligned,
             sample["target_object"],
             sample["target_support"],
             selected_threshold,
         )
+        prediction_before_shift = (
+            prediction_before_shift * np.exp(1.0j * phase_offset)
+        ).astype(np.complex64)
         pair = str(row.get("shape_phase", "unknown/unknown"))
         pair_token = "_".join(
             "".join(character for character in part if character.isalnum() or character == "_")
@@ -931,7 +938,7 @@ def render_visualizations(
                 "slice_overview": str(slice_path),
             }
         )
-    volume_path = save_amplitude_volume_comparison(
+    amplitude_volume_path = save_amplitude_volume_comparison(
         target_objects=target_objects,
         predicted_objects_before_shift=predictions_before_shift,
         predicted_objects_after_shift=predictions_after_shift,
@@ -941,8 +948,20 @@ def render_visualizations(
         support_threshold=selected_threshold,
         model_label=model_label,
     )
+    phase_volume_path = save_phase_volume_comparison(
+        target_objects=target_objects,
+        predicted_objects_before_shift=predictions_before_shift,
+        predicted_objects_after_shift=predictions_after_shift,
+        target_supports=target_supports,
+        names=volume_names,
+        destination=visualization_dir / "representative_phase_3d.png",
+        support_threshold=selected_threshold,
+        model_label=model_label,
+    )
     for record in records:
-        record["volume_overview"] = str(volume_path)
+        record["volume_overview"] = str(amplitude_volume_path)
+        record["amplitude_volume_overview"] = str(amplitude_volume_path)
+        record["phase_volume_overview"] = str(phase_volume_path)
     return records
 
 

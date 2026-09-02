@@ -280,24 +280,28 @@ def plot_five_panel_volume(
     elevation: float,
     azimuth: float,
     absolute_zero_minimum: bool = False,
+    absolute_limits: tuple[float, float] | None = None,
+    difference_limits: tuple[float, float] | None = None,
 ) -> None:
     """Save the AutoPhaseNN five-column full-volume comparison layout."""
 
     from matplotlib.cm import ScalarMappable
     from matplotlib.colors import Normalize
 
-    absolute_limits = _visible_value_limits(
-        panel_rows,
-        range(3),
-        symmetric=False,
-        zero_minimum=absolute_zero_minimum,
-    )
-    difference_limits = _visible_value_limits(
-        panel_rows,
-        range(3, 5),
-        symmetric=True,
-        zero_minimum=False,
-    )
+    if absolute_limits is None:
+        absolute_limits = _visible_value_limits(
+            panel_rows,
+            range(3),
+            symmetric=False,
+            zero_minimum=absolute_zero_minimum,
+        )
+    if difference_limits is None:
+        difference_limits = _visible_value_limits(
+            panel_rows,
+            range(3, 5),
+            symmetric=True,
+            zero_minimum=False,
+        )
     absolute_normalizer = Normalize(*absolute_limits)
     difference_normalizer = Normalize(*difference_limits)
     absolute_map = plt.get_cmap(absolute_color_map)
@@ -381,6 +385,27 @@ def _relative_geometry(amplitude: np.ndarray) -> np.ndarray:
     return amplitude / max(float(amplitude.max()), 1e-12)
 
 
+def _wrap_phase(values: np.ndarray) -> np.ndarray:
+    """Map phase values or phase differences to the principal interval."""
+
+    return np.angle(np.exp(1.0j * np.asarray(values))).astype(np.float32)
+
+
+def _target_geometry(
+    target_amplitude: np.ndarray,
+    target_support: np.ndarray | None,
+    support_threshold: float,
+) -> tuple[np.ndarray, float]:
+    """Resolve the exact target support or a relative-amplitude fallback."""
+
+    if target_support is None:
+        return _relative_geometry(target_amplitude), support_threshold
+    geometry = np.asarray(target_support, dtype=np.float32)
+    if geometry.shape != target_amplitude.shape:
+        raise ValueError("Target support and target object shapes differ.")
+    return geometry, 0.5
+
+
 def _amplitude_volume_panels(
     *,
     target_object: np.ndarray,
@@ -399,14 +424,11 @@ def _amplitude_volume_panels(
     after_amplitude = np.abs(predicted_object_after_shift).astype(
         np.float32, copy=False
     )
-    if target_support is None:
-        target_geometry = _relative_geometry(target_amplitude)
-        target_level = support_threshold
-    else:
-        target_geometry = np.asarray(target_support, dtype=np.float32)
-        if target_geometry.shape != target_amplitude.shape:
-            raise ValueError("Target support and target object shapes differ.")
-        target_level = 0.5
+    target_geometry, target_level = _target_geometry(
+        target_amplitude,
+        target_support,
+        support_threshold,
+    )
 
     shift_difference = before_amplitude - after_amplitude
     target_difference = after_amplitude - target_amplitude
@@ -435,6 +457,60 @@ def _amplitude_volume_panels(
             target_difference,
             "Difference: after - target",
             amplitude_error_level,
+        ),
+    ]
+
+
+def _phase_volume_panels(
+    *,
+    target_object: np.ndarray,
+    predicted_object_before_shift: np.ndarray,
+    predicted_object_after_shift: np.ndarray,
+    support_threshold: float,
+    target_support: np.ndarray | None,
+) -> list[tuple[np.ndarray, np.ndarray, str, float]]:
+    """Build target, aligned predictions, and wrapped phase-difference panels."""
+
+    target_amplitude = np.abs(target_object).astype(np.float32, copy=False)
+    before_geometry = _relative_geometry(np.abs(predicted_object_before_shift))
+    after_geometry = _relative_geometry(np.abs(predicted_object_after_shift))
+    target_geometry, target_level = _target_geometry(
+        target_amplitude,
+        target_support,
+        support_threshold,
+    )
+    target_phase = np.angle(target_object).astype(np.float32, copy=False)
+    before_phase = np.angle(predicted_object_before_shift).astype(
+        np.float32, copy=False
+    )
+    after_phase = np.angle(predicted_object_after_shift).astype(
+        np.float32, copy=False
+    )
+    return [
+        (target_geometry, target_phase, "Target", target_level),
+        (
+            before_geometry,
+            before_phase,
+            "Prediction before center shift",
+            support_threshold,
+        ),
+        (
+            after_geometry,
+            after_phase,
+            "Prediction after center shift",
+            support_threshold,
+        ),
+        (
+            np.minimum(before_geometry, after_geometry),
+            _wrap_phase(before_phase - after_phase),
+            "Wrapped difference: before - after",
+            support_threshold,
+        ),
+        (
+            np.minimum(target_geometry, after_geometry),
+            _wrap_phase(after_phase - target_phase),
+            "Wrapped difference: after - target",
+            support_threshold,
         ),
     ]
 
@@ -507,6 +583,78 @@ def save_amplitude_volume_comparison(
         elevation=view_elevation,
         azimuth=view_azimuth,
         absolute_zero_minimum=True,
+    )
+    return destination
+
+
+def save_phase_volume_comparison(
+    *,
+    target_objects: list[np.ndarray],
+    predicted_objects_after_shift: list[np.ndarray],
+    destination: str | Path,
+    support_threshold: float,
+    names: list[str] | None = None,
+    predicted_objects_before_shift: list[np.ndarray] | None = None,
+    target_supports: list[np.ndarray | None] | None = None,
+    model_label: str = "HighStrain model",
+    max_volume_points: int = 7000,
+    volume_point_size: float = 3.0,
+    volume_alpha: float = 0.4,
+    view_elevation: float = 25.0,
+    view_azimuth: float = 35.0,
+) -> Path:
+    """Save a shared-limit, five-column wrapped-phase volume comparison."""
+
+    sample_count = len(target_objects)
+    if sample_count < 1 or len(predicted_objects_after_shift) != sample_count:
+        raise ValueError(
+            "Target and prediction lists must have equal nonzero lengths."
+        )
+    if predicted_objects_before_shift is None:
+        predicted_objects_before_shift = predicted_objects_after_shift
+    if target_supports is None:
+        target_supports = [None] * sample_count
+    if names is None:
+        names = [f"Sample {index + 1}" for index in range(sample_count)]
+    if any(
+        len(values) != sample_count
+        for values in (predicted_objects_before_shift, target_supports, names)
+    ):
+        raise ValueError("Every comparison list must contain the same samples.")
+
+    panel_rows = [
+        _phase_volume_panels(
+            target_object=target_object,
+            predicted_object_before_shift=before_object,
+            predicted_object_after_shift=after_object,
+            support_threshold=support_threshold,
+            target_support=target_support,
+        )
+        for target_object, before_object, after_object, target_support in zip(
+            target_objects,
+            predicted_objects_before_shift,
+            predicted_objects_after_shift,
+            target_supports,
+        )
+    ]
+    destination = Path(destination).expanduser().resolve()
+    phase_limits = (-float(np.pi), float(np.pi))
+    plot_five_panel_volume(
+        panel_rows=panel_rows,
+        names=names,
+        output_png=destination,
+        figure_title=f"Real-space phase 3D volumes | {model_label}",
+        absolute_color_map="twilight",
+        difference_color_map="coolwarm",
+        absolute_colorbar_label="Wrapped phase (rad)",
+        difference_colorbar_label="Wrapped phase difference (rad)",
+        max_points=max_volume_points,
+        point_size=volume_point_size,
+        alpha=volume_alpha,
+        elevation=view_elevation,
+        azimuth=view_azimuth,
+        absolute_limits=phase_limits,
+        difference_limits=phase_limits,
     )
     return destination
 
