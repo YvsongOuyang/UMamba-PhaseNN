@@ -24,7 +24,7 @@ from .run_paper_model import (
     prepare_model_input,
     reconstruct_object,
 )
-from .visualization import save_slice_overview, save_volume_overview
+from .visualization import save_amplitude_volume_comparison, save_slice_overview
 from .sample_io import load_reciprocal_phase
 
 
@@ -862,6 +862,11 @@ def render_visualizations(
 
     model_label = _visualization_model_label(model_metadata)
     records: list[dict[str, Any]] = []
+    target_objects: list[np.ndarray] = []
+    predictions_before_shift: list[np.ndarray] = []
+    predictions_after_shift: list[np.ndarray] = []
+    target_supports: list[np.ndarray | None] = []
+    volume_names: list[str] = []
     for rank, row in enumerate(selected_rows, start=1):
         index = int(row["index"])
         sample = load_sample(sample_paths[index])
@@ -870,9 +875,12 @@ def render_visualizations(
             -raw_prediction if bool(row["twin_flip_selected"]) else raw_prediction
         )
         reconstruction = reconstruct_object(sample["intensity"], selected_phase)
-        geometry_aligned, _, _ = align_geometry(
+        geometry_aligned, _, amplitude_scale = align_geometry(
             reconstruction,
             sample["target_object"],
+        )
+        prediction_before_shift = (reconstruction * amplitude_scale).astype(
+            np.complex64
         )
         aligned, _ = align_global_phase(
             geometry_aligned,
@@ -903,15 +911,14 @@ def render_visualizations(
             model_label=model_label,
             sample_label=sample_label,
         )
-        volume_path = save_volume_overview(
-            intensity=sample["intensity"],
-            target_object=sample["target_object"],
-            predicted_object=aligned,
-            destination=visualization_dir / f"{stem}_3d.png",
-            support_threshold=selected_threshold,
-            target_support=sample["target_support"],
-            model_label=model_label,
-            sample_label=sample_label,
+        target_objects.append(sample["target_object"])
+        predictions_before_shift.append(prediction_before_shift)
+        predictions_after_shift.append(aligned)
+        target_supports.append(sample["target_support"])
+        volume_names.append(
+            f"{pair} | sample {index:05d}\n"
+            f"WCA={float(row['phase_wca']):.4f} | "
+            f"IoU={float(row['support_iou']):.4f}"
         )
         records.append(
             {
@@ -922,9 +929,20 @@ def render_visualizations(
                 "phase_wca": row["phase_wca"],
                 "support_iou": row["support_iou"],
                 "slice_overview": str(slice_path),
-                "volume_overview": str(volume_path),
             }
         )
+    volume_path = save_amplitude_volume_comparison(
+        target_objects=target_objects,
+        predicted_objects_before_shift=predictions_before_shift,
+        predicted_objects_after_shift=predictions_after_shift,
+        target_supports=target_supports,
+        names=volume_names,
+        destination=visualization_dir / "representative_amplitude_3d.png",
+        support_threshold=selected_threshold,
+        model_label=model_label,
+    )
+    for record in records:
+        record["volume_overview"] = str(volume_path)
     return records
 
 

@@ -348,7 +348,10 @@ python -m simulation.evaluate_paper_model \
 The complete validation split selects the support threshold; only the held-out
 test split contributes the final metrics. PyTorch and TensorFlow both reuse the
 same WCA, inverse FFT, real-space alignment, exact simulated support, category
-summaries, and 2D/3D visualization code.
+summaries, and 2D/3D visualization code. The 3D result uses the same full-volume
+five-panel layout as AutoPhaseNN: target, prediction before center shift,
+prediction after center shift, shift difference, and final target difference.
+It renders all visible volume voxels rather than only the support surface.
 
 To redraw visualizations after evaluation without recomputing all metrics, rerun
 the same command with the same model, data, output, cache and visualization
@@ -358,8 +361,10 @@ directories, plus:
 --reuse-predictions --visualize-only --visualize-samples 9
 ```
 
-Nine requested images select the median-WCA sample from each of the nine
-shape/phase groups. Smaller requests retain the support-IoU quantile overview.
+Nine requested samples select the median-WCA case from each of the nine
+shape/phase groups. Their 3D amplitude comparisons share one composite image
+and common color scales. Smaller requests retain the support-IoU quantile
+overview.
 
 Run active source and evaluation checks with:
 

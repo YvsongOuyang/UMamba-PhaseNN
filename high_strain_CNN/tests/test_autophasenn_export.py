@@ -66,10 +66,11 @@ class AutoPhaseNNExportTest(unittest.TestCase):
                 predicted_object=sample.realspace_object, target_support=sample.support,
                 support_threshold=0.3,
             )
-            with patch.object(visualization, "_surface_points", wraps=visualization._surface_points) as surface:
+            with patch.object(visualization, "plot_five_panel_volume") as volume_plot:
                 visualization.save_volume_overview(**arguments, destination=Path(temporary) / "3d.png")
-                np.testing.assert_array_equal(surface.call_args_list[0].args[0], sample.support)
-                self.assertEqual(surface.call_args_list[0].args[2], 0.5)
+                target_panel = volume_plot.call_args.kwargs["panel_rows"][0][0]
+                np.testing.assert_array_equal(target_panel[0], sample.support)
+                self.assertEqual(target_panel[3], 0.5)
             with patch.object(visualization, "_masked_phase", wraps=visualization._masked_phase) as masked:
                 visualization.save_slice_overview(
                     **arguments, destination=Path(temporary) / "2d.png",
