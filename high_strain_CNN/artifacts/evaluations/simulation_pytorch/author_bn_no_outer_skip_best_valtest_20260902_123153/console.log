@@ -1,0 +1,496 @@
+2026-09-02 12:31:56 | INFO    | Dataset: /data_ssd/oyys/high_strain_cnn/dataset | samples=5907 | calibration/evaluation=3383/2524 | manifest particle-disjoint splits: val calibrates; test reports final metrics
+2026-09-02 12:31:56 | INFO    | Thresholds: 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6
+2026-09-02 12:32:00 | INFO    | Loading PyTorch model: /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/author_bn_no_outer_skip_full_bs16_lr1e-3_20260831_234036/checkpoint_best.pt | variant=reduced_bn_no_outer_skip | device=cuda
+2026-09-02 12:32:01 | INFO    | PyTorch inference 16/5907 | 15.496 samples/s | ETA 380.2 s
+2026-09-02 12:32:02 | INFO    | PyTorch inference 32/5907 | 17.737 samples/s | ETA 331.2 s
+2026-09-02 12:32:03 | INFO    | PyTorch inference 48/5907 | 18.893 samples/s | ETA 310.1 s
+2026-09-02 12:32:03 | INFO    | PyTorch inference 64/5907 | 19.635 samples/s | ETA 297.6 s
+2026-09-02 12:32:04 | INFO    | PyTorch inference 80/5907 | 19.829 samples/s | ETA 293.9 s
+2026-09-02 12:32:05 | INFO    | PyTorch inference 96/5907 | 20.106 samples/s | ETA 289.0 s
+2026-09-02 12:32:06 | INFO    | PyTorch inference 112/5907 | 20.202 samples/s | ETA 286.8 s
+2026-09-02 12:32:06 | INFO    | PyTorch inference 128/5907 | 20.162 samples/s | ETA 286.6 s
+2026-09-02 12:32:07 | INFO    | PyTorch inference 144/5907 | 20.259 samples/s | ETA 284.5 s
+2026-09-02 12:32:08 | INFO    | PyTorch inference 160/5907 | 20.340 samples/s | ETA 282.6 s
+2026-09-02 12:32:09 | INFO    | PyTorch inference 176/5907 | 20.374 samples/s | ETA 281.3 s
+2026-09-02 12:32:10 | INFO    | PyTorch inference 192/5907 | 20.405 samples/s | ETA 280.1 s
+2026-09-02 12:32:10 | INFO    | PyTorch inference 208/5907 | 20.430 samples/s | ETA 279.0 s
+2026-09-02 12:32:11 | INFO    | PyTorch inference 224/5907 | 20.473 samples/s | ETA 277.6 s
+2026-09-02 12:32:12 | INFO    | PyTorch inference 240/5907 | 20.489 samples/s | ETA 276.6 s
+2026-09-02 12:32:13 | INFO    | PyTorch inference 256/5907 | 20.497 samples/s | ETA 275.7 s
+2026-09-02 12:32:13 | INFO    | PyTorch inference 272/5907 | 20.485 samples/s | ETA 275.1 s
+2026-09-02 12:32:14 | INFO    | PyTorch inference 288/5907 | 20.511 samples/s | ETA 273.9 s
+2026-09-02 12:32:15 | INFO    | PyTorch inference 304/5907 | 20.535 samples/s | ETA 272.9 s
+2026-09-02 12:32:16 | INFO    | PyTorch inference 320/5907 | 20.568 samples/s | ETA 271.6 s
+2026-09-02 12:32:16 | INFO    | PyTorch inference 336/5907 | 20.611 samples/s | ETA 270.3 s
+2026-09-02 12:32:17 | INFO    | PyTorch inference 352/5907 | 20.488 samples/s | ETA 271.1 s
+2026-09-02 12:32:18 | INFO    | PyTorch inference 368/5907 | 20.572 samples/s | ETA 269.2 s
+2026-09-02 12:32:19 | INFO    | PyTorch inference 384/5907 | 20.631 samples/s | ETA 267.7 s
+2026-09-02 12:32:19 | INFO    | PyTorch inference 400/5907 | 20.717 samples/s | ETA 265.8 s
+2026-09-02 12:32:20 | INFO    | PyTorch inference 416/5907 | 20.817 samples/s | ETA 263.8 s
+2026-09-02 12:32:21 | INFO    | PyTorch inference 432/5907 | 20.874 samples/s | ETA 262.3 s
+2026-09-02 12:32:22 | INFO    | PyTorch inference 448/5907 | 20.912 samples/s | ETA 261.0 s
+2026-09-02 12:32:22 | INFO    | PyTorch inference 464/5907 | 21.085 samples/s | ETA 258.2 s
+2026-09-02 12:32:23 | INFO    | PyTorch inference 480/5907 | 21.103 samples/s | ETA 257.2 s
+2026-09-02 12:32:24 | INFO    | PyTorch inference 496/5907 | 21.085 samples/s | ETA 256.6 s
+2026-09-02 12:32:24 | INFO    | PyTorch inference 512/5907 | 21.045 samples/s | ETA 256.4 s
+2026-09-02 12:32:25 | INFO    | PyTorch inference 528/5907 | 21.061 samples/s | ETA 255.4 s
+2026-09-02 12:32:26 | INFO    | PyTorch inference 544/5907 | 21.065 samples/s | ETA 254.6 s
+2026-09-02 12:32:27 | INFO    | PyTorch inference 560/5907 | 21.062 samples/s | ETA 253.9 s
+2026-09-02 12:32:27 | INFO    | PyTorch inference 576/5907 | 21.040 samples/s | ETA 253.4 s
+2026-09-02 12:32:28 | INFO    | PyTorch inference 592/5907 | 21.052 samples/s | ETA 252.5 s
+2026-09-02 12:32:29 | INFO    | PyTorch inference 608/5907 | 21.042 samples/s | ETA 251.8 s
+2026-09-02 12:32:30 | INFO    | PyTorch inference 624/5907 | 21.042 samples/s | ETA 251.1 s
+2026-09-02 12:32:31 | INFO    | PyTorch inference 640/5907 | 21.024 samples/s | ETA 250.5 s
+2026-09-02 12:32:31 | INFO    | PyTorch inference 656/5907 | 21.045 samples/s | ETA 249.5 s
+2026-09-02 12:32:32 | INFO    | PyTorch inference 672/5907 | 21.040 samples/s | ETA 248.8 s
+2026-09-02 12:32:33 | INFO    | PyTorch inference 688/5907 | 21.026 samples/s | ETA 248.2 s
+2026-09-02 12:32:34 | INFO    | PyTorch inference 704/5907 | 21.031 samples/s | ETA 247.4 s
+2026-09-02 12:32:34 | INFO    | PyTorch inference 720/5907 | 21.025 samples/s | ETA 246.7 s
+2026-09-02 12:32:35 | INFO    | PyTorch inference 736/5907 | 21.038 samples/s | ETA 245.8 s
+2026-09-02 12:32:36 | INFO    | PyTorch inference 752/5907 | 21.049 samples/s | ETA 244.9 s
+2026-09-02 12:32:37 | INFO    | PyTorch inference 768/5907 | 21.089 samples/s | ETA 243.7 s
+2026-09-02 12:32:37 | INFO    | PyTorch inference 784/5907 | 21.096 samples/s | ETA 242.8 s
+2026-09-02 12:32:38 | INFO    | PyTorch inference 800/5907 | 21.047 samples/s | ETA 242.7 s
+2026-09-02 12:32:39 | INFO    | PyTorch inference 816/5907 | 21.057 samples/s | ETA 241.8 s
+2026-09-02 12:32:40 | INFO    | PyTorch inference 832/5907 | 21.046 samples/s | ETA 241.1 s
+2026-09-02 12:32:40 | INFO    | PyTorch inference 848/5907 | 21.044 samples/s | ETA 240.4 s
+2026-09-02 12:32:41 | INFO    | PyTorch inference 864/5907 | 21.032 samples/s | ETA 239.8 s
+2026-09-02 12:32:42 | INFO    | PyTorch inference 880/5907 | 21.021 samples/s | ETA 239.1 s
+2026-09-02 12:32:43 | INFO    | PyTorch inference 896/5907 | 21.004 samples/s | ETA 238.6 s
+2026-09-02 12:32:44 | INFO    | PyTorch inference 912/5907 | 20.952 samples/s | ETA 238.4 s
+2026-09-02 12:32:44 | INFO    | PyTorch inference 928/5907 | 20.950 samples/s | ETA 237.7 s
+2026-09-02 12:32:45 | INFO    | PyTorch inference 944/5907 | 20.969 samples/s | ETA 236.7 s
+2026-09-02 12:32:46 | INFO    | PyTorch inference 960/5907 | 20.974 samples/s | ETA 235.9 s
+2026-09-02 12:32:47 | INFO    | PyTorch inference 976/5907 | 20.961 samples/s | ETA 235.2 s
+2026-09-02 12:32:47 | INFO    | PyTorch inference 992/5907 | 20.964 samples/s | ETA 234.4 s
+2026-09-02 12:32:48 | INFO    | PyTorch inference 1008/5907 | 20.942 samples/s | ETA 233.9 s
+2026-09-02 12:32:49 | INFO    | PyTorch inference 1024/5907 | 20.896 samples/s | ETA 233.7 s
+2026-09-02 12:32:50 | INFO    | PyTorch inference 1040/5907 | 20.906 samples/s | ETA 232.8 s
+2026-09-02 12:32:51 | INFO    | PyTorch inference 1056/5907 | 20.868 samples/s | ETA 232.5 s
+2026-09-02 12:32:51 | INFO    | PyTorch inference 1072/5907 | 20.860 samples/s | ETA 231.8 s
+2026-09-02 12:32:52 | INFO    | PyTorch inference 1088/5907 | 20.874 samples/s | ETA 230.9 s
+2026-09-02 12:32:53 | INFO    | PyTorch inference 1104/5907 | 20.857 samples/s | ETA 230.3 s
+2026-09-02 12:32:54 | INFO    | PyTorch inference 1120/5907 | 20.859 samples/s | ETA 229.5 s
+2026-09-02 12:32:55 | INFO    | PyTorch inference 1136/5907 | 20.817 samples/s | ETA 229.2 s
+2026-09-02 12:32:56 | INFO    | PyTorch inference 1152/5907 | 20.797 samples/s | ETA 228.6 s
+2026-09-02 12:32:56 | INFO    | PyTorch inference 1168/5907 | 20.796 samples/s | ETA 227.9 s
+2026-09-02 12:32:57 | INFO    | PyTorch inference 1184/5907 | 20.787 samples/s | ETA 227.2 s
+2026-09-02 12:32:58 | INFO    | PyTorch inference 1200/5907 | 20.789 samples/s | ETA 226.4 s
+2026-09-02 12:32:59 | INFO    | PyTorch inference 1216/5907 | 20.761 samples/s | ETA 225.9 s
+2026-09-02 12:32:59 | INFO    | PyTorch inference 1232/5907 | 20.769 samples/s | ETA 225.1 s
+2026-09-02 12:33:00 | INFO    | PyTorch inference 1248/5907 | 20.753 samples/s | ETA 224.5 s
+2026-09-02 12:33:01 | INFO    | PyTorch inference 1264/5907 | 20.728 samples/s | ETA 224.0 s
+2026-09-02 12:33:02 | INFO    | PyTorch inference 1280/5907 | 20.724 samples/s | ETA 223.3 s
+2026-09-02 12:33:03 | INFO    | PyTorch inference 1296/5907 | 20.757 samples/s | ETA 222.1 s
+2026-09-02 12:33:03 | INFO    | PyTorch inference 1312/5907 | 20.804 samples/s | ETA 220.9 s
+2026-09-02 12:33:04 | INFO    | PyTorch inference 1328/5907 | 20.829 samples/s | ETA 219.8 s
+2026-09-02 12:33:05 | INFO    | PyTorch inference 1344/5907 | 20.813 samples/s | ETA 219.2 s
+2026-09-02 12:33:05 | INFO    | PyTorch inference 1360/5907 | 20.845 samples/s | ETA 218.1 s
+2026-09-02 12:33:06 | INFO    | PyTorch inference 1376/5907 | 20.863 samples/s | ETA 217.2 s
+2026-09-02 12:33:07 | INFO    | PyTorch inference 1392/5907 | 20.899 samples/s | ETA 216.0 s
+2026-09-02 12:33:07 | INFO    | PyTorch inference 1408/5907 | 20.956 samples/s | ETA 214.7 s
+2026-09-02 12:33:08 | INFO    | PyTorch inference 1424/5907 | 20.985 samples/s | ETA 213.6 s
+2026-09-02 12:33:09 | INFO    | PyTorch inference 1440/5907 | 20.972 samples/s | ETA 213.0 s
+2026-09-02 12:33:09 | INFO    | PyTorch inference 1456/5907 | 20.982 samples/s | ETA 212.1 s
+2026-09-02 12:33:10 | INFO    | PyTorch inference 1472/5907 | 20.978 samples/s | ETA 211.4 s
+2026-09-02 12:33:11 | INFO    | PyTorch inference 1488/5907 | 20.958 samples/s | ETA 210.9 s
+2026-09-02 12:33:12 | INFO    | PyTorch inference 1504/5907 | 20.948 samples/s | ETA 210.2 s
+2026-09-02 12:33:13 | INFO    | PyTorch inference 1520/5907 | 20.960 samples/s | ETA 209.3 s
+2026-09-02 12:33:13 | INFO    | PyTorch inference 1536/5907 | 20.953 samples/s | ETA 208.6 s
+2026-09-02 12:33:14 | INFO    | PyTorch inference 1552/5907 | 20.943 samples/s | ETA 207.9 s
+2026-09-02 12:33:15 | INFO    | PyTorch inference 1568/5907 | 20.939 samples/s | ETA 207.2 s
+2026-09-02 12:33:16 | INFO    | PyTorch inference 1584/5907 | 20.930 samples/s | ETA 206.5 s
+2026-09-02 12:33:17 | INFO    | PyTorch inference 1600/5907 | 20.932 samples/s | ETA 205.8 s
+2026-09-02 12:33:17 | INFO    | PyTorch inference 1616/5907 | 20.956 samples/s | ETA 204.8 s
+2026-09-02 12:33:18 | INFO    | PyTorch inference 1632/5907 | 20.941 samples/s | ETA 204.1 s
+2026-09-02 12:33:19 | INFO    | PyTorch inference 1648/5907 | 20.939 samples/s | ETA 203.4 s
+2026-09-02 12:33:20 | INFO    | PyTorch inference 1664/5907 | 20.932 samples/s | ETA 202.7 s
+2026-09-02 12:33:20 | INFO    | PyTorch inference 1680/5907 | 20.930 samples/s | ETA 202.0 s
+2026-09-02 12:33:21 | INFO    | PyTorch inference 1696/5907 | 20.931 samples/s | ETA 201.2 s
+2026-09-02 12:33:22 | INFO    | PyTorch inference 1712/5907 | 20.927 samples/s | ETA 200.5 s
+2026-09-02 12:33:23 | INFO    | PyTorch inference 1728/5907 | 20.914 samples/s | ETA 199.8 s
+2026-09-02 12:33:24 | INFO    | PyTorch inference 1744/5907 | 20.910 samples/s | ETA 199.1 s
+2026-09-02 12:33:24 | INFO    | PyTorch inference 1760/5907 | 20.908 samples/s | ETA 198.3 s
+2026-09-02 12:33:25 | INFO    | PyTorch inference 1776/5907 | 20.902 samples/s | ETA 197.6 s
+2026-09-02 12:33:26 | INFO    | PyTorch inference 1792/5907 | 20.907 samples/s | ETA 196.8 s
+2026-09-02 12:33:27 | INFO    | PyTorch inference 1808/5907 | 20.915 samples/s | ETA 196.0 s
+2026-09-02 12:33:27 | INFO    | PyTorch inference 1824/5907 | 20.903 samples/s | ETA 195.3 s
+2026-09-02 12:33:28 | INFO    | PyTorch inference 1840/5907 | 20.903 samples/s | ETA 194.6 s
+2026-09-02 12:33:29 | INFO    | PyTorch inference 1856/5907 | 20.888 samples/s | ETA 193.9 s
+2026-09-02 12:33:30 | INFO    | PyTorch inference 1872/5907 | 20.890 samples/s | ETA 193.2 s
+2026-09-02 12:33:31 | INFO    | PyTorch inference 1888/5907 | 20.880 samples/s | ETA 192.5 s
+2026-09-02 12:33:31 | INFO    | PyTorch inference 1904/5907 | 20.880 samples/s | ETA 191.7 s
+2026-09-02 12:33:32 | INFO    | PyTorch inference 1920/5907 | 20.879 samples/s | ETA 191.0 s
+2026-09-02 12:33:33 | INFO    | PyTorch inference 1936/5907 | 20.873 samples/s | ETA 190.2 s
+2026-09-02 12:33:34 | INFO    | PyTorch inference 1952/5907 | 20.869 samples/s | ETA 189.5 s
+2026-09-02 12:33:34 | INFO    | PyTorch inference 1968/5907 | 20.873 samples/s | ETA 188.7 s
+2026-09-02 12:33:35 | INFO    | PyTorch inference 1984/5907 | 20.874 samples/s | ETA 187.9 s
+2026-09-02 12:33:36 | INFO    | PyTorch inference 2000/5907 | 20.888 samples/s | ETA 187.0 s
+2026-09-02 12:33:37 | INFO    | PyTorch inference 2016/5907 | 20.878 samples/s | ETA 186.4 s
+2026-09-02 12:33:38 | INFO    | PyTorch inference 2032/5907 | 20.864 samples/s | ETA 185.7 s
+2026-09-02 12:33:38 | INFO    | PyTorch inference 2048/5907 | 20.868 samples/s | ETA 184.9 s
+2026-09-02 12:33:39 | INFO    | PyTorch inference 2064/5907 | 20.862 samples/s | ETA 184.2 s
+2026-09-02 12:33:40 | INFO    | PyTorch inference 2080/5907 | 20.867 samples/s | ETA 183.4 s
+2026-09-02 12:33:41 | INFO    | PyTorch inference 2096/5907 | 20.869 samples/s | ETA 182.6 s
+2026-09-02 12:33:41 | INFO    | PyTorch inference 2112/5907 | 20.869 samples/s | ETA 181.9 s
+2026-09-02 12:33:42 | INFO    | PyTorch inference 2128/5907 | 20.869 samples/s | ETA 181.1 s
+2026-09-02 12:33:43 | INFO    | PyTorch inference 2144/5907 | 20.857 samples/s | ETA 180.4 s
+2026-09-02 12:33:44 | INFO    | PyTorch inference 2160/5907 | 20.862 samples/s | ETA 179.6 s
+2026-09-02 12:33:44 | INFO    | PyTorch inference 2176/5907 | 20.859 samples/s | ETA 178.9 s
+2026-09-02 12:33:45 | INFO    | PyTorch inference 2192/5907 | 20.848 samples/s | ETA 178.2 s
+2026-09-02 12:33:46 | INFO    | PyTorch inference 2208/5907 | 20.830 samples/s | ETA 177.6 s
+2026-09-02 12:33:47 | INFO    | PyTorch inference 2224/5907 | 20.837 samples/s | ETA 176.8 s
+2026-09-02 12:33:48 | INFO    | PyTorch inference 2240/5907 | 20.838 samples/s | ETA 176.0 s
+2026-09-02 12:33:48 | INFO    | PyTorch inference 2256/5907 | 20.835 samples/s | ETA 175.2 s
+2026-09-02 12:33:49 | INFO    | PyTorch inference 2272/5907 | 20.830 samples/s | ETA 174.5 s
+2026-09-02 12:33:50 | INFO    | PyTorch inference 2288/5907 | 20.845 samples/s | ETA 173.6 s
+2026-09-02 12:33:51 | INFO    | PyTorch inference 2304/5907 | 20.851 samples/s | ETA 172.8 s
+2026-09-02 12:33:51 | INFO    | PyTorch inference 2320/5907 | 20.855 samples/s | ETA 172.0 s
+2026-09-02 12:33:52 | INFO    | PyTorch inference 2336/5907 | 20.877 samples/s | ETA 171.0 s
+2026-09-02 12:33:53 | INFO    | PyTorch inference 2352/5907 | 20.895 samples/s | ETA 170.1 s
+2026-09-02 12:33:53 | INFO    | PyTorch inference 2368/5907 | 20.885 samples/s | ETA 169.5 s
+2026-09-02 12:33:54 | INFO    | PyTorch inference 2384/5907 | 20.882 samples/s | ETA 168.7 s
+2026-09-02 12:33:55 | INFO    | PyTorch inference 2400/5907 | 20.884 samples/s | ETA 167.9 s
+2026-09-02 12:33:56 | INFO    | PyTorch inference 2416/5907 | 20.884 samples/s | ETA 167.2 s
+2026-09-02 12:33:57 | INFO    | PyTorch inference 2432/5907 | 20.868 samples/s | ETA 166.5 s
+2026-09-02 12:33:57 | INFO    | PyTorch inference 2448/5907 | 20.869 samples/s | ETA 165.7 s
+2026-09-02 12:33:58 | INFO    | PyTorch inference 2464/5907 | 20.877 samples/s | ETA 164.9 s
+2026-09-02 12:33:59 | INFO    | PyTorch inference 2480/5907 | 20.866 samples/s | ETA 164.2 s
+2026-09-02 12:34:00 | INFO    | PyTorch inference 2496/5907 | 20.888 samples/s | ETA 163.3 s
+2026-09-02 12:34:00 | INFO    | PyTorch inference 2512/5907 | 20.887 samples/s | ETA 162.5 s
+2026-09-02 12:34:01 | INFO    | PyTorch inference 2528/5907 | 20.889 samples/s | ETA 161.8 s
+2026-09-02 12:34:02 | INFO    | PyTorch inference 2544/5907 | 20.885 samples/s | ETA 161.0 s
+2026-09-02 12:34:03 | INFO    | PyTorch inference 2560/5907 | 20.893 samples/s | ETA 160.2 s
+2026-09-02 12:34:03 | INFO    | PyTorch inference 2576/5907 | 20.894 samples/s | ETA 159.4 s
+2026-09-02 12:34:04 | INFO    | PyTorch inference 2592/5907 | 20.895 samples/s | ETA 158.6 s
+2026-09-02 12:34:05 | INFO    | PyTorch inference 2608/5907 | 20.893 samples/s | ETA 157.9 s
+2026-09-02 12:34:06 | INFO    | PyTorch inference 2624/5907 | 20.896 samples/s | ETA 157.1 s
+2026-09-02 12:34:06 | INFO    | PyTorch inference 2640/5907 | 20.893 samples/s | ETA 156.4 s
+2026-09-02 12:34:07 | INFO    | PyTorch inference 2656/5907 | 20.897 samples/s | ETA 155.6 s
+2026-09-02 12:34:08 | INFO    | PyTorch inference 2672/5907 | 20.896 samples/s | ETA 154.8 s
+2026-09-02 12:34:09 | INFO    | PyTorch inference 2688/5907 | 20.895 samples/s | ETA 154.1 s
+2026-09-02 12:34:10 | INFO    | PyTorch inference 2704/5907 | 20.894 samples/s | ETA 153.3 s
+2026-09-02 12:34:10 | INFO    | PyTorch inference 2720/5907 | 20.890 samples/s | ETA 152.6 s
+2026-09-02 12:34:11 | INFO    | PyTorch inference 2736/5907 | 20.894 samples/s | ETA 151.8 s
+2026-09-02 12:34:12 | INFO    | PyTorch inference 2752/5907 | 20.893 samples/s | ETA 151.0 s
+2026-09-02 12:34:13 | INFO    | PyTorch inference 2768/5907 | 20.895 samples/s | ETA 150.2 s
+2026-09-02 12:34:13 | INFO    | PyTorch inference 2784/5907 | 20.889 samples/s | ETA 149.5 s
+2026-09-02 12:34:14 | INFO    | PyTorch inference 2800/5907 | 20.880 samples/s | ETA 148.8 s
+2026-09-02 12:34:15 | INFO    | PyTorch inference 2816/5907 | 20.878 samples/s | ETA 148.1 s
+2026-09-02 12:34:16 | INFO    | PyTorch inference 2832/5907 | 20.876 samples/s | ETA 147.3 s
+2026-09-02 12:34:16 | INFO    | PyTorch inference 2848/5907 | 20.885 samples/s | ETA 146.5 s
+2026-09-02 12:34:17 | INFO    | PyTorch inference 2864/5907 | 20.885 samples/s | ETA 145.7 s
+2026-09-02 12:34:18 | INFO    | PyTorch inference 2880/5907 | 20.882 samples/s | ETA 145.0 s
+2026-09-02 12:34:19 | INFO    | PyTorch inference 2896/5907 | 20.876 samples/s | ETA 144.2 s
+2026-09-02 12:34:20 | INFO    | PyTorch inference 2912/5907 | 20.876 samples/s | ETA 143.5 s
+2026-09-02 12:34:20 | INFO    | PyTorch inference 2928/5907 | 20.873 samples/s | ETA 142.7 s
+2026-09-02 12:34:21 | INFO    | PyTorch inference 2944/5907 | 20.867 samples/s | ETA 142.0 s
+2026-09-02 12:34:22 | INFO    | PyTorch inference 2960/5907 | 20.867 samples/s | ETA 141.2 s
+2026-09-02 12:34:23 | INFO    | PyTorch inference 2976/5907 | 20.863 samples/s | ETA 140.5 s
+2026-09-02 12:34:23 | INFO    | PyTorch inference 2992/5907 | 20.870 samples/s | ETA 139.7 s
+2026-09-02 12:34:24 | INFO    | PyTorch inference 3008/5907 | 20.868 samples/s | ETA 138.9 s
+2026-09-02 12:34:25 | INFO    | PyTorch inference 3024/5907 | 20.870 samples/s | ETA 138.1 s
+2026-09-02 12:34:26 | INFO    | PyTorch inference 3040/5907 | 20.871 samples/s | ETA 137.4 s
+2026-09-02 12:34:27 | INFO    | PyTorch inference 3056/5907 | 20.872 samples/s | ETA 136.6 s
+2026-09-02 12:34:27 | INFO    | PyTorch inference 3072/5907 | 20.872 samples/s | ETA 135.8 s
+2026-09-02 12:34:28 | INFO    | PyTorch inference 3088/5907 | 20.869 samples/s | ETA 135.1 s
+2026-09-02 12:34:29 | INFO    | PyTorch inference 3104/5907 | 20.869 samples/s | ETA 134.3 s
+2026-09-02 12:34:30 | INFO    | PyTorch inference 3120/5907 | 20.867 samples/s | ETA 133.6 s
+2026-09-02 12:34:30 | INFO    | PyTorch inference 3136/5907 | 20.872 samples/s | ETA 132.8 s
+2026-09-02 12:34:31 | INFO    | PyTorch inference 3152/5907 | 20.870 samples/s | ETA 132.0 s
+2026-09-02 12:34:32 | INFO    | PyTorch inference 3168/5907 | 20.865 samples/s | ETA 131.3 s
+2026-09-02 12:34:33 | INFO    | PyTorch inference 3184/5907 | 20.873 samples/s | ETA 130.5 s
+2026-09-02 12:34:33 | INFO    | PyTorch inference 3200/5907 | 20.868 samples/s | ETA 129.7 s
+2026-09-02 12:34:34 | INFO    | PyTorch inference 3216/5907 | 20.883 samples/s | ETA 128.9 s
+2026-09-02 12:34:35 | INFO    | PyTorch inference 3232/5907 | 20.888 samples/s | ETA 128.1 s
+2026-09-02 12:34:36 | INFO    | PyTorch inference 3248/5907 | 20.899 samples/s | ETA 127.2 s
+2026-09-02 12:34:36 | INFO    | PyTorch inference 3264/5907 | 20.900 samples/s | ETA 126.5 s
+2026-09-02 12:34:37 | INFO    | PyTorch inference 3280/5907 | 20.918 samples/s | ETA 125.6 s
+2026-09-02 12:34:38 | INFO    | PyTorch inference 3296/5907 | 20.919 samples/s | ETA 124.8 s
+2026-09-02 12:34:38 | INFO    | PyTorch inference 3312/5907 | 20.916 samples/s | ETA 124.1 s
+2026-09-02 12:34:39 | INFO    | PyTorch inference 3328/5907 | 20.913 samples/s | ETA 123.3 s
+2026-09-02 12:34:40 | INFO    | PyTorch inference 3344/5907 | 20.904 samples/s | ETA 122.6 s
+2026-09-02 12:34:41 | INFO    | PyTorch inference 3360/5907 | 20.906 samples/s | ETA 121.8 s
+2026-09-02 12:34:42 | INFO    | PyTorch inference 3376/5907 | 20.904 samples/s | ETA 121.1 s
+2026-09-02 12:34:42 | INFO    | PyTorch inference 3392/5907 | 20.908 samples/s | ETA 120.3 s
+2026-09-02 12:34:43 | INFO    | PyTorch inference 3408/5907 | 20.911 samples/s | ETA 119.5 s
+2026-09-02 12:34:44 | INFO    | PyTorch inference 3424/5907 | 20.906 samples/s | ETA 118.8 s
+2026-09-02 12:34:45 | INFO    | PyTorch inference 3440/5907 | 20.903 samples/s | ETA 118.0 s
+2026-09-02 12:34:45 | INFO    | PyTorch inference 3456/5907 | 20.908 samples/s | ETA 117.2 s
+2026-09-02 12:34:46 | INFO    | PyTorch inference 3472/5907 | 20.898 samples/s | ETA 116.5 s
+2026-09-02 12:34:47 | INFO    | PyTorch inference 3488/5907 | 20.895 samples/s | ETA 115.8 s
+2026-09-02 12:34:48 | INFO    | PyTorch inference 3504/5907 | 20.890 samples/s | ETA 115.0 s
+2026-09-02 12:34:49 | INFO    | PyTorch inference 3520/5907 | 20.883 samples/s | ETA 114.3 s
+2026-09-02 12:34:49 | INFO    | PyTorch inference 3536/5907 | 20.887 samples/s | ETA 113.5 s
+2026-09-02 12:34:50 | INFO    | PyTorch inference 3552/5907 | 20.889 samples/s | ETA 112.7 s
+2026-09-02 12:34:51 | INFO    | PyTorch inference 3568/5907 | 20.875 samples/s | ETA 112.0 s
+2026-09-02 12:34:52 | INFO    | PyTorch inference 3584/5907 | 20.872 samples/s | ETA 111.3 s
+2026-09-02 12:34:53 | INFO    | PyTorch inference 3600/5907 | 20.874 samples/s | ETA 110.5 s
+2026-09-02 12:34:53 | INFO    | PyTorch inference 3616/5907 | 20.865 samples/s | ETA 109.8 s
+2026-09-02 12:34:54 | INFO    | PyTorch inference 3632/5907 | 20.869 samples/s | ETA 109.0 s
+2026-09-02 12:34:55 | INFO    | PyTorch inference 3648/5907 | 20.873 samples/s | ETA 108.2 s
+2026-09-02 12:34:56 | INFO    | PyTorch inference 3664/5907 | 20.864 samples/s | ETA 107.5 s
+2026-09-02 12:34:57 | INFO    | PyTorch inference 3680/5907 | 20.862 samples/s | ETA 106.8 s
+2026-09-02 12:34:57 | INFO    | PyTorch inference 3696/5907 | 20.861 samples/s | ETA 106.0 s
+2026-09-02 12:34:58 | INFO    | PyTorch inference 3712/5907 | 20.850 samples/s | ETA 105.3 s
+2026-09-02 12:34:59 | INFO    | PyTorch inference 3728/5907 | 20.848 samples/s | ETA 104.5 s
+2026-09-02 12:35:00 | INFO    | PyTorch inference 3744/5907 | 20.836 samples/s | ETA 103.8 s
+2026-09-02 12:35:01 | INFO    | PyTorch inference 3760/5907 | 20.840 samples/s | ETA 103.0 s
+2026-09-02 12:35:01 | INFO    | PyTorch inference 3776/5907 | 20.829 samples/s | ETA 102.3 s
+2026-09-02 12:35:02 | INFO    | PyTorch inference 3792/5907 | 20.812 samples/s | ETA 101.6 s
+2026-09-02 12:35:03 | INFO    | PyTorch inference 3808/5907 | 20.811 samples/s | ETA 100.9 s
+2026-09-02 12:35:04 | INFO    | PyTorch inference 3824/5907 | 20.815 samples/s | ETA 100.1 s
+2026-09-02 12:35:05 | INFO    | PyTorch inference 3840/5907 | 20.813 samples/s | ETA 99.3 s
+2026-09-02 12:35:05 | INFO    | PyTorch inference 3856/5907 | 20.818 samples/s | ETA 98.5 s
+2026-09-02 12:35:06 | INFO    | PyTorch inference 3872/5907 | 20.817 samples/s | ETA 97.8 s
+2026-09-02 12:35:07 | INFO    | PyTorch inference 3888/5907 | 20.817 samples/s | ETA 97.0 s
+2026-09-02 12:35:08 | INFO    | PyTorch inference 3904/5907 | 20.810 samples/s | ETA 96.2 s
+2026-09-02 12:35:08 | INFO    | PyTorch inference 3920/5907 | 20.814 samples/s | ETA 95.5 s
+2026-09-02 12:35:09 | INFO    | PyTorch inference 3936/5907 | 20.812 samples/s | ETA 94.7 s
+2026-09-02 12:35:10 | INFO    | PyTorch inference 3952/5907 | 20.811 samples/s | ETA 93.9 s
+2026-09-02 12:35:11 | INFO    | PyTorch inference 3968/5907 | 20.811 samples/s | ETA 93.2 s
+2026-09-02 12:35:12 | INFO    | PyTorch inference 3984/5907 | 20.800 samples/s | ETA 92.5 s
+2026-09-02 12:35:12 | INFO    | PyTorch inference 4000/5907 | 20.792 samples/s | ETA 91.7 s
+2026-09-02 12:35:13 | INFO    | PyTorch inference 4016/5907 | 20.793 samples/s | ETA 90.9 s
+2026-09-02 12:35:14 | INFO    | PyTorch inference 4032/5907 | 20.791 samples/s | ETA 90.2 s
+2026-09-02 12:35:15 | INFO    | PyTorch inference 4048/5907 | 20.792 samples/s | ETA 89.4 s
+2026-09-02 12:35:16 | INFO    | PyTorch inference 4064/5907 | 20.789 samples/s | ETA 88.7 s
+2026-09-02 12:35:16 | INFO    | PyTorch inference 4080/5907 | 20.791 samples/s | ETA 87.9 s
+2026-09-02 12:35:17 | INFO    | PyTorch inference 4096/5907 | 20.796 samples/s | ETA 87.1 s
+2026-09-02 12:35:18 | INFO    | PyTorch inference 4112/5907 | 20.794 samples/s | ETA 86.3 s
+2026-09-02 12:35:18 | INFO    | PyTorch inference 4128/5907 | 20.810 samples/s | ETA 85.5 s
+2026-09-02 12:35:19 | INFO    | PyTorch inference 4144/5907 | 20.819 samples/s | ETA 84.7 s
+2026-09-02 12:35:20 | INFO    | PyTorch inference 4160/5907 | 20.828 samples/s | ETA 83.9 s
+2026-09-02 12:35:21 | INFO    | PyTorch inference 4176/5907 | 20.836 samples/s | ETA 83.1 s
+2026-09-02 12:35:21 | INFO    | PyTorch inference 4192/5907 | 20.852 samples/s | ETA 82.2 s
+2026-09-02 12:35:22 | INFO    | PyTorch inference 4208/5907 | 20.845 samples/s | ETA 81.5 s
+2026-09-02 12:35:23 | INFO    | PyTorch inference 4224/5907 | 20.838 samples/s | ETA 80.8 s
+2026-09-02 12:35:24 | INFO    | PyTorch inference 4240/5907 | 20.842 samples/s | ETA 80.0 s
+2026-09-02 12:35:24 | INFO    | PyTorch inference 4256/5907 | 20.841 samples/s | ETA 79.2 s
+2026-09-02 12:35:25 | INFO    | PyTorch inference 4272/5907 | 20.845 samples/s | ETA 78.4 s
+2026-09-02 12:35:26 | INFO    | PyTorch inference 4288/5907 | 20.846 samples/s | ETA 77.7 s
+2026-09-02 12:35:27 | INFO    | PyTorch inference 4304/5907 | 20.836 samples/s | ETA 76.9 s
+2026-09-02 12:35:28 | INFO    | PyTorch inference 4320/5907 | 20.826 samples/s | ETA 76.2 s
+2026-09-02 12:35:28 | INFO    | PyTorch inference 4336/5907 | 20.812 samples/s | ETA 75.5 s
+2026-09-02 12:35:29 | INFO    | PyTorch inference 4352/5907 | 20.815 samples/s | ETA 74.7 s
+2026-09-02 12:35:30 | INFO    | PyTorch inference 4368/5907 | 20.805 samples/s | ETA 74.0 s
+2026-09-02 12:35:31 | INFO    | PyTorch inference 4384/5907 | 20.803 samples/s | ETA 73.2 s
+2026-09-02 12:35:32 | INFO    | PyTorch inference 4400/5907 | 20.804 samples/s | ETA 72.4 s
+2026-09-02 12:35:32 | INFO    | PyTorch inference 4416/5907 | 20.805 samples/s | ETA 71.7 s
+2026-09-02 12:35:33 | INFO    | PyTorch inference 4432/5907 | 20.796 samples/s | ETA 70.9 s
+2026-09-02 12:35:34 | INFO    | PyTorch inference 4448/5907 | 20.773 samples/s | ETA 70.2 s
+2026-09-02 12:35:35 | INFO    | PyTorch inference 4464/5907 | 20.761 samples/s | ETA 69.5 s
+2026-09-02 12:35:36 | INFO    | PyTorch inference 4480/5907 | 20.758 samples/s | ETA 68.7 s
+2026-09-02 12:35:37 | INFO    | PyTorch inference 4496/5907 | 20.739 samples/s | ETA 68.0 s
+2026-09-02 12:35:38 | INFO    | PyTorch inference 4512/5907 | 20.729 samples/s | ETA 67.3 s
+2026-09-02 12:35:39 | INFO    | PyTorch inference 4528/5907 | 20.718 samples/s | ETA 66.6 s
+2026-09-02 12:35:40 | INFO    | PyTorch inference 4544/5907 | 20.705 samples/s | ETA 65.8 s
+2026-09-02 12:35:41 | INFO    | PyTorch inference 4560/5907 | 20.687 samples/s | ETA 65.1 s
+2026-09-02 12:35:41 | INFO    | PyTorch inference 4576/5907 | 20.691 samples/s | ETA 64.3 s
+2026-09-02 12:35:42 | INFO    | PyTorch inference 4592/5907 | 20.667 samples/s | ETA 63.6 s
+2026-09-02 12:35:43 | INFO    | PyTorch inference 4608/5907 | 20.655 samples/s | ETA 62.9 s
+2026-09-02 12:35:44 | INFO    | PyTorch inference 4624/5907 | 20.654 samples/s | ETA 62.1 s
+2026-09-02 12:35:45 | INFO    | PyTorch inference 4640/5907 | 20.639 samples/s | ETA 61.4 s
+2026-09-02 12:35:46 | INFO    | PyTorch inference 4656/5907 | 20.644 samples/s | ETA 60.6 s
+2026-09-02 12:35:47 | INFO    | PyTorch inference 4672/5907 | 20.626 samples/s | ETA 59.9 s
+2026-09-02 12:35:48 | INFO    | PyTorch inference 4688/5907 | 20.616 samples/s | ETA 59.1 s
+2026-09-02 12:35:48 | INFO    | PyTorch inference 4704/5907 | 20.613 samples/s | ETA 58.4 s
+2026-09-02 12:35:49 | INFO    | PyTorch inference 4720/5907 | 20.617 samples/s | ETA 57.6 s
+2026-09-02 12:35:50 | INFO    | PyTorch inference 4736/5907 | 20.605 samples/s | ETA 56.8 s
+2026-09-02 12:35:51 | INFO    | PyTorch inference 4752/5907 | 20.603 samples/s | ETA 56.1 s
+2026-09-02 12:35:52 | INFO    | PyTorch inference 4768/5907 | 20.602 samples/s | ETA 55.3 s
+2026-09-02 12:35:52 | INFO    | PyTorch inference 4784/5907 | 20.601 samples/s | ETA 54.5 s
+2026-09-02 12:35:53 | INFO    | PyTorch inference 4800/5907 | 20.594 samples/s | ETA 53.8 s
+2026-09-02 12:35:54 | INFO    | PyTorch inference 4816/5907 | 20.596 samples/s | ETA 53.0 s
+2026-09-02 12:35:55 | INFO    | PyTorch inference 4832/5907 | 20.590 samples/s | ETA 52.2 s
+2026-09-02 12:35:56 | INFO    | PyTorch inference 4848/5907 | 20.588 samples/s | ETA 51.4 s
+2026-09-02 12:35:56 | INFO    | PyTorch inference 4864/5907 | 20.589 samples/s | ETA 50.7 s
+2026-09-02 12:35:57 | INFO    | PyTorch inference 4880/5907 | 20.580 samples/s | ETA 49.9 s
+2026-09-02 12:35:58 | INFO    | PyTorch inference 4896/5907 | 20.575 samples/s | ETA 49.1 s
+2026-09-02 12:35:59 | INFO    | PyTorch inference 4912/5907 | 20.568 samples/s | ETA 48.4 s
+2026-09-02 12:36:00 | INFO    | PyTorch inference 4928/5907 | 20.564 samples/s | ETA 47.6 s
+2026-09-02 12:36:01 | INFO    | PyTorch inference 4944/5907 | 20.547 samples/s | ETA 46.9 s
+2026-09-02 12:36:01 | INFO    | PyTorch inference 4960/5907 | 20.550 samples/s | ETA 46.1 s
+2026-09-02 12:36:02 | INFO    | PyTorch inference 4976/5907 | 20.544 samples/s | ETA 45.3 s
+2026-09-02 12:36:03 | INFO    | PyTorch inference 4992/5907 | 20.549 samples/s | ETA 44.5 s
+2026-09-02 12:36:04 | INFO    | PyTorch inference 5008/5907 | 20.552 samples/s | ETA 43.7 s
+2026-09-02 12:36:05 | INFO    | PyTorch inference 5024/5907 | 20.557 samples/s | ETA 43.0 s
+2026-09-02 12:36:05 | INFO    | PyTorch inference 5040/5907 | 20.550 samples/s | ETA 42.2 s
+2026-09-02 12:36:06 | INFO    | PyTorch inference 5056/5907 | 20.549 samples/s | ETA 41.4 s
+2026-09-02 12:36:07 | INFO    | PyTorch inference 5072/5907 | 20.550 samples/s | ETA 40.6 s
+2026-09-02 12:36:08 | INFO    | PyTorch inference 5088/5907 | 20.558 samples/s | ETA 39.8 s
+2026-09-02 12:36:08 | INFO    | PyTorch inference 5104/5907 | 20.567 samples/s | ETA 39.0 s
+2026-09-02 12:36:09 | INFO    | PyTorch inference 5120/5907 | 20.566 samples/s | ETA 38.3 s
+2026-09-02 12:36:10 | INFO    | PyTorch inference 5136/5907 | 20.561 samples/s | ETA 37.5 s
+2026-09-02 12:36:11 | INFO    | PyTorch inference 5152/5907 | 20.553 samples/s | ETA 36.7 s
+2026-09-02 12:36:12 | INFO    | PyTorch inference 5168/5907 | 20.550 samples/s | ETA 36.0 s
+2026-09-02 12:36:12 | INFO    | PyTorch inference 5184/5907 | 20.554 samples/s | ETA 35.2 s
+2026-09-02 12:36:13 | INFO    | PyTorch inference 5200/5907 | 20.547 samples/s | ETA 34.4 s
+2026-09-02 12:36:14 | INFO    | PyTorch inference 5216/5907 | 20.539 samples/s | ETA 33.6 s
+2026-09-02 12:36:15 | INFO    | PyTorch inference 5232/5907 | 20.533 samples/s | ETA 32.9 s
+2026-09-02 12:36:16 | INFO    | PyTorch inference 5248/5907 | 20.527 samples/s | ETA 32.1 s
+2026-09-02 12:36:17 | INFO    | PyTorch inference 5264/5907 | 20.526 samples/s | ETA 31.3 s
+2026-09-02 12:36:17 | INFO    | PyTorch inference 5280/5907 | 20.521 samples/s | ETA 30.6 s
+2026-09-02 12:36:18 | INFO    | PyTorch inference 5296/5907 | 20.516 samples/s | ETA 29.8 s
+2026-09-02 12:36:19 | INFO    | PyTorch inference 5312/5907 | 20.512 samples/s | ETA 29.0 s
+2026-09-02 12:36:20 | INFO    | PyTorch inference 5328/5907 | 20.503 samples/s | ETA 28.2 s
+2026-09-02 12:36:21 | INFO    | PyTorch inference 5344/5907 | 20.485 samples/s | ETA 27.5 s
+2026-09-02 12:36:22 | INFO    | PyTorch inference 5360/5907 | 20.481 samples/s | ETA 26.7 s
+2026-09-02 12:36:23 | INFO    | PyTorch inference 5376/5907 | 20.480 samples/s | ETA 25.9 s
+2026-09-02 12:36:23 | INFO    | PyTorch inference 5392/5907 | 20.481 samples/s | ETA 25.1 s
+2026-09-02 12:36:24 | INFO    | PyTorch inference 5408/5907 | 20.477 samples/s | ETA 24.4 s
+2026-09-02 12:36:25 | INFO    | PyTorch inference 5424/5907 | 20.471 samples/s | ETA 23.6 s
+2026-09-02 12:36:26 | INFO    | PyTorch inference 5440/5907 | 20.469 samples/s | ETA 22.8 s
+2026-09-02 12:36:27 | INFO    | PyTorch inference 5456/5907 | 20.464 samples/s | ETA 22.0 s
+2026-09-02 12:36:28 | INFO    | PyTorch inference 5472/5907 | 20.455 samples/s | ETA 21.3 s
+2026-09-02 12:36:28 | INFO    | PyTorch inference 5488/5907 | 20.450 samples/s | ETA 20.5 s
+2026-09-02 12:36:29 | INFO    | PyTorch inference 5504/5907 | 20.444 samples/s | ETA 19.7 s
+2026-09-02 12:36:30 | INFO    | PyTorch inference 5520/5907 | 20.454 samples/s | ETA 18.9 s
+2026-09-02 12:36:31 | INFO    | PyTorch inference 5536/5907 | 20.454 samples/s | ETA 18.1 s
+2026-09-02 12:36:32 | INFO    | PyTorch inference 5552/5907 | 20.455 samples/s | ETA 17.4 s
+2026-09-02 12:36:32 | INFO    | PyTorch inference 5568/5907 | 20.452 samples/s | ETA 16.6 s
+2026-09-02 12:36:33 | INFO    | PyTorch inference 5584/5907 | 20.457 samples/s | ETA 15.8 s
+2026-09-02 12:36:34 | INFO    | PyTorch inference 5600/5907 | 20.452 samples/s | ETA 15.0 s
+2026-09-02 12:36:35 | INFO    | PyTorch inference 5616/5907 | 20.454 samples/s | ETA 14.2 s
+2026-09-02 12:36:35 | INFO    | PyTorch inference 5632/5907 | 20.455 samples/s | ETA 13.4 s
+2026-09-02 12:36:36 | INFO    | PyTorch inference 5648/5907 | 20.458 samples/s | ETA 12.7 s
+2026-09-02 12:36:37 | INFO    | PyTorch inference 5664/5907 | 20.454 samples/s | ETA 11.9 s
+2026-09-02 12:36:38 | INFO    | PyTorch inference 5680/5907 | 20.449 samples/s | ETA 11.1 s
+2026-09-02 12:36:39 | INFO    | PyTorch inference 5696/5907 | 20.448 samples/s | ETA 10.3 s
+2026-09-02 12:36:40 | INFO    | PyTorch inference 5712/5907 | 20.443 samples/s | ETA 9.5 s
+2026-09-02 12:36:40 | INFO    | PyTorch inference 5728/5907 | 20.444 samples/s | ETA 8.8 s
+2026-09-02 12:36:41 | INFO    | PyTorch inference 5744/5907 | 20.446 samples/s | ETA 8.0 s
+2026-09-02 12:36:42 | INFO    | PyTorch inference 5760/5907 | 20.443 samples/s | ETA 7.2 s
+2026-09-02 12:36:43 | INFO    | PyTorch inference 5776/5907 | 20.443 samples/s | ETA 6.4 s
+2026-09-02 12:36:43 | INFO    | PyTorch inference 5792/5907 | 20.441 samples/s | ETA 5.6 s
+2026-09-02 12:36:44 | INFO    | PyTorch inference 5808/5907 | 20.444 samples/s | ETA 4.8 s
+2026-09-02 12:36:45 | INFO    | PyTorch inference 5824/5907 | 20.445 samples/s | ETA 4.1 s
+2026-09-02 12:36:46 | INFO    | PyTorch inference 5840/5907 | 20.450 samples/s | ETA 3.3 s
+2026-09-02 12:36:46 | INFO    | PyTorch inference 5856/5907 | 20.452 samples/s | ETA 2.5 s
+2026-09-02 12:36:47 | INFO    | PyTorch inference 5872/5907 | 20.445 samples/s | ETA 1.7 s
+2026-09-02 12:36:48 | INFO    | PyTorch inference 5888/5907 | 20.448 samples/s | ETA 0.9 s
+2026-09-02 12:36:49 | INFO    | PyTorch inference 5904/5907 | 20.446 samples/s | ETA 0.1 s
+2026-09-02 12:36:49 | INFO    | PyTorch inference 5907/5907 | 20.442 samples/s | ETA 0.0 s
+2026-09-02 12:37:11 | INFO    | Evaluated sample 50/5907: sample_95060.npz
+2026-09-02 12:37:29 | INFO    | Evaluated sample 100/5907: sample_95120.npz
+2026-09-02 12:37:47 | INFO    | Evaluated sample 150/5907: sample_95174.npz
+2026-09-02 12:38:04 | INFO    | Evaluated sample 200/5907: sample_95226.npz
+2026-09-02 12:38:22 | INFO    | Evaluated sample 250/5907: sample_95282.npz
+2026-09-02 12:38:41 | INFO    | Evaluated sample 300/5907: sample_95337.npz
+2026-09-02 12:38:59 | INFO    | Evaluated sample 350/5907: sample_95396.npz
+2026-09-02 12:39:16 | INFO    | Evaluated sample 400/5907: sample_95460.npz
+2026-09-02 12:39:34 | INFO    | Evaluated sample 450/5907: sample_95514.npz
+2026-09-02 12:39:52 | INFO    | Evaluated sample 500/5907: sample_95574.npz
+2026-09-02 12:40:10 | INFO    | Evaluated sample 550/5907: sample_95635.npz
+2026-09-02 12:40:28 | INFO    | Evaluated sample 600/5907: sample_95692.npz
+2026-09-02 12:40:46 | INFO    | Evaluated sample 650/5907: sample_95749.npz
+2026-09-02 12:41:09 | INFO    | Evaluated sample 700/5907: sample_95810.npz
+2026-09-02 12:41:30 | INFO    | Evaluated sample 750/5907: sample_95866.npz
+2026-09-02 12:41:49 | INFO    | Evaluated sample 800/5907: sample_95927.npz
+2026-09-02 12:42:06 | INFO    | Evaluated sample 850/5907: sample_95993.npz
+2026-09-02 12:42:24 | INFO    | Evaluated sample 900/5907: sample_96053.npz
+2026-09-02 12:42:41 | INFO    | Evaluated sample 950/5907: sample_96116.npz
+2026-09-02 12:43:00 | INFO    | Evaluated sample 1000/5907: sample_96175.npz
+2026-09-02 12:43:18 | INFO    | Evaluated sample 1050/5907: sample_96231.npz
+2026-09-02 12:43:36 | INFO    | Evaluated sample 1100/5907: sample_96286.npz
+2026-09-02 12:43:54 | INFO    | Evaluated sample 1150/5907: sample_96344.npz
+2026-09-02 12:44:12 | INFO    | Evaluated sample 1200/5907: sample_96402.npz
+2026-09-02 12:44:30 | INFO    | Evaluated sample 1250/5907: sample_96466.npz
+2026-09-02 12:44:48 | INFO    | Evaluated sample 1300/5907: sample_96525.npz
+2026-09-02 12:45:06 | INFO    | Evaluated sample 1350/5907: sample_96590.npz
+2026-09-02 12:45:23 | INFO    | Evaluated sample 1400/5907: sample_96650.npz
+2026-09-02 12:45:41 | INFO    | Evaluated sample 1450/5907: sample_96704.npz
+2026-09-02 12:46:01 | INFO    | Evaluated sample 1500/5907: sample_96764.npz
+2026-09-02 12:46:23 | INFO    | Evaluated sample 1550/5907: sample_96826.npz
+2026-09-02 12:46:44 | INFO    | Evaluated sample 1600/5907: sample_96887.npz
+2026-09-02 12:47:02 | INFO    | Evaluated sample 1650/5907: sample_96947.npz
+2026-09-02 12:47:20 | INFO    | Evaluated sample 1700/5907: sample_97007.npz
+2026-09-02 12:47:39 | INFO    | Evaluated sample 1750/5907: sample_97077.npz
+2026-09-02 12:47:57 | INFO    | Evaluated sample 1800/5907: sample_97132.npz
+2026-09-02 12:48:14 | INFO    | Evaluated sample 1850/5907: sample_97189.npz
+2026-09-02 12:48:32 | INFO    | Evaluated sample 1900/5907: sample_97250.npz
+2026-09-02 12:48:50 | INFO    | Evaluated sample 1950/5907: sample_97309.npz
+2026-09-02 12:49:08 | INFO    | Evaluated sample 2000/5907: sample_97361.npz
+2026-09-02 12:49:25 | INFO    | Evaluated sample 2050/5907: sample_97416.npz
+2026-09-02 12:49:43 | INFO    | Evaluated sample 2100/5907: sample_97476.npz
+2026-09-02 12:50:01 | INFO    | Evaluated sample 2150/5907: sample_97540.npz
+2026-09-02 12:50:19 | INFO    | Evaluated sample 2200/5907: sample_97599.npz
+2026-09-02 12:50:37 | INFO    | Evaluated sample 2250/5907: sample_97659.npz
+2026-09-02 12:50:56 | INFO    | Evaluated sample 2300/5907: sample_97718.npz
+2026-09-02 12:51:18 | INFO    | Evaluated sample 2350/5907: sample_97771.npz
+2026-09-02 12:51:39 | INFO    | Evaluated sample 2400/5907: sample_97835.npz
+2026-09-02 12:51:58 | INFO    | Evaluated sample 2450/5907: sample_97891.npz
+2026-09-02 12:52:16 | INFO    | Evaluated sample 2500/5907: sample_97947.npz
+2026-09-02 12:52:33 | INFO    | Evaluated sample 2550/5907: sample_98009.npz
+2026-09-02 12:52:51 | INFO    | Evaluated sample 2600/5907: sample_98071.npz
+2026-09-02 12:53:10 | INFO    | Evaluated sample 2650/5907: sample_98129.npz
+2026-09-02 12:53:28 | INFO    | Evaluated sample 2700/5907: sample_98187.npz
+2026-09-02 12:53:45 | INFO    | Evaluated sample 2750/5907: sample_98245.npz
+2026-09-02 12:54:02 | INFO    | Evaluated sample 2800/5907: sample_98302.npz
+2026-09-02 12:54:20 | INFO    | Evaluated sample 2850/5907: sample_98359.npz
+2026-09-02 12:54:39 | INFO    | Evaluated sample 2900/5907: sample_98411.npz
+2026-09-02 12:54:57 | INFO    | Evaluated sample 2950/5907: sample_98470.npz
+2026-09-02 12:55:15 | INFO    | Evaluated sample 3000/5907: sample_98528.npz
+2026-09-02 12:55:32 | INFO    | Evaluated sample 3050/5907: sample_98583.npz
+2026-09-02 12:55:50 | INFO    | Evaluated sample 3100/5907: sample_98641.npz
+2026-09-02 12:56:08 | INFO    | Evaluated sample 3150/5907: sample_98708.npz
+2026-09-02 12:56:30 | INFO    | Evaluated sample 3200/5907: sample_98768.npz
+2026-09-02 12:56:52 | INFO    | Evaluated sample 3250/5907: sample_98826.npz
+2026-09-02 12:57:10 | INFO    | Evaluated sample 3300/5907: sample_98888.npz
+2026-09-02 12:57:28 | INFO    | Evaluated sample 3350/5907: sample_98952.npz
+2026-09-02 12:57:45 | INFO    | Evaluated sample 3400/5907: sample_99016.npz
+2026-09-02 12:58:03 | INFO    | Evaluated sample 3450/5907: sample_99079.npz
+2026-09-02 12:58:21 | INFO    | Evaluated sample 3500/5907: sample_99136.npz
+2026-09-02 12:58:38 | INFO    | Evaluated sample 3550/5907: sample_99192.npz
+2026-09-02 12:58:56 | INFO    | Evaluated sample 3600/5907: sample_99256.npz
+2026-09-02 12:59:14 | INFO    | Evaluated sample 3650/5907: sample_99316.npz
+2026-09-02 12:59:32 | INFO    | Evaluated sample 3700/5907: sample_99376.npz
+2026-09-02 12:59:50 | INFO    | Evaluated sample 3750/5907: sample_99436.npz
+2026-09-02 13:00:07 | INFO    | Evaluated sample 3800/5907: sample_99492.npz
+2026-09-02 13:00:25 | INFO    | Evaluated sample 3850/5907: sample_99551.npz
+2026-09-02 13:00:44 | INFO    | Evaluated sample 3900/5907: sample_99607.npz
+2026-09-02 13:01:01 | INFO    | Evaluated sample 3950/5907: sample_99660.npz
+2026-09-02 13:01:19 | INFO    | Evaluated sample 4000/5907: sample_99722.npz
+2026-09-02 13:01:40 | INFO    | Evaluated sample 4050/5907: sample_99779.npz
+2026-09-02 13:02:00 | INFO    | Evaluated sample 4100/5907: sample_99842.npz
+2026-09-02 13:02:21 | INFO    | Evaluated sample 4150/5907: sample_99905.npz
+2026-09-02 13:02:38 | INFO    | Evaluated sample 4200/5907: sample_99967.npz
+2026-09-02 13:02:56 | INFO    | Evaluated sample 4250/5907: sample_100031.npz
+2026-09-02 13:03:14 | INFO    | Evaluated sample 4300/5907: sample_100090.npz
+2026-09-02 13:03:33 | INFO    | Evaluated sample 4350/5907: sample_100150.npz
+2026-09-02 13:03:51 | INFO    | Evaluated sample 4400/5907: sample_100205.npz
+2026-09-02 13:04:08 | INFO    | Evaluated sample 4450/5907: sample_100260.npz
+2026-09-02 13:04:26 | INFO    | Evaluated sample 4500/5907: sample_100316.npz
+2026-09-02 13:04:44 | INFO    | Evaluated sample 4550/5907: sample_100375.npz
+2026-09-02 13:05:03 | INFO    | Evaluated sample 4600/5907: sample_100438.npz
+2026-09-02 13:05:21 | INFO    | Evaluated sample 4650/5907: sample_100491.npz
+2026-09-02 13:05:39 | INFO    | Evaluated sample 4700/5907: sample_100548.npz
+2026-09-02 13:05:56 | INFO    | Evaluated sample 4750/5907: sample_100612.npz
+2026-09-02 13:06:14 | INFO    | Evaluated sample 4800/5907: sample_100671.npz
+2026-09-02 13:06:32 | INFO    | Evaluated sample 4850/5907: sample_100728.npz
+2026-09-02 13:06:55 | INFO    | Evaluated sample 4900/5907: sample_100788.npz
+2026-09-02 13:07:16 | INFO    | Evaluated sample 4950/5907: sample_100851.npz
+2026-09-02 13:07:35 | INFO    | Evaluated sample 5000/5907: sample_100912.npz
+2026-09-02 13:07:53 | INFO    | Evaluated sample 5050/5907: sample_100977.npz
+2026-09-02 13:08:11 | INFO    | Evaluated sample 5100/5907: sample_101034.npz
+2026-09-02 13:08:29 | INFO    | Evaluated sample 5150/5907: sample_101090.npz
+2026-09-02 13:08:47 | INFO    | Evaluated sample 5200/5907: sample_101148.npz
+2026-09-02 13:09:06 | INFO    | Evaluated sample 5250/5907: sample_101213.npz
+2026-09-02 13:09:24 | INFO    | Evaluated sample 5300/5907: sample_101272.npz
+2026-09-02 13:09:42 | INFO    | Evaluated sample 5350/5907: sample_101331.npz
+2026-09-02 13:09:59 | INFO    | Evaluated sample 5400/5907: sample_101395.npz
+2026-09-02 13:10:17 | INFO    | Evaluated sample 5450/5907: sample_101456.npz
+2026-09-02 13:10:35 | INFO    | Evaluated sample 5500/5907: sample_101517.npz
+2026-09-02 13:10:53 | INFO    | Evaluated sample 5550/5907: sample_101576.npz
+2026-09-02 13:11:12 | INFO    | Evaluated sample 5600/5907: sample_101635.npz
+2026-09-02 13:11:30 | INFO    | Evaluated sample 5650/5907: sample_101690.npz
+2026-09-02 13:11:49 | INFO    | Evaluated sample 5700/5907: sample_101749.npz
+2026-09-02 13:12:10 | INFO    | Evaluated sample 5750/5907: sample_101813.npz
+2026-09-02 13:12:32 | INFO    | Evaluated sample 5800/5907: sample_101869.npz
+2026-09-02 13:12:50 | INFO    | Evaluated sample 5850/5907: sample_101930.npz
+2026-09-02 13:13:07 | INFO    | Evaluated sample 5900/5907: sample_101992.npz
+2026-09-02 13:13:10 | INFO    | Evaluated sample 5907/5907: sample_101999.npz
+2026-09-02 13:13:37 | INFO    | Selected support threshold 0.275 from near-optimal calibration IoU and volume-ratio balance.
+2026-09-02 13:13:59 | INFO    | Held-out mean | WCA=0.470102 | support IoU=0.797884 | Dice=0.883201 | phase MAE=0.316844
+2026-09-02 13:13:59 | INFO    | Results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/evaluations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153
+2026-09-02 13:13:59 | INFO    | Visualizations: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/visualizations/simulation_pytorch/author_bn_no_outer_skip_best_valtest_20260902_123153
