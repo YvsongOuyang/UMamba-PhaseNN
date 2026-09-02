@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import random
 from pathlib import Path
@@ -175,6 +176,51 @@ def test_group_statistics_and_particle_bootstrap() -> None:
     np.testing.assert_allclose(groups["wulff"]["mean"], 0.3)
     ci = _particle_bootstrap_ci(rows, seed=7)
     np.testing.assert_allclose(ci, [0.3, 0.8])
+
+
+def test_paper_evaluator_uses_manifest_val_and_test_without_particle_leakage(tmp_path):
+    from simulation.evaluate_paper_model import select_evaluation_samples
+
+    records = []
+    for index, (split, particle_seed) in enumerate(
+        (("train", 10), ("val", 20), ("val", 21), ("test", 30))
+    ):
+        filename = f"sample_{index:05d}.npz"
+        (tmp_path / filename).touch()
+        records.append(
+            {
+                "filename": filename,
+                "split": split,
+                "metadata": {"particle_seed": particle_seed, "shape": "wulff"},
+            }
+        )
+    manifest = {
+        "split_unit": "particle",
+        "splits": {"train": 1, "val": 2, "test": 1},
+        "samples": records,
+    }
+    (tmp_path / "dataset_manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+    args = SimpleNamespace(
+        calibration_split="val",
+        evaluation_split="test",
+        num_samples=0,
+        calibration_fraction=0.5,
+    )
+    paths, calibration_count, loaded_manifest, split_rule = (
+        select_evaluation_samples(tmp_path.resolve(), args)
+    )
+    assert [path.name for path in paths] == [
+        "sample_00001.npz",
+        "sample_00002.npz",
+        "sample_00003.npz",
+    ]
+    assert calibration_count == 2
+    assert loaded_manifest == manifest
+    assert "val calibrates" in split_rule
+    assert "test reports" in split_rule
 
 
 def test_coverage_lists_all_nine_pairs_even_for_small_random_sample():

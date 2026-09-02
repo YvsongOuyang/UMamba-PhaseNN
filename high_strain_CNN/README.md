@@ -331,6 +331,24 @@ and support-threshold calibration tool. Always pass the intended
 `--dataset-dir` explicitly; source-generated and AutoPhaseNN-exported datasets
 must have separate output/cache directories. Ground-truth extras are required
 for real-space metrics. Threshold changes do not affect reciprocal-phase WCA.
+For a PyTorch checkpoint trained on the compact author dataset, use the active
+particle-disjoint manifest splits rather than the legacy filename fraction:
+
+```bash
+python -m simulation.evaluate_paper_model \
+  --backend pytorch --device gpu \
+  --model /path/to/checkpoint_best.pt \
+  --dataset-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --calibration-split val --evaluation-split test \
+  --output-dir artifacts/evaluations/simulation_pytorch/your_run \
+  --cache-dir /data_ssd/oyys/high_strain_cnn/evaluation_cache/your_run \
+  --visualization-dir artifacts/visualizations/simulation_pytorch/your_run
+```
+
+The complete validation split selects the support threshold; only the held-out
+test split contributes the final metrics. PyTorch and TensorFlow both reuse the
+same WCA, inverse FFT, real-space alignment, exact simulated support, category
+summaries, and 2D/3D visualization code.
 
 Run active source and evaluation checks with:
 

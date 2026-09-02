@@ -1,4 +1,4 @@
-"""Evaluate the official TensorFlow model on generated paper-style samples."""
+"""Evaluate TensorFlow or PyTorch phase models on generated paper-style samples."""
 
 from __future__ import annotations
 
@@ -80,6 +80,12 @@ LOGGER = logging.getLogger("high_strain.simulation_evaluation")
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset-dir", default=str(DEFAULT_DATASET))
+    parser.add_argument(
+        "--backend",
+        choices=("tensorflow", "pytorch"),
+        default="tensorflow",
+        help="Model runtime. TensorFlow remains the backward-compatible default.",
+    )
     parser.add_argument("--model", default=str(DEFAULT_MODEL))
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--cache-dir", default=str(DEFAULT_CACHE))
@@ -97,6 +103,18 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_THRESHOLDS,
     )
     parser.add_argument("--calibration-fraction", type=float, default=0.5)
+    parser.add_argument(
+        "--calibration-split",
+        choices=("train", "val", "test"),
+        default=None,
+        help="Manifest split used only to select the support threshold.",
+    )
+    parser.add_argument(
+        "--evaluation-split",
+        choices=("train", "val", "test"),
+        default=None,
+        help="Disjoint manifest split used for final reported metrics.",
+    )
     parser.add_argument("--iou-tolerance", type=float, default=1e-3)
     parser.add_argument("--visualize-samples", type=int, default=3)
     parser.add_argument("--reuse-predictions", action="store_true")
@@ -112,6 +130,15 @@ def parse_args() -> argparse.Namespace:
         parser.error("Batch size must be positive and visualizations nonnegative.")
     if not 0.0 < args.calibration_fraction < 1.0:
         parser.error("--calibration-fraction must lie in (0, 1).")
+    if (args.calibration_split is None) != (args.evaluation_split is None):
+        parser.error("Set --calibration-split and --evaluation-split together.")
+    if (
+        args.calibration_split == args.evaluation_split
+        and args.calibration_split is not None
+    ):
+        parser.error("Calibration and evaluation manifest splits must differ.")
+    if args.calibration_split is not None and args.num_samples:
+        parser.error("--num-samples is only available with the legacy fraction split.")
     if args.iou_tolerance < 0.0:
         parser.error("--iou-tolerance cannot be negative.")
     if any(not np.isfinite(value) or not 0.0 < value < 1.0 for value in args.thresholds):
@@ -274,7 +301,7 @@ def metric_statistics(rows: list[dict[str, Any]]) -> dict[str, dict[str, float]]
             for row in rows
             for key, value in row.items()
             if isinstance(value, (int, float, np.integer, np.floating))
-            and key not in {"index", "threshold"}
+            and key not in {"index", "threshold", "particle_seed"}
             and not isinstance(value, (bool, np.bool_))
         }
     )
@@ -300,10 +327,19 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _prediction_identity(sample_paths: list[Path], model_path: Path) -> dict[str, Any]:
+def _prediction_identity(
+    sample_paths: list[Path],
+    model_path: Path,
+    backend: str = "tensorflow",
+) -> dict[str, Any]:
     return {
         "schema_version": 2,
-        "preprocessing_version": "log1p_float32_minmax_volume_ndhwc_v1",
+        "preprocessing_version": (
+            "log1p_float32_minmax_volume_ndhwc_v1"
+            if backend == "tensorflow"
+            else "log1p_float32_minmax_volume_ncdhw_v1"
+        ),
+        "backend": backend,
         "model_sha256": _file_sha256(model_path),
         "samples": [
             {"name": path.name, "sha256": _file_sha256(path)} for path in sample_paths
@@ -320,7 +356,7 @@ def run_tensorflow_predictions(
 ) -> tuple[np.ndarray, dict[str, Any]]:
     prediction_path = cache_dir / "predicted_reciprocal_phase.npy"
     manifest_path = cache_dir / "prediction_manifest.json"
-    identity = _prediction_identity(sample_paths, model_path)
+    identity = _prediction_identity(sample_paths, model_path, "tensorflow")
     shape = load_sample(sample_paths[0])["intensity"].shape
     if reuse:
         if not prediction_path.is_file() or not manifest_path.is_file():
@@ -404,6 +440,142 @@ def run_tensorflow_predictions(
     return np.load(prediction_path, mmap_mode="r"), manifest
 
 
+def run_pytorch_predictions(
+    sample_paths: list[Path],
+    model_path: Path,
+    cache_dir: Path,
+    batch_size: int,
+    reuse: bool,
+    device_name: str,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Run a converted PyTorch phase model with the same numerical preprocessing."""
+
+    import torch
+
+    from pytorch_autophasenn.model import (
+        HighStrainPhaseUNet,
+        count_parameters,
+        infer_model_variant,
+    )
+
+    prediction_path = cache_dir / "predicted_reciprocal_phase.npy"
+    manifest_path = cache_dir / "prediction_manifest.json"
+    identity = _prediction_identity(sample_paths, model_path, "pytorch")
+    shape = load_sample(sample_paths[0])["intensity"].shape
+    if reuse:
+        if not prediction_path.is_file() or not manifest_path.is_file():
+            raise FileNotFoundError("--reuse-predictions requires prediction and manifest files.")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("content_identity") != identity:
+            raise ValueError("Cached model/data/preprocessing identity differs; rerun inference.")
+        if manifest.get("prediction_sha256") != _file_sha256(prediction_path):
+            raise ValueError("Cached prediction content is incomplete or changed.")
+        predictions = np.load(prediction_path, mmap_mode="r")
+        if predictions.shape != (len(sample_paths),) + shape or predictions.dtype != np.float32:
+            raise ValueError("Cached prediction shape/dtype differs from selected samples.")
+        if any(not np.all(np.isfinite(prediction)) for prediction in predictions):
+            raise ValueError("Cached predictions contain non-finite values.")
+        return predictions, manifest
+
+    device = torch.device("cuda" if device_name == "gpu" else "cpu")
+    if device.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("--device gpu requested but PyTorch CUDA is unavailable.")
+    checkpoint = torch.load(model_path, map_location=device)
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+    model_variant = infer_model_variant(state_dict)
+    model = HighStrainPhaseUNet(model_variant=model_variant).to(device)
+    model.load_state_dict(state_dict, strict=True)
+    model.eval()
+
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path.unlink(missing_ok=True)
+    predictions = np.lib.format.open_memmap(
+        prediction_path,
+        mode="w+",
+        dtype=np.float32,
+        shape=(len(sample_paths),) + shape,
+    )
+    LOGGER.info(
+        "Loading PyTorch model: %s | variant=%s | device=%s",
+        model_path,
+        model_variant,
+        device,
+    )
+    inference_seconds = 0.0
+    started = time.perf_counter()
+    with torch.inference_mode():
+        for start in range(0, len(sample_paths), batch_size):
+            stop = min(start + batch_size, len(sample_paths))
+            batch_ndhwc = np.concatenate(
+                [
+                    prepare_model_input(load_sample(path)["intensity"])
+                    for path in sample_paths[start:stop]
+                ],
+                axis=0,
+            )
+            batch_ncdhw = np.moveaxis(batch_ndhwc, -1, 1)
+            model_input = torch.from_numpy(
+                np.ascontiguousarray(batch_ncdhw)
+            ).to(device=device, dtype=torch.float32)
+            if device.type == "cuda":
+                torch.cuda.synchronize(device)
+            inference_started = time.perf_counter()
+            output = model(model_input)
+            if device.type == "cuda":
+                torch.cuda.synchronize(device)
+            inference_seconds += time.perf_counter() - inference_started
+            if output.shape != (stop - start, 1) + shape:
+                raise ValueError(f"Unexpected PyTorch output shape: {tuple(output.shape)}")
+            output_numpy = output[:, 0].detach().cpu().numpy().astype(np.float32)
+            if not np.all(np.isfinite(output_numpy)):
+                raise ValueError("PyTorch returned non-finite predictions.")
+            predictions[start:stop] = output_numpy
+            predictions.flush()
+            elapsed = time.perf_counter() - started
+            rate = stop / max(elapsed, 1e-12)
+            remaining = (len(sample_paths) - stop) / max(rate, 1e-12)
+            LOGGER.info(
+                "PyTorch inference %d/%d | %.3f samples/s | ETA %.1f s",
+                stop,
+                len(sample_paths),
+                rate,
+                remaining,
+            )
+
+    checkpoint_metadata = checkpoint if isinstance(checkpoint, dict) else {}
+    manifest = {
+        "backend": "pytorch",
+        "torch_version": torch.__version__,
+        "cuda_version": torch.version.cuda,
+        "python_version": platform.python_version(),
+        "model": str(model_path),
+        "model_file_bytes": model_path.stat().st_size,
+        "content_identity": identity,
+        "prediction_sha256": _file_sha256(prediction_path),
+        "parameter_count": count_parameters(model),
+        "model_variant": model_variant,
+        "checkpoint_epoch": checkpoint_metadata.get("epoch"),
+        "checkpoint_project_version": checkpoint_metadata.get("project_version"),
+        "checkpoint_git_commit": checkpoint_metadata.get("git_commit"),
+        "sample_names": [path.name for path in sample_paths],
+        "num_samples": len(sample_paths),
+        "shape": list(shape),
+        "prediction_path": str(prediction_path),
+        "input_preprocessing": "log1p intensity + per-volume min-max, NCDHW",
+        "inference_seconds": inference_seconds,
+        "mean_inference_ms_per_sample": 1000.0 * inference_seconds / len(sample_paths),
+        "device": str(device),
+        "gpu_name": (
+            torch.cuda.get_device_name(device) if device.type == "cuda" else None
+        ),
+    }
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return np.load(prediction_path, mmap_mode="r"), manifest
+
+
 def summarize_thresholds(
     sweep_rows: list[dict[str, Any]],
     thresholds: tuple[float, ...],
@@ -469,9 +641,10 @@ def render_markdown(report: dict[str, Any]) -> str:
     selected = report["selected_threshold"]
     stats = report["evaluation_statistics"]
     dataset_name = (report.get("dataset_manifest") or {}).get("dataset_name", "Reproduced Simulations")
+    backend = str(report["model_metadata"]["backend"]).replace("_", " ").title()
     return "\n".join(
         [
-            f"# Official TensorFlow Model on {dataset_name}",
+            f"# {backend} Model on {dataset_name}",
             "",
             "## Protocol",
             "",
@@ -498,15 +671,101 @@ def render_markdown(report: dict[str, Any]) -> str:
             "- `evaluation_results.json`: full provenance, statistics, and per-sample rows.",
             "- `evaluation_samples.csv`: held-out per-sample metrics at the selected threshold.",
             "- `threshold_sweep.csv`: calibration and evaluation means for every threshold.",
-            "- `evaluation.log`: TensorFlow inference and evaluation progress.",
+            f"- `evaluation.log`: {backend} inference and evaluation progress.",
             "",
         ]
     )
 
 
+def select_evaluation_samples(
+    dataset_dir: Path,
+    args: argparse.Namespace,
+) -> tuple[list[Path], int, dict[str, Any] | None, str]:
+    """Select either explicit manifest splits or the legacy filename fraction."""
+
+    manifest_path = dataset_dir / "dataset_manifest.json"
+    dataset_manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest_path.is_file()
+        else None
+    )
+    if args.calibration_split is None:
+        sample_paths = sorted(dataset_dir.glob("sample_*.npz"))
+        if args.num_samples:
+            sample_paths = sample_paths[: args.num_samples]
+        if len(sample_paths) < 2:
+            raise ValueError("At least two generated samples are required.")
+        calibration_count = min(
+            len(sample_paths) - 1,
+            max(1, int(round(len(sample_paths) * args.calibration_fraction))),
+        )
+        return (
+            sample_paths,
+            calibration_count,
+            dataset_manifest,
+            "sorted sample filenames; first fraction calibrates threshold",
+        )
+
+    if dataset_manifest is None:
+        raise FileNotFoundError("Manifest split selection requires dataset_manifest.json.")
+    if dataset_manifest.get("split_unit") != "particle":
+        raise ValueError("Manifest splits must be particle-disjoint.")
+    declared_splits = dataset_manifest.get("splits", {})
+    for split in (args.calibration_split, args.evaluation_split):
+        if split not in declared_splits:
+            raise ValueError(f"Manifest does not contain split {split!r}.")
+
+    selected: dict[str, list[Path]] = {
+        args.calibration_split: [],
+        args.evaluation_split: [],
+    }
+    particles: dict[str, set[tuple[int, str]]] = {
+        args.calibration_split: set(),
+        args.evaluation_split: set(),
+    }
+    seen: set[str] = set()
+    for record in dataset_manifest.get("samples", []):
+        split = record.get("split")
+        if split not in selected:
+            continue
+        filename = str(record["filename"])
+        relative = Path(filename)
+        if relative.is_absolute() or ".." in relative.parts or filename in seen:
+            raise ValueError(f"Unsafe or duplicate manifest sample: {filename}")
+        seen.add(filename)
+        path = (dataset_dir / relative).resolve()
+        if dataset_dir not in path.parents or not path.is_file():
+            raise FileNotFoundError(f"Manifest sample is missing: {path}")
+        metadata = record.get("metadata", {})
+        particles[split].add((int(metadata["particle_seed"]), str(metadata["shape"])))
+        selected[split].append(path)
+
+    for split, paths in selected.items():
+        if len(paths) != int(declared_splits[split]):
+            raise ValueError(
+                f"Manifest declares {declared_splits[split]} {split} samples but selected {len(paths)}."
+            )
+    overlap = particles[args.calibration_split] & particles[args.evaluation_split]
+    if overlap:
+        raise ValueError("Particle leakage exists between calibration and evaluation splits.")
+    calibration_paths = selected[args.calibration_split]
+    evaluation_paths = selected[args.evaluation_split]
+    if not calibration_paths or not evaluation_paths:
+        raise ValueError("Calibration and evaluation manifest splits must both be nonempty.")
+    return (
+        calibration_paths + evaluation_paths,
+        len(calibration_paths),
+        dataset_manifest,
+        (
+            f"manifest particle-disjoint splits: {args.calibration_split} calibrates; "
+            f"{args.evaluation_split} reports final metrics"
+        ),
+    )
+
+
 def main() -> int:
     args = parse_args()
-    if args.device == "cpu":
+    if args.backend == "tensorflow" and args.device == "cpu":
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
     dataset_dir = Path(args.dataset_dir).expanduser().resolve()
@@ -517,31 +776,36 @@ def main() -> int:
     configure_logging(output_dir, args.log_level)
     if not model_path.is_file():
         raise FileNotFoundError(f"Model not found: {model_path}")
-    sample_paths = sorted(dataset_dir.glob("sample_*.npz"))
-    if args.num_samples:
-        sample_paths = sample_paths[: args.num_samples]
-    if len(sample_paths) < 2:
-        raise ValueError("At least two generated samples are required.")
-    calibration_count = min(
-        len(sample_paths) - 1,
-        max(1, int(round(len(sample_paths) * args.calibration_fraction))),
+    sample_paths, calibration_count, dataset_manifest, split_rule = (
+        select_evaluation_samples(dataset_dir, args)
     )
     LOGGER.info(
-        "Dataset: %s | samples=%d | calibration/evaluation=%d/%d",
+        "Dataset: %s | samples=%d | calibration/evaluation=%d/%d | %s",
         dataset_dir,
         len(sample_paths),
         calibration_count,
         len(sample_paths) - calibration_count,
+        split_rule,
     )
     LOGGER.info("Thresholds: %s", ", ".join(f"{value:g}" for value in args.thresholds))
 
-    predictions, model_metadata = run_tensorflow_predictions(
-        sample_paths,
-        model_path,
-        cache_dir,
-        args.batch_size,
-        args.reuse_predictions,
-    )
+    if args.backend == "tensorflow":
+        predictions, model_metadata = run_tensorflow_predictions(
+            sample_paths,
+            model_path,
+            cache_dir,
+            args.batch_size,
+            args.reuse_predictions,
+        )
+    else:
+        predictions, model_metadata = run_pytorch_predictions(
+            sample_paths,
+            model_path,
+            cache_dir,
+            args.batch_size,
+            args.reuse_predictions,
+            args.device,
+        )
     sweep_rows: list[dict[str, Any]] = []
     sample_state: dict[int, dict[str, Any]] = {}
     for index, (sample_path, raw_prediction) in enumerate(zip(sample_paths, predictions)):
@@ -562,12 +826,12 @@ def main() -> int:
         )
         split = "calibration" if index < calibration_count else "evaluation"
         metadata = sample["metadata"]
-        shape_type = metadata.get("shape_type", "unknown")
-        phase_type = metadata.get("phase_type", "unknown")
+        shape_type = metadata.get("shape_type", metadata.get("shape", "unknown"))
+        phase_type = metadata.get(
+            "phase_type",
+            metadata.get("strain_argument", metadata.get("phase_family", "unknown")),
+        )
         sample_state[index] = {
-            **sample,
-            "selected_phase": selected_phase,
-            "geometry_aligned": geometry_aligned,
             "center_shift": center_shift,
             "amplitude_scale": amplitude_scale,
             "phase_wca": min(direct_wca, inverted_wca),
@@ -591,6 +855,7 @@ def main() -> int:
                     "shape_type": shape_type,
                     "phase_type": phase_type,
                     "shape_phase": f"{shape_type}/{phase_type}",
+                    "particle_seed": metadata.get("particle_seed"),
                     "threshold": threshold,
                     "phase_offset_rad": phase_offset,
                     **realspace_metrics(
@@ -601,7 +866,13 @@ def main() -> int:
                     ),
                 }
             )
-        LOGGER.info("Evaluated sample %d/%d: %s", index + 1, len(sample_paths), sample_path.name)
+        if (index + 1) % 50 == 0 or index + 1 == len(sample_paths):
+            LOGGER.info(
+                "Evaluated sample %d/%d: %s",
+                index + 1,
+                len(sample_paths),
+                sample_path.name,
+            )
 
     threshold_summaries = summarize_thresholds(sweep_rows, args.thresholds)
     selected_threshold = choose_threshold(
@@ -654,30 +925,40 @@ def main() -> int:
             row = ranked[int(position)]
             index = int(row["index"])
             state = sample_state[index]
+            sample = load_sample(sample_paths[index])
+            raw_prediction = predictions[index]
+            selected_phase = (
+                -raw_prediction if state["twin_flip_selected"] else raw_prediction
+            )
+            reconstruction = reconstruct_object(sample["intensity"], selected_phase)
+            geometry_aligned, _, _ = align_geometry(
+                reconstruction,
+                sample["target_object"],
+            )
             aligned, _ = align_global_phase(
-                state["geometry_aligned"],
-                state["target_object"],
-                state["target_support"],
+                geometry_aligned,
+                sample["target_object"],
+                sample["target_support"],
                 selected_threshold,
             )
             stem = f"sample_{index:05d}_representative_{rank + 1}"
             slice_path = save_slice_overview(
-                intensity=state["intensity"],
-                target_reciprocal_phase=state["target_phase"],
-                predicted_reciprocal_phase=state["selected_phase"],
-                target_object=state["target_object"],
+                intensity=sample["intensity"],
+                target_reciprocal_phase=sample["target_phase"],
+                predicted_reciprocal_phase=selected_phase,
+                target_object=sample["target_object"],
                 predicted_object=aligned,
                 destination=visualization_dir / f"{stem}_2d.png",
                 support_threshold=selected_threshold,
-                target_support=state["target_support"],
+                target_support=sample["target_support"],
             )
             volume_path = save_volume_overview(
-                intensity=state["intensity"],
-                target_object=state["target_object"],
+                intensity=sample["intensity"],
+                target_object=sample["target_object"],
                 predicted_object=aligned,
                 destination=visualization_dir / f"{stem}_3d.png",
                 support_threshold=selected_threshold,
-                target_support=state["target_support"],
+                target_support=sample["target_support"],
             )
             visualization_records.append(
                 {
@@ -690,19 +971,31 @@ def main() -> int:
             )
 
     evaluation_statistics = metric_statistics(final_rows)
-    dataset_manifest = (
-        json.loads((dataset_dir / "dataset_manifest.json").read_text(encoding="utf-8"))
-        if (dataset_dir / "dataset_manifest.json").is_file() else None
+    dataset_manifest_summary = (
+        {key: value for key, value in dataset_manifest.items() if key != "samples"}
+        if dataset_manifest is not None
+        else None
     )
+    if dataset_manifest_summary is not None:
+        index_filter = dataset_manifest_summary.get("index_filter")
+        if isinstance(index_filter, dict):
+            dataset_manifest_summary["index_filter"] = {
+                key: value
+                for key, value in index_filter.items()
+                if key != "excluded_filenames"
+            }
+        dataset_manifest_summary["manifest_sha256"] = _file_sha256(
+            dataset_dir / "dataset_manifest.json"
+        )
     report = {
         "schema_version": 1,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "dataset_dir": str(dataset_dir),
-        "dataset_manifest": dataset_manifest,
+        "dataset_manifest": dataset_manifest_summary,
         "num_samples": len(sample_paths),
         "calibration_samples": calibration_count,
         "evaluation_samples": len(final_rows),
-        "split_rule": "sorted sample filenames; first fraction calibrates threshold",
+        "split_rule": split_rule,
         "threshold_selection_metric": (
             "calibration mean support IoU within tolerance of maximum, then "
             "support volume ratio closest to one"
@@ -710,7 +1003,7 @@ def main() -> int:
         "iou_tolerance": args.iou_tolerance,
         "thresholds": list(args.thresholds),
         "selected_threshold": selected_threshold,
-        "target_support_definition": (dataset_manifest or {}).get(
+        "target_support_definition": (dataset_manifest_summary or {}).get(
             "target_support_definition", "exact boolean support saved by simulation generator"
         ),
         "model_metadata": model_metadata,
