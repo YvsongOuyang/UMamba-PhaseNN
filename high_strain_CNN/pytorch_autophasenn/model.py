@@ -9,18 +9,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.utils import _triple
 
+from .mamba_block import BidirectionalMamba3D, MambaFactory
+
 
 PUBLISHED_MODEL_VARIANT = "published"
 REDUCED_MODEL_VARIANT = "reduced"
 REDUCED_BN_NO_OUTER_SKIP_VARIANT = "reduced_bn_no_outer_skip"
+REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT = "reduced_bn_no_outer_skip_mamba8"
 MODEL_VARIANTS = (
     REDUCED_MODEL_VARIANT,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+    REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
     PUBLISHED_MODEL_VARIANT,
 )
 DEFAULT_MODEL_VARIANT = REDUCED_MODEL_VARIANT
 BN_EPS = 1e-3
 BN_MOMENTUM = 0.01
+MAMBA_CHANNELS = 256
+MAMBA_D_MODEL = 128
+MAMBA_D_STATE = 16
+MAMBA_D_CONV = 4
+MAMBA_EXPAND = 2
 
 
 class TensorFlowSameConv3d(nn.Module):
@@ -91,20 +100,33 @@ class HighStrainPhaseUNet(nn.Module):
     Input and output use PyTorch's ``[batch, channel, depth, height, width]``
     layout. ``reduced`` removes the deepest encoder-decoder scale and caps the
     bottleneck at 1024 channels. ``reduced_bn_no_outer_skip`` additionally uses
-    BatchNorm and removes the full-resolution skip. ``published`` retains the
-    numerically matched six-level Keras architecture with a 2048-channel
-    bottleneck.
+    BatchNorm and removes the full-resolution skip. Its ``mamba8`` extension
+    adds bidirectional global context at the 8-cubed decoder scale. ``published``
+    retains the numerically matched six-level Keras architecture with a
+    2048-channel bottleneck.
     """
 
-    def __init__(self, model_variant: str = DEFAULT_MODEL_VARIANT) -> None:
+    def __init__(
+        self,
+        model_variant: str = DEFAULT_MODEL_VARIANT,
+        *,
+        mamba_factory: MambaFactory | None = None,
+    ) -> None:
         super().__init__()
         if model_variant not in MODEL_VARIANTS:
             raise ValueError(
                 f"Unknown model variant {model_variant!r}; expected one of {MODEL_VARIANTS}."
             )
         self.model_variant = model_variant
-        self.use_batch_norm = model_variant == REDUCED_BN_NO_OUTER_SKIP_VARIANT
-        self.use_outer_skip = model_variant != REDUCED_BN_NO_OUTER_SKIP_VARIANT
+        self.use_mamba = model_variant == REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT
+        self.use_batch_norm = model_variant in {
+            REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+            REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+        }
+        self.use_outer_skip = model_variant not in {
+            REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+            REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+        }
         self.is_published = model_variant == PUBLISHED_MODEL_VARIANT
 
         layers: dict[str, nn.Module] = {
@@ -186,12 +208,24 @@ class HighStrainPhaseUNet(nn.Module):
                     track_running_stats=True,
                 )
         self.activation = nn.LeakyReLU(negative_slope=0.2)
+        if self.use_mamba:
+            # Preserve the base CNN's random stream so scratch ablations start
+            # from the same convolution weights when given the same seed.
+            with torch.random.fork_rng(devices=[]):
+                self.global_context = BidirectionalMamba3D(
+                    channels=MAMBA_CHANNELS,
+                    d_model=MAMBA_D_MODEL,
+                    d_state=MAMBA_D_STATE,
+                    d_conv=MAMBA_D_CONV,
+                    expand=MAMBA_EXPAND,
+                    mixer_factory=mamba_factory,
+                )
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
         """Match Keras Glorot-uniform kernels and zero biases."""
 
-        for module in self.modules():
+        for module in self.layers.modules():
             if isinstance(module, (nn.Conv3d, nn.ConvTranspose3d)):
                 nn.init.xavier_uniform_(module.weight)
                 nn.init.zeros_(module.bias)
@@ -279,6 +313,8 @@ class HighStrainPhaseUNet(nn.Module):
             s6 = self._skip(s6, "conv3d_17")
             x = self._decoder(x, "conv3d_transpose_1", s6)
         x = self._decoder(x, "conv3d_transpose_2", s5)
+        if self.use_mamba:
+            x = self.global_context(x)
         x = self._decoder(x, "conv3d_transpose_3", s4)
         x = self._decoder(x, "conv3d_transpose_4", s3)
         x = self._decoder(x, "conv3d_transpose_5", s2)
@@ -295,6 +331,9 @@ def count_parameters(model: nn.Module) -> int:
 
 def infer_model_variant(state_dict: Mapping[str, torch.Tensor]) -> str:
     """Infer the architecture from the bottleneck kernel in a state dict."""
+
+    if "global_context.alpha" in state_dict:
+        return REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT
 
     key = "layers.conv3d_18.conv.weight"
     if key not in state_dict:

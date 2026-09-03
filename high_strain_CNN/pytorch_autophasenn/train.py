@@ -30,6 +30,7 @@ from pytorch_autophasenn.model import (
     DEFAULT_MODEL_VARIANT,
     MODEL_VARIANTS,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+    REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
     HighStrainPhaseUNet,
     count_parameters,
     infer_model_variant,
@@ -120,7 +121,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Initial learning rate. Defaults to 1e-3 for "
-            "reduced_bn_no_outer_skip and 1e-4 otherwise."
+            "the BatchNorm/no-outer-skip variants and 1e-4 otherwise."
         ),
     )
     parser.add_argument(
@@ -129,7 +130,8 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_MODEL_VARIANT,
         help=(
             "Use reduced by default; reduced_bn_no_outer_skip adds BatchNorm and "
-            "removes the full-resolution skip; published retains 2048 channels."
+            "removes the full-resolution skip; its mamba8 extension adds global "
+            "context at the 8-cubed decoder scale; published retains 2048 channels."
         ),
     )
     parser.add_argument(
@@ -178,7 +180,10 @@ def parse_args() -> argparse.Namespace:
     if args.learning_rate is None:
         args.learning_rate = (
             1e-3
-            if args.model_variant == REDUCED_BN_NO_OUTER_SKIP_VARIANT
+            if args.model_variant in {
+                REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+                REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+            }
             else 1e-4
         )
     args.data_config = str(Path(args.data_config).expanduser().resolve())
@@ -586,6 +591,12 @@ def main() -> None:
         writer.add_scalar("train/data_wait_seconds", train_stats["data_wait_seconds"], epoch)
         writer.add_scalar("val/data_wait_seconds", val_stats["data_wait_seconds"], epoch)
         writer.add_scalar("learning_rate", optimizer.param_groups[0]["lr"], epoch)
+        if model.use_mamba:
+            writer.add_scalar(
+                "model/mamba_gate",
+                torch.tanh(model.global_context.alpha).detach().item(),
+                epoch,
+            )
         writer.flush()
 
         improved = float(val_stats["loss"]) < best_val_loss
@@ -637,9 +648,14 @@ def main() -> None:
         estimated_finish = datetime.now().astimezone() + timedelta(
             seconds=remaining_seconds
         )
+        mamba_status = (
+            f" | mamba_gate={torch.tanh(model.global_context.alpha).detach().item():.5f}"
+            if model.use_mamba
+            else ""
+        )
         LOGGER.info(
             "Epoch %03d complete | train=%.6e | val=%.6e | best=%.6e | "
-            "lr=%.3e | epoch_time=%s | run_elapsed=%s | eta=%s | finish=%s",
+            "lr=%.3e | epoch_time=%s | run_elapsed=%s | eta=%s | finish=%s%s",
             epoch,
             train_stats["loss"],
             val_stats["loss"],
@@ -649,6 +665,7 @@ def main() -> None:
             format_duration(run_seconds),
             format_duration(remaining_seconds),
             estimated_finish.strftime("%Y-%m-%d %H:%M:%S %Z"),
+            mamba_status,
         )
 
     writer.close()

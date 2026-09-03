@@ -3,7 +3,8 @@
 A supervised 3D CNN for reciprocal-space phase retrieval from highly strained
 Bragg coherent diffraction patterns. This checkout keeps the original
 TensorFlow 2.10.1 implementation and adds a numerically verified PyTorch port,
-a resource-reduced PyTorch training variant, and an AutoPhaseNN memmap adapter.
+a resource-reduced PyTorch training variant, an optional Mamba global-context
+ablation, and an AutoPhaseNN memmap adapter.
 
 The model predicts the **reciprocal-space phase**. It does not directly predict
 the real-space amplitude and phase used by AutoPhaseNN. Combining the measured
@@ -42,12 +43,13 @@ This is a separate dataset route; the AutoPhaseNN commands below retain their de
 
 ## PyTorch architecture
 
-`HighStrainPhaseUNet` supports three variants:
+`HighStrainPhaseUNet` supports four variants:
 
 | Variant | Encoder scales | Bottleneck | Parameters | Purpose |
 |---|---:|---:|---:|---|
 | `reduced` | 5 | 1024 | 39,160,897 | Default AutoPhaseNN-data training |
 | `reduced_bn_no_outer_skip` | 5 | 1024 | 39,121,665 | BatchNorm and no full-resolution skip ablation |
+| `reduced_bn_no_outer_skip_mamba8` | 5 | 1024 | 39,304,322 | Previous ablation plus 8-cubed bidirectional Mamba |
 | `published` | 6 | 2048 | 143,759,937 | Original-weight conversion and parity |
 
 The reduced model removes the complete deepest encoder-decoder scale. Its
@@ -70,6 +72,16 @@ convolution and transpose convolution follows
 momentum `0.99`. The data pipeline, WCA loss, output semantics, and real-space
 reconstruction are unchanged.
 
+The `reduced_bn_no_outer_skip_mamba8` variant applies global context after the
+decoder produces its `8^3 x 256` feature. A `1 x 1 x 1` projection maps the
+feature to 128 channels, the 512 spatial positions are flattened into tokens,
+and one shared Mamba block scans the sequence in forward and reverse order.
+Their aligned outputs are averaged, projected back to 256 channels, and added
+through `tanh(alpha)`, where `alpha` starts at zero. The CNN therefore starts
+from exactly the same mapping as `reduced_bn_no_outer_skip` for a matching
+random seed, while optimization can turn on the global branch. This ablation
+does not add another loss or change the reciprocal-phase output.
+
 PyTorch tensors use `NCDHW`; TensorFlow tensors use `NDHWC`. This layout change
 does not change the logical tensor dimensions.
 
@@ -87,6 +99,17 @@ tests, install the lock file in a clean Python 3.10 environment:
 ```bash
 python -m pip install -r requirements/pytorch-lock.txt
 ```
+
+The Mamba variant additionally needs the official CUDA extension. Install it
+on the Linux training server after the locked PyTorch environment is active:
+
+```bash
+python -m pip install --no-build-isolation -r requirements/mamba.txt
+python -c "import torch, mamba_ssm; print(torch.__version__, mamba_ssm.__version__)"
+```
+
+`mamba-ssm` is optional so the three existing variants and the Windows-side
+data/evaluation tools remain importable without CUDA build dependencies.
 
 TensorFlow is needed only to regenerate the numerical reference. Because the
 published model uses TensorFlow 2.10.1, use a separate Python 3.10 environment:
@@ -351,7 +374,8 @@ same WCA, inverse FFT, real-space alignment, exact simulated support, category
 summaries, and 2D/3D visualization code. The 3D result uses the same full-volume
 five-panel layout as AutoPhaseNN: target, prediction before center shift,
 prediction after center shift, shift difference, and final target difference.
-It renders all visible volume voxels rather than only the support surface.
+Separate amplitude and wrapped-phase composites render all visible volume
+voxels rather than only the support surface.
 
 To redraw visualizations after evaluation without recomputing all metrics, rerun
 the same command with the same model, data, output, cache and visualization
@@ -362,9 +386,9 @@ directories, plus:
 ```
 
 Nine requested samples select the median-WCA case from each of the nine
-shape/phase groups. Their 3D amplitude comparisons share one composite image
-and common color scales. Smaller requests retain the support-IoU quantile
-overview.
+shape/phase groups. Their 3D amplitude and phase comparisons use two composite
+images with common color scales. Smaller requests retain the support-IoU
+quantile overview.
 
 Run active source and evaluation checks with:
 
@@ -412,13 +436,22 @@ python -u -m pytorch_autophasenn.train --run-name high_strain_autophase_scratch
 ```
 
 Train the BatchNorm/no-outer-skip ablation from scratch with the otherwise
-unchanged defaults. This variant starts at `1e-3`; the existing variants keep
-their `1e-4` default:
+unchanged defaults. This variant starts at `1e-3`:
 
 ```bash
 python -u -m pytorch_autophasenn.train \
   --model-variant reduced_bn_no_outer_skip \
   --run-name high_strain_reduced_bn_no_outer_skip_scratch
+```
+
+Train the Mamba extension from scratch. It shares the BatchNorm variant's
+default Adam learning rate of `1e-3`; omitting both `--pretrained` and
+`--resume` is intentional:
+
+```bash
+python -u -m pytorch_autophasenn.train \
+  --model-variant reduced_bn_no_outer_skip_mamba8 \
+  --run-name high_strain_reduced_bn_no_outer_skip_mamba8_scratch
 ```
 
 Background training with a timestamped, self-describing run directory:
@@ -453,7 +486,8 @@ from the checkpoint.
 Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
 `epsilon=1e-7`), float32, batch size 16, and the WCA objective. The `reduced`
 and `published` variants start at the paper's `1e-4`; the BatchNorm ablation
-starts at `1e-3` to test whether normalization supports faster optimization.
+and its Mamba extension start at `1e-3` to test whether normalization supports
+faster optimization.
 All variants use the AutoPhaseNN `ReduceLROnPlateau` defaults: factor `0.5`,
 patience `5`, and minimum learning rate `1e-6`. The scheduler is the only
 learning-rate-policy departure from the paper's constant rate. The adapted

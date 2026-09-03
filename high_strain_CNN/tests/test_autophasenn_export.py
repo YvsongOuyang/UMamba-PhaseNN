@@ -79,6 +79,29 @@ class AutoPhaseNNExportTest(unittest.TestCase):
                 )
                 np.testing.assert_array_equal(masked.call_args_list[3].args[1], sample.support)
 
+    def test_phase_volume_wraps_errors_on_support_intersection(self) -> None:
+        sample = adapt_sample(self.modulus, self.obj)
+        before = sample.realspace_object * np.exp(0.8j)
+        after = sample.realspace_object * np.exp(0.2j)
+        with patch.object(visualization, "plot_five_panel_volume") as volume_plot:
+            visualization.save_phase_volume_comparison(
+                target_objects=[sample.realspace_object],
+                predicted_objects_before_shift=[before],
+                predicted_objects_after_shift=[after],
+                target_supports=[sample.support],
+                names=["sample"],
+                destination=Path("phase.png"),
+                support_threshold=0.3,
+            )
+        panels = volume_plot.call_args.kwargs["panel_rows"][0]
+        np.testing.assert_array_equal(panels[0][0], sample.support)
+        np.testing.assert_allclose(panels[3][1][sample.support], 0.6, atol=1e-6)
+        np.testing.assert_allclose(panels[4][1][sample.support], 0.2, atol=1e-6)
+        self.assertEqual(
+            volume_plot.call_args.kwargs["absolute_limits"],
+            (-np.pi, np.pi),
+        )
+
     def test_cli_records_sampling_and_keeps_source_readonly(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
