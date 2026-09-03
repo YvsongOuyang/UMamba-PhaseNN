@@ -1,0 +1,6 @@
+# Install after the PyTorch environment with:
+# python -m pip install --no-build-isolation -r requirements/mamba.txt
+einops==0.8.1
+ninja==1.11.1.4
+packaging>=23
+mamba-ssm==1.2.2

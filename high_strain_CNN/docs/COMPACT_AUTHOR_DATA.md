@@ -342,6 +342,38 @@ This starts from scratch, with default float32, four loader workers, Adam at
 uses fixed-validation WCA after each full epoch. Changing to short rounds also
 changes scheduler and validation frequency. Defaults retain best/last checkpoints under
 `/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/<run-name>`.
+
+For a controlled global-context ablation against the completed
+`reduced_bn_no_outer_skip` run, use the same filtered manifest, 30 full epochs,
+batch size 16, seed 42, Adam at 1e-3, and the same plateau scheduler. The Mamba
+run must omit both `--pretrained` and `--resume`:
+
+```bash
+RUN_NAME="author_bn_no_outer_skip_mamba8_scratch_bs16_lr1e-3_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/artifacts/training/pytorch_simulation/${RUN_NAME}"
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u -m pytorch_autophasenn.train \
+  --data-format author_npz \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --model-variant reduced_bn_no_outer_skip_mamba8 \
+  --epochs 30 \
+  --run-name "${RUN_NAME}" \
+  --save-every 0 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+echo "Submitted PID=${PID}; logs=${RUN_DIR}/console.log"
+```
+
+At the same seed, the Mamba model's CNN parameters are initialized identically
+to the base ablation. Its zero-initialized residual gate initially preserves
+the base mapping; all parameters are nevertheless placed in one Adam optimizer
+and trained jointly from scratch. TensorBoard records `model/mamba_gate` each
+epoch. Compare the two models at 30 epochs using validation/test WCA, the same
+real-space metrics and threshold sweep, parameter count, peak GPU memory, and
+wall time per optimizer step.
 If the measured training-only throughput is 25000 observations in 15 minutes,
 a filtered full epoch costs about 48 minutes, and 20 full epochs cost about
 16 training hours, plus validation/loading/checkpoint overhead. The previous
