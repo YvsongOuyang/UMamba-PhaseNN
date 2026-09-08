@@ -28,6 +28,7 @@ from autophasenn_training_pipeline.losses import (
     windowed_ssim_3d,
 )
 from autophasenn_training_pipeline.model_factory import (
+    create_model,
     default_support_threshold,
     resolve_support_threshold,
 )
@@ -36,6 +37,12 @@ from autophasenn_training_pipeline.model_mamba_skip import (
     MAMBA_SKIP_PREFIXES,
     MAMBA_WIDTH,
     initialize_from_baseline_state_dict,
+)
+from autophasenn_training_pipeline.model_relu_baseline import (
+    ReLUBaselineAutoPhaseNN,
+)
+from autophasenn_training_pipeline.model_tf_compatible import (
+    TFCompatibleAutoPhaseNN,
 )
 
 
@@ -105,7 +112,53 @@ def test_threshold_sweep_includes_primary_and_removes_duplicates():
 def test_model_variant_support_threshold_defaults_are_isolated():
     assert default_support_threshold("mamba_skip") == pytest.approx(0.3)
     assert default_support_threshold("baseline") == pytest.approx(0.1)
+    assert default_support_threshold("relu_baseline") == pytest.approx(0.1)
     assert resolve_support_threshold("mamba_skip", 0.15) == pytest.approx(0.15)
+
+
+def test_relu_baseline_strictly_accepts_baseline_state_dict():
+    baseline = TFCompatibleAutoPhaseNN(threshold=0.1)
+    relu_model = create_model("relu_baseline")
+
+    assert isinstance(relu_model, ReLUBaselineAutoPhaseNN)
+    relu_model.load_state_dict(baseline.state_dict(), strict=True)
+    assert {
+        key: tuple(value.shape) for key, value in relu_model.state_dict().items()
+    } == {
+        key: tuple(value.shape) for key, value in baseline.state_dict().items()
+    }
+
+
+def test_relu_baseline_zeroes_negative_hidden_responses():
+    baseline = TFCompatibleAutoPhaseNN(threshold=0.1).eval()
+    relu_model = ReLUBaselineAutoPhaseNN(threshold=0.1).eval()
+    relu_model.load_state_dict(baseline.state_dict(), strict=True)
+
+    with torch.no_grad():
+        for model in (baseline, relu_model):
+            conv = model.layers["conv3d"]
+            conv.weight.zero_()
+            conv.bias.fill_(-1.0)
+            bn = model.layers["batch_normalization"]
+            bn.weight.fill_(1.0)
+            bn.bias.zero_()
+            bn.running_mean.zero_()
+            bn.running_var.fill_(1.0)
+
+    x = torch.zeros((1, 1, 3, 3, 3))
+    baseline_output = baseline._conv_lrelu_bn(
+        x,
+        "conv3d",
+        "batch_normalization",
+    )
+    relu_output = relu_model._conv_lrelu_bn(
+        x,
+        "conv3d",
+        "batch_normalization",
+    )
+
+    assert torch.all(baseline_output < 0)
+    assert torch.count_nonzero(relu_output).item() == 0
 
 
 def test_mamba_skip_baseline_initialization_zeroes_new_input_channels():

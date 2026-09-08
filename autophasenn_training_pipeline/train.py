@@ -758,7 +758,13 @@ def main():
             args.pretrained,
             map_location="cpu",
         )
-        if args.model_variant == "amplitude_skip":
+        if args.model_variant == "relu_baseline":
+            LOGGER.info(
+                "Loaded all baseline weights and BatchNorm state before ReLU "
+                "fine-tuning: %s",
+                args.pretrained,
+            )
+        elif args.model_variant == "amplitude_skip":
             LOGGER.info(
                 "Loaded baseline weights with zero-initialized amplitude skip kernels: %s",
                 args.pretrained,

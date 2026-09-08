@@ -13,6 +13,7 @@ PyTorch/cohere-trained_model_tf_compatible.pth
 dataset.py                  Memmap data loading with pipeline preprocessing
 losses.py                   Project loss functions and scale alignment
 model_tf_compatible.py      PyTorch model matching the converted TF2 checkpoint
+model_relu_baseline.py      ReLUBaselineAutoPhaseNN activation variant
 model_residual.py           ResidualAutoPhaseNN architecture variant
 model_amplitude_skip.py     AmplitudeSkipAutoPhaseNN architecture variant
 model_decoder_cross_skip.py DecoderCrossSkipAutoPhaseNN architecture variant
@@ -24,6 +25,32 @@ evaluate.py                 Checkpoint evaluation and loss report
 visualize_postprocessed.py  TF test_network_unsup-style visualization
 experiments/bn_recalibration Isolated BatchNorm running-statistics experiment
 ```
+
+## ReLU Baseline Variant
+
+`ReLUBaselineAutoPhaseNN` keeps every baseline convolution, BatchNorm layer,
+channel count, output activation, support operation, and forward-physics step.
+It only replaces the 22 hidden `LeakyReLU(negative_slope=0.01)` operations with
+ReLU; the two final decoder blocks already using ReLU remain unchanged. Because
+the model has the exact baseline parameter names and shapes, a baseline
+checkpoint loads strictly, including all BatchNorm affine parameters and
+running statistics.
+
+Fine-tune all parameters for 70 epochs with a fresh Adam optimizer initialized
+at `5e-4`:
+
+```bash
+python autophasenn_training_pipeline/train.py \
+  --model-variant relu_baseline \
+  --pretrained /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt \
+  --epochs 70 \
+  --lr 5e-4
+```
+
+Use `--resume` only with a checkpoint already produced by the `relu_baseline`
+variant. The baseline checkpoint should be supplied with `--pretrained`, which
+restores model and BatchNorm state but intentionally starts a new optimizer and
+scheduler for fine-tuning.
 
 ## ResidualAutoPhaseNN Variant
 

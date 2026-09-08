@@ -20,6 +20,7 @@ try:
         AutoPhaseNNBiPVMSkip,
         load_baseline_weights as load_mamba_skip_baseline_weights,
     )
+    from .model_relu_baseline import ReLUBaselineAutoPhaseNN
     from .model_residual import ResidualAutoPhaseNN
     from .model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 except ImportError:
@@ -39,12 +40,14 @@ except ImportError:
         AutoPhaseNNBiPVMSkip,
         load_baseline_weights as load_mamba_skip_baseline_weights,
     )
+    from model_relu_baseline import ReLUBaselineAutoPhaseNN
     from model_residual import ResidualAutoPhaseNN
     from model_tf_compatible import TFCompatibleAutoPhaseNN, load_weights
 
 
 MODEL_VARIANTS = (
     "baseline",
+    "relu_baseline",
     "residual",
     "amplitude_skip",
     "decoder_cross_skip",
@@ -87,6 +90,8 @@ def create_model(model_variant: str, threshold: float | None = None) -> nn.Modul
 
     if model_variant == "baseline":
         return TFCompatibleAutoPhaseNN(threshold=threshold)
+    if model_variant == "relu_baseline":
+        return ReLUBaselineAutoPhaseNN(threshold=threshold)
     if model_variant == "residual":
         return ResidualAutoPhaseNN(threshold=threshold)
     if model_variant == "amplitude_skip":
