@@ -176,3 +176,33 @@ python "$SCRIPT" \
     --num_samples_train "$num_samples_train" \
     --num_samples_val "$num_samples_val" \
     --scale_I "$scale_I" 2>&1 | tee -a "$log_file"
+
+
+
+
+
+
+RUN_NAME="relu_baseline_ft_bs16_lr5e-4_$(date +%Y%m%d_%H%M%S)"
+RUN_DIR="$PWD/autophasenn_training_pipeline/runs/${RUN_NAME}"
+
+mkdir -p "${RUN_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u \
+  autophasenn_training_pipeline/train.py \
+  --model-variant relu_baseline \
+  --run-name "${RUN_NAME}" \
+  --pretrained /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/autophasenn_retrain_l1/checkpoint_best.pt \
+  --epochs 70 \
+  --lr 5e-4 \
+  --save-every 20 \
+  --print-freq 50 \
+  > "${RUN_DIR}/console.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${RUN_DIR}/train.pid"
+
+echo "训练已启动"
+echo "PID          : ${PID}"
+echo "日志         : ${RUN_DIR}/console.log"
+echo "运行记录     : ${RUN_DIR}"
+echo "Checkpoints  : /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/${RUN_NAME}"

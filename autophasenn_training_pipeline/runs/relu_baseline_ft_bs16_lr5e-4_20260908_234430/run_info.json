@@ -1,0 +1,31 @@
+{
+  "run_name": "relu_baseline_ft_bs16_lr5e-4_20260908_234430",
+  "created_at": "2026-09-08T23:44:31.516385+08:00",
+  "model_variant": "relu_baseline",
+  "initialization": "checkpointed",
+  "loss": {
+    "type": "l1",
+    "scope": "diff"
+  },
+  "optimization": {
+    "optimizer": "adam",
+    "learning_rate": 0.0005,
+    "scheduler": "plateau",
+    "batch_size": 16,
+    "epochs": 70,
+    "fp16": false,
+    "cross_skip_only_epochs": 0,
+    "decoder_finetune_epochs": 0
+  },
+  "data": {
+    "directory": "/data_ssd/oyys/autophasenn/",
+    "train_samples": 25000,
+    "validation_samples": 5000
+  },
+  "paths": {
+    "run": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/relu_baseline_ft_bs16_lr5e-4_20260908_234430",
+    "output": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/relu_baseline_ft_bs16_lr5e-4_20260908_234430",
+    "checkpoints": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/relu_baseline_ft_bs16_lr5e-4_20260908_234430",
+    "tensorboard": "/home/oyys/code/UMamba-AutoPhaseNN/autophasenn_training_pipeline/runs/relu_baseline_ft_bs16_lr5e-4_20260908_234430/tensorboard"
+  }
+}
