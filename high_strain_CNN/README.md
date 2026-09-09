@@ -43,12 +43,13 @@ This is a separate dataset route; the AutoPhaseNN commands below retain their de
 
 ## PyTorch architecture
 
-`HighStrainPhaseUNet` supports four variants:
+`HighStrainPhaseUNet` supports five variants:
 
 | Variant | Encoder scales | Bottleneck | Parameters | Purpose |
 |---|---:|---:|---:|---|
 | `reduced` | 5 | 1024 | 39,160,897 | Default AutoPhaseNN-data training |
 | `reduced_bn_no_outer_skip` | 5 | 1024 | 39,121,665 | BatchNorm and no full-resolution skip ablation |
+| `reduced_bn_relu_no_outer_skip` | 5 | 1024 | 39,121,665 | Previous ablation with ReLU hidden activations |
 | `reduced_bn_no_outer_skip_mamba8` | 5 | 1024 | 39,304,322 | Previous ablation plus 8-cubed bidirectional Mamba |
 | `published` | 6 | 2048 | 143,759,937 | Original-weight conversion and parity |
 
@@ -59,7 +60,8 @@ published decoder input of `4^3 x 768` from that point onward.
 
 All variants retain the two multi-dilation input blocks, compressed U-Net
 skips, LeakyReLU slope 0.2, TensorFlow `SAME` padding, transpose-convolution
-voxel alignment, and one-channel `64 x 64 x 64` reciprocal-phase output.
+voxel alignment, and one-channel `64 x 64 x 64` reciprocal-phase output. The
+ReLU ablation is the sole exception to the shared LeakyReLU activation.
 
 The `reduced_bn_no_outer_skip` variant is based only on `reduced`. It removes
 the outermost `64^3` encoder-to-decoder skip, including its dedicated
@@ -71,6 +73,13 @@ convolution and transpose convolution follows
 `eps=1e-3` and PyTorch `momentum=0.01`, equivalent to Keras running-statistics
 momentum `0.99`. The data pipeline, WCA loss, output semantics, and real-space
 reconstruction are unchanged.
+
+The `reduced_bn_relu_no_outer_skip` variant has exactly the same parameterized
+layers as `reduced_bn_no_outer_skip`, but replaces every hidden LeakyReLU with
+ReLU. A `reduced_bn_no_outer_skip` checkpoint can therefore be loaded strictly
+through `--pretrained` for activation-only fine-tuning. This migration starts a
+fresh optimizer and scheduler; `--resume` remains restricted to checkpoints
+already saved as the ReLU variant.
 
 The `reduced_bn_no_outer_skip_mamba8` variant applies global context after the
 decoder produces its `8^3 x 256` feature. A `1 x 1 x 1` projection maps the
@@ -444,6 +453,19 @@ python -u -m pytorch_autophasenn.train \
   --run-name high_strain_reduced_bn_no_outer_skip_scratch
 ```
 
+Fine-tune the ReLU activation ablation on AutoPhaseNN data for 60 epochs. Its
+default initial learning rate is `5e-4`:
+
+```bash
+python -u -m pytorch_autophasenn.train \
+  --data-format autophasenn \
+  --model-variant reduced_bn_relu_no_outer_skip \
+  --pretrained /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/checkpoint_best.pt \
+  --epochs 60 \
+  --learning-rate 5e-4 \
+  --run-name high_strain_reduced_bn_relu_no_outer_skip_ft
+```
+
 Train the Mamba extension from scratch. It shares the BatchNorm variant's
 default Adam learning rate of `1e-3`; omitting both `--pretrained` and
 `--resume` is intentional:
@@ -487,7 +509,8 @@ Training keeps the original Adam settings (`beta1=0.9`, `beta2=0.999`,
 `epsilon=1e-7`), float32, batch size 16, and the WCA objective. The `reduced`
 and `published` variants start at the paper's `1e-4`; the BatchNorm ablation
 and its Mamba extension start at `1e-3` to test whether normalization supports
-faster optimization.
+faster optimization. The pretrained ReLU ablation starts at `5e-4` and defaults
+to 60 fine-tuning epochs.
 All variants use the AutoPhaseNN `ReduceLROnPlateau` defaults: factor `0.5`,
 patience `5`, and minimum learning rate `1e-6`. The scheduler is the only
 learning-rate-policy departure from the paper's constant rate. The adapted

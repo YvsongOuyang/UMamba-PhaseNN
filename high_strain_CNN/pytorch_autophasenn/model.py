@@ -15,10 +15,12 @@ from .mamba_block import BidirectionalMamba3D, MambaFactory
 PUBLISHED_MODEL_VARIANT = "published"
 REDUCED_MODEL_VARIANT = "reduced"
 REDUCED_BN_NO_OUTER_SKIP_VARIANT = "reduced_bn_no_outer_skip"
+REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT = "reduced_bn_relu_no_outer_skip"
 REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT = "reduced_bn_no_outer_skip_mamba8"
 MODEL_VARIANTS = (
     REDUCED_MODEL_VARIANT,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+    REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT,
     REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
     PUBLISHED_MODEL_VARIANT,
 )
@@ -100,10 +102,11 @@ class HighStrainPhaseUNet(nn.Module):
     Input and output use PyTorch's ``[batch, channel, depth, height, width]``
     layout. ``reduced`` removes the deepest encoder-decoder scale and caps the
     bottleneck at 1024 channels. ``reduced_bn_no_outer_skip`` additionally uses
-    BatchNorm and removes the full-resolution skip. Its ``mamba8`` extension
-    adds bidirectional global context at the 8-cubed decoder scale. ``published``
-    retains the numerically matched six-level Keras architecture with a
-    2048-channel bottleneck.
+    BatchNorm and removes the full-resolution skip. Its ``relu`` variant
+    replaces every hidden LeakyReLU with ReLU, while its ``mamba8`` extension
+    adds bidirectional global context at the 8-cubed decoder scale.
+    ``published`` retains the numerically matched six-level Keras architecture
+    with a 2048-channel bottleneck.
     """
 
     def __init__(
@@ -121,10 +124,12 @@ class HighStrainPhaseUNet(nn.Module):
         self.use_mamba = model_variant == REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT
         self.use_batch_norm = model_variant in {
             REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+            REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT,
             REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
         }
         self.use_outer_skip = model_variant not in {
             REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+            REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT,
             REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
         }
         self.is_published = model_variant == PUBLISHED_MODEL_VARIANT
@@ -207,7 +212,11 @@ class HighStrainPhaseUNet(nn.Module):
                     affine=True,
                     track_running_stats=True,
                 )
-        self.activation = nn.LeakyReLU(negative_slope=0.2)
+        self.activation = (
+            nn.ReLU()
+            if model_variant == REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT
+            else nn.LeakyReLU(negative_slope=0.2)
+        )
         if self.use_mamba:
             # Preserve the base CNN's random stream so scratch ablations start
             # from the same convolution weights when given the same seed.
@@ -329,11 +338,25 @@ def count_parameters(model: nn.Module) -> int:
     return sum(parameter.numel() for parameter in model.parameters())
 
 
-def infer_model_variant(state_dict: Mapping[str, torch.Tensor]) -> str:
-    """Infer the architecture from the bottleneck kernel in a state dict."""
+def infer_model_variant(
+    state_dict: Mapping[str, torch.Tensor],
+    declared_variant: str | None = None,
+) -> str:
+    """Infer structure, using checkpoint metadata for parameter-free variants."""
+
+    if declared_variant is not None and declared_variant not in MODEL_VARIANTS:
+        raise ValueError(
+            f"Checkpoint declares unknown model variant {declared_variant!r}."
+        )
 
     if "global_context.alpha" in state_dict:
-        return REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT
+        inferred_variant = REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT
+        if declared_variant is not None and declared_variant != inferred_variant:
+            raise ValueError(
+                f"Checkpoint declares {declared_variant!r}, but its state dict "
+                f"matches {inferred_variant!r}."
+            )
+        return inferred_variant
 
     key = "layers.conv3d_18.conv.weight"
     if key not in state_dict:
@@ -347,14 +370,31 @@ def infer_model_variant(state_dict: Mapping[str, torch.Tensor]) -> str:
             )
         final_hidden_inputs = int(state_dict[final_hidden_key].shape[1])
         if final_hidden_inputs == 32:
+            if declared_variant == REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT:
+                return declared_variant
+            if declared_variant not in {None, REDUCED_BN_NO_OUTER_SKIP_VARIANT}:
+                raise ValueError(
+                    f"Checkpoint declares {declared_variant!r}, but its state dict "
+                    "matches a BatchNorm/no-outer-skip variant."
+                )
             return REDUCED_BN_NO_OUTER_SKIP_VARIANT
         if final_hidden_inputs == 48:
+            if declared_variant not in {None, REDUCED_MODEL_VARIANT}:
+                raise ValueError(
+                    f"Checkpoint declares {declared_variant!r}, but its state dict "
+                    f"matches {REDUCED_MODEL_VARIANT!r}."
+                )
             return REDUCED_MODEL_VARIANT
         raise ValueError(
             f"Cannot infer reduced model variant from {final_hidden_key} with "
             f"{final_hidden_inputs} input channels."
         )
     if channels == (2048, 1024):
+        if declared_variant not in {None, PUBLISHED_MODEL_VARIANT}:
+            raise ValueError(
+                f"Checkpoint declares {declared_variant!r}, but its state dict "
+                f"matches {PUBLISHED_MODEL_VARIANT!r}."
+            )
         return PUBLISHED_MODEL_VARIANT
     raise ValueError(
         f"Cannot infer model variant from {key} with channel shape {channels}."

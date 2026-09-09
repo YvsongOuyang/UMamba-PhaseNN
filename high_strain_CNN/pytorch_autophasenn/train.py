@@ -31,6 +31,7 @@ from pytorch_autophasenn.model import (
     MODEL_VARIANTS,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
     REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+    REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT,
     HighStrainPhaseUNet,
     count_parameters,
     infer_model_variant,
@@ -111,7 +112,15 @@ def parse_args() -> argparse.Namespace:
         default=data_config.get("input_preprocessing", {}).get("transform") == "log1p",
         help="Use normalized log1p(intensity), matching the published model.",
     )
-    parser.add_argument("--epochs", type=int, default=240)
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=None,
+        help=(
+            "Training epochs. Defaults to 60 for reduced_bn_relu_no_outer_skip "
+            "and 240 otherwise."
+        ),
+    )
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--prefetch-factor", type=int, default=2)
@@ -120,8 +129,9 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=None,
         help=(
-            "Initial learning rate. Defaults to 1e-3 for "
-            "the BatchNorm/no-outer-skip variants and 1e-4 otherwise."
+            "Initial learning rate. Defaults to 5e-4 for "
+            "reduced_bn_relu_no_outer_skip, 1e-3 for the other "
+            "BatchNorm/no-outer-skip variants, and 1e-4 otherwise."
         ),
     )
     parser.add_argument(
@@ -130,8 +140,8 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_MODEL_VARIANT,
         help=(
             "Use reduced by default; reduced_bn_no_outer_skip adds BatchNorm and "
-            "removes the full-resolution skip; its mamba8 extension adds global "
-            "context at the 8-cubed decoder scale; published retains 2048 channels."
+            "removes the full-resolution skip; its relu variant replaces LeakyReLU, "
+            "and its mamba8 extension adds 8-cubed global context."
         ),
     )
     parser.add_argument(
@@ -158,6 +168,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--fp16", action="store_true")
     args = parser.parse_args()
+    if args.epochs is None:
+        args.epochs = (
+            60
+            if args.model_variant == REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT
+            else 240
+        )
     if args.num_workers < 0 or args.prefetch_factor < 1 or args.batch_size < 1 or args.save_every < 0:
         parser.error("Invalid worker, prefetch, batch, or checkpoint interval.")
     if args.max_batches_per_epoch < 0 or args.epochs < 1:
@@ -178,14 +194,15 @@ def parse_args() -> argparse.Namespace:
             else PROJECT_DIR / "artifacts" / "training" / "pytorch_simulation"
         )
     if args.learning_rate is None:
-        args.learning_rate = (
-            1e-3
-            if args.model_variant in {
-                REDUCED_BN_NO_OUTER_SKIP_VARIANT,
-                REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
-            }
-            else 1e-4
-        )
+        if args.model_variant == REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT:
+            args.learning_rate = 5e-4
+        elif args.model_variant in {
+            REDUCED_BN_NO_OUTER_SKIP_VARIANT,
+            REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+        }:
+            args.learning_rate = 1e-3
+        else:
+            args.learning_rate = 1e-4
     args.data_config = str(Path(args.data_config).expanduser().resolve())
     return args
 
@@ -220,11 +237,21 @@ def load_model_state(
     model: HighStrainPhaseUNet,
     checkpoint_path: str | Path,
     device: torch.device,
+    *,
+    allow_activation_migration: bool = False,
 ) -> dict:
     checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint.get("model_state_dict", checkpoint)
-    checkpoint_variant = infer_model_variant(state_dict)
-    if checkpoint_variant != model.model_variant:
+    declared_variant = (
+        checkpoint.get("model_variant") if isinstance(checkpoint, dict) else None
+    )
+    checkpoint_variant = infer_model_variant(state_dict, declared_variant)
+    activation_migration = (
+        allow_activation_migration
+        and checkpoint_variant == REDUCED_BN_NO_OUTER_SKIP_VARIANT
+        and model.model_variant == REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT
+    )
+    if checkpoint_variant != model.model_variant and not activation_migration:
         raise ValueError(
             f"Checkpoint uses model variant {checkpoint_variant!r}, but the requested "
             f"model is {model.model_variant!r}. Select the matching --model-variant."
@@ -496,8 +523,17 @@ def main() -> None:
     best_val_loss = float("inf")
 
     if args.pretrained:
-        load_model_state(model, args.pretrained, device)
-        LOGGER.info("Loaded converted/pretrained weights: %s", args.pretrained)
+        load_model_state(
+            model,
+            args.pretrained,
+            device,
+            allow_activation_migration=True,
+        )
+        LOGGER.info(
+            "Loaded pretrained weights for %s: %s",
+            args.model_variant,
+            args.pretrained,
+        )
     elif args.resume:
         checkpoint = load_model_state(model, args.resume, device)
         checkpoint_version = checkpoint.get("project_version")

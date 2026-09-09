@@ -261,7 +261,10 @@ def load_model(
 ) -> tuple[HighStrainPhaseUNet, dict]:
     checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint.get("model_state_dict", checkpoint)
-    checkpoint_variant = infer_model_variant(state_dict)
+    declared_variant = (
+        checkpoint.get("model_variant") if isinstance(checkpoint, dict) else None
+    )
+    checkpoint_variant = infer_model_variant(state_dict, declared_variant)
     if requested_variant != "auto" and requested_variant != checkpoint_variant:
         raise ValueError(
             f"Checkpoint uses model variant {checkpoint_variant!r}, but "

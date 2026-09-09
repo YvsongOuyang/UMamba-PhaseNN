@@ -7,6 +7,7 @@ from .model import (
     MODEL_VARIANTS,
     REDUCED_BN_NO_OUTER_SKIP_VARIANT,
     REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT,
+    REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT,
     HighStrainPhaseUNet,
     infer_model_variant,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "MODEL_VARIANTS",
     "REDUCED_BN_NO_OUTER_SKIP_VARIANT",
     "REDUCED_BN_NO_OUTER_SKIP_MAMBA8_VARIANT",
+    "REDUCED_BN_RELU_NO_OUTER_SKIP_VARIANT",
     "farfield_modulus_from_realspace",
     "phase_retrieval_wca_components",
     "phase_retrieval_wca_loss",
