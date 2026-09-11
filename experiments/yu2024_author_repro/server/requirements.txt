@@ -1,0 +1,6 @@
+# Install a matched torch/torchvision CUDA pair first (see README).
+numpy==2.2.6
+scipy==1.15.3
+matplotlib==3.10.8
+scikit-learn==1.7.2
+tqdm==4.67.3

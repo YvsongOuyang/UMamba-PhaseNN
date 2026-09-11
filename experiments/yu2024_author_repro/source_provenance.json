@@ -1,0 +1,10 @@
+{
+  "commit": "bcccdef38ca7d0c35699036ceee629fecdfc76f7",
+  "unmodified_runtime_files": {
+    "model.py": "911f0461909ec98e99177729fd70206c24103e810290c661088681f693b0dac6",
+    "complexNN.py": "9589238aa8a74d41b236a9eca83a100cd10362f5f8616e6ee37550cce73c3952",
+    "untils.py": "313f17da05ed146f0ccb5eba5418f7c05311a279fb54ab5ee953de8cc45172bf"
+  },
+  "training_source_sha256": "8c805b14028e7d1296af4326f51e16d6a7faa3c3219c7e84ac89e726c4159614",
+  "generator_sha256": "bc91b43ec13fdb834fb24f6eb299294d9ab92405ea773b5fdeac80875584e486"
+}

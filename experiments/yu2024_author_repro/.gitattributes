@@ -1,0 +1,2 @@
+# Preserve upstream byte hashes on Windows and Linux.
+vendor/** -text
