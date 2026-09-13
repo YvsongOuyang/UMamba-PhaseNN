@@ -4,7 +4,8 @@ A supervised 3D CNN for reciprocal-space phase retrieval from highly strained
 Bragg coherent diffraction patterns. This checkout keeps the original
 TensorFlow 2.10.1 implementation and adds a numerically verified PyTorch port,
 a resource-reduced PyTorch training variant, an optional Mamba global-context
-ablation, and an AutoPhaseNN memmap adapter.
+ablation, a sparse-MoMamba real-space refinement experiment, and an AutoPhaseNN
+memmap adapter.
 
 The model predicts the **reciprocal-space phase**. It does not directly predict
 the real-space amplitude and phase used by AutoPhaseNN. Combining the measured
@@ -25,6 +26,11 @@ retrieval algorithm.
   including compact object-to-phase FFT labels.
 - `pytorch_autophasenn/reconstruction.py`: combines measured diffraction modulus and
   predicted reciprocal phase, then reconstructs a complex real-space object.
+- `pytorch_autophasenn/momamba_refiner.py`: complex-valued cascade adapter with
+  sinusoidal position enhancement, multihead top-k routing, sparse Mamba experts,
+  and an optional measured-modulus projection.
+- `pytorch_autophasenn/train_refiner.py`: isolated second-stage trainer; it freezes
+  an existing phase U-Net and trains only the real-space refiner.
 - `pytorch_autophasenn/train.py`, `evaluate.py`, and `visualize.py`: the full
   PyTorch workflow on AutoPhaseNN data.
 - `simulation/`: supplied-author particle generation, shared TensorFlow/PyTorch
@@ -93,6 +99,82 @@ does not add another loss or change the reciprocal-phase output.
 
 PyTorch tensors use `NCDHW`; TensorFlow tensors use `NDHWC`. This layout change
 does not change the logical tensor dimensions.
+
+## Real-space sparse-MoMamba refinement
+
+This experiment adapts the method in *Sparse Mixture of Mambas for Domain
+Generalized Atomic Electron Tomography Augmentation* to BCDI. It is not a
+claim that the paper's scalar AET weights can be reused for complex objects.
+The architecture was checked against the authors' public
+[`yuy38457/MoMambas`](https://github.com/yuy38457/MoMambas) repository; this
+implementation is clean-room code and does not vendor that repository.
+The implemented path is:
+
+```text
+minmax(log1p(diffraction intensity)) -> frozen HighStrainPhaseUNet
+unit-maximum measured modulus + predicted reciprocal phase -> inverse 3D FFT
+complex 3D convolutions + joint real/imaginary sparse-MoMamba 3D U-Net
+optional measured-modulus projection -> refined complex object
+```
+
+The MoM blocks retain the paper's parameter-free sinusoidal positional
+encoding, fused multihead router, three experts per stage, top-2 routing,
+Mamba settings `(d_state=16, d_conv=4, expand=2)`, `1e-6` residual scale, and
+two residual 3D convolution blocks. The AET scalar input/output heads are
+replaced by explicit complex convolutions. Each local transform uses two real
+kernels and computes `Wr*xr-Wi*xi` and `Wr*xi+Wi*xr`; real and imaginary
+components use separate BatchNorm statistics and component-wise LeakyReLU.
+Mamba itself remains a real selective state-space operator over the concatenated
+real/imaginary feature channels, so this is a complex-convolution/joint-Mamba
+hybrid rather than a claim of complex-valued Mamba algebra. The surrounding
+U-shaped backbone stays compact instead of copying the AET-specific
+ensemble-cross head.
+
+The final complex output convolution is zero-initialized, so a newly attached
+refiner initially returns exactly the inverse-FFT initialization while still
+allowing the output weights to receive gradients on the first update. The
+front `HighStrainPhaseUNet` is always placed in evaluation mode, has
+`requires_grad=False`, and runs under `no_grad`; only the refiner enters the
+optimizer.
+
+The default supervised objective follows Eq. (1) of Yu et al., *Ultrafast Bragg
+coherent diffraction imaging of epitaxial thin films using deep complex-valued
+neural networks*: `MAE(real)+MAE(imag)`. Before applying that component loss,
+the implementation RMS-normalizes the two objects, aligns global phase, and
+selects the lower direct or conjugate/twin-equivalent target because those are
+unavoidable BCDI ambiguities. `--object-loss-scope full` matches the paper's
+full output loss; `support_balanced` is retained only as an ablation.
+
+Eq. (2)'s Fourier-modulus MAE is available through
+`--physics-loss-weight`, applying the stored synthetic support before the FFT.
+It defaults to zero because the paper uses Eq. (1) for supervised simulated
+training and Eq. (2) for unsupervised experimental refinement rather than
+combining them. Hard measured-modulus projection is also disabled by default;
+`--project-measured-modulus` remains available as an explicit ablation or
+inference constraint.
+
+Install the existing optional Mamba dependency, then run a short diagnostic
+before committing to the full dataset:
+
+```bash
+cd /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN
+
+python -u -m pytorch_autophasenn.train_refiner \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --phase-checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/author_bn_no_outer_skip_full_bs16_lr1e-3_20260831_234036/checkpoint_best.pt \
+  --num-samples-train 256 \
+  --num-samples-val 64 \
+  --max-batches-per-epoch 20 \
+  --epochs 2
+```
+
+The trainer defaults to the MoMamba paper's `2e-4` learning rate, three experts,
+top-2 routing and two router heads, while using the BCDI paper's Adam optimizer
+and cosine schedule. It trains for 100 epochs in float32 with a frozen phase
+U-Net. `base_channels=4` denotes four complex channels, or eight stored real
+feature channels, preserving the former refiner's effective Mamba width.
+Run records stay under `artifacts/training/pytorch_realspace_momamba/`; large
+checkpoints stay under the configured external checkpoint root.
 
 ## Install
 
