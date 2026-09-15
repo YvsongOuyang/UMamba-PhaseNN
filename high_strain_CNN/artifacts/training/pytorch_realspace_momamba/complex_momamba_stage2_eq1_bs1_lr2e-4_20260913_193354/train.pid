@@ -1,1 +1,15 @@
 118440
+
+cd /home/oyys/code/UMamba-AutoPhaseNN
+
+cd high_strain_CNN
+
+RUN_NAME="complex_momamba_stage2_eq1_bs1_lr2e-4_20260913_193354"
+
+python -u -m pytorch_autophasenn.evaluate_refiner \
+  --checkpoint "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/${RUN_NAME}/checkpoint_best.pt" \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --split test \
+  --batch-size 24 \
+  --num-workers 4 \
+  --support-threshold 0.3

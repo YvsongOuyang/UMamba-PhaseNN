@@ -1900,3 +1900,32 @@
 2026-09-15 22:50:46 | INFO    | TRAIN | epoch=027/100 | batch=01250/03355 | total=3.74515e-02 | object=3.74515e-02 | physics=0.00000e+00 | elapsed=00:40:07 | eta=01:07:34 | data_wait=0.88s
 2026-09-15 22:52:43 | INFO    | TRAIN | epoch=027/100 | batch=01300/03355 | total=4.09270e-02 | object=4.09270e-02 | physics=0.00000e+00 | elapsed=00:42:04 | eta=01:06:30 | data_wait=0.89s
 2026-09-15 22:54:37 | INFO    | TRAIN | epoch=027/100 | batch=01350/03355 | total=4.40549e-02 | object=4.40549e-02 | physics=0.00000e+00 | elapsed=00:43:58 | eta=01:05:18 | data_wait=0.90s
+2026-09-15 22:56:08 | INFO    | TRAIN | epoch=027/100 | batch=01400/03355 | total=3.79954e-02 | object=3.79954e-02 | physics=0.00000e+00 | elapsed=00:45:29 | eta=01:03:31 | data_wait=0.91s
+2026-09-15 22:57:46 | INFO    | TRAIN | epoch=027/100 | batch=01450/03355 | total=3.68569e-02 | object=3.68569e-02 | physics=0.00000e+00 | elapsed=00:47:08 | eta=01:01:55 | data_wait=0.92s
+2026-09-15 22:59:17 | INFO    | TRAIN | epoch=027/100 | batch=01500/03355 | total=4.52287e-02 | object=4.52287e-02 | physics=0.00000e+00 | elapsed=00:48:39 | eta=01:00:09 | data_wait=0.93s
+2026-09-15 23:00:49 | INFO    | TRAIN | epoch=027/100 | batch=01550/03355 | total=4.43437e-02 | object=4.43437e-02 | physics=0.00000e+00 | elapsed=00:50:10 | eta=00:58:25 | data_wait=0.93s
+2026-09-15 23:02:23 | INFO    | TRAIN | epoch=027/100 | batch=01600/03355 | total=3.16347e-02 | object=3.16347e-02 | physics=0.00000e+00 | elapsed=00:51:44 | eta=00:56:45 | data_wait=0.94s
+2026-09-15 23:03:58 | INFO    | TRAIN | epoch=027/100 | batch=01650/03355 | total=4.00083e-02 | object=4.00083e-02 | physics=0.00000e+00 | elapsed=00:53:20 | eta=00:55:06 | data_wait=0.95s
+2026-09-15 23:05:30 | INFO    | TRAIN | epoch=027/100 | batch=01700/03355 | total=3.92467e-02 | object=3.92467e-02 | physics=0.00000e+00 | elapsed=00:54:51 | eta=00:53:24 | data_wait=0.96s
+2026-09-15 23:07:02 | INFO    | TRAIN | epoch=027/100 | batch=01750/03355 | total=4.36529e-02 | object=4.36529e-02 | physics=0.00000e+00 | elapsed=00:56:23 | eta=00:51:43 | data_wait=0.97s
+2026-09-15 23:08:39 | INFO    | TRAIN | epoch=027/100 | batch=01800/03355 | total=3.81193e-02 | object=3.81193e-02 | physics=0.00000e+00 | elapsed=00:58:00 | eta=00:50:07 | data_wait=0.98s
+2026-09-15 23:10:11 | INFO    | TRAIN | epoch=027/100 | batch=01850/03355 | total=3.92117e-02 | object=3.92117e-02 | physics=0.00000e+00 | elapsed=00:59:32 | eta=00:48:26 | data_wait=0.99s
+2026-09-15 23:11:44 | INFO    | TRAIN | epoch=027/100 | batch=01900/03355 | total=3.74926e-02 | object=3.74926e-02 | physics=0.00000e+00 | elapsed=01:01:05 | eta=00:46:47 | data_wait=1.00s
+2026-09-15 23:13:22 | INFO    | TRAIN | epoch=027/100 | batch=01950/03355 | total=4.73403e-02 | object=4.73403e-02 | physics=0.00000e+00 | elapsed=01:02:43 | eta=00:45:11 | data_wait=1.01s
+2026-09-15 23:14:53 | INFO    | TRAIN | epoch=027/100 | batch=02000/03355 | total=3.78557e-02 | object=3.78557e-02 | physics=0.00000e+00 | elapsed=01:04:14 | eta=00:43:31 | data_wait=1.02s
+2026-09-15 23:16:25 | INFO    | TRAIN | epoch=027/100 | batch=02050/03355 | total=3.71086e-02 | object=3.71086e-02 | physics=0.00000e+00 | elapsed=01:05:47 | eta=00:41:52 | data_wait=1.03s
+2026-09-15 23:18:05 | INFO    | TRAIN | epoch=027/100 | batch=02100/03355 | total=3.77979e-02 | object=3.77979e-02 | physics=0.00000e+00 | elapsed=01:07:26 | eta=00:40:18 | data_wait=1.04s
+2026-09-15 23:19:38 | INFO    | TRAIN | epoch=027/100 | batch=02150/03355 | total=3.65587e-02 | object=3.65587e-02 | physics=0.00000e+00 | elapsed=01:09:00 | eta=00:38:40 | data_wait=1.05s
+2026-09-15 23:21:15 | INFO    | TRAIN | epoch=027/100 | batch=02200/03355 | total=4.59467e-02 | object=4.59467e-02 | physics=0.00000e+00 | elapsed=01:10:37 | eta=00:37:04 | data_wait=1.06s
+2026-09-15 23:22:52 | INFO    | TRAIN | epoch=027/100 | batch=02250/03355 | total=3.96773e-02 | object=3.96773e-02 | physics=0.00000e+00 | elapsed=01:12:13 | eta=00:35:28 | data_wait=1.07s
+2026-09-15 23:24:25 | INFO    | TRAIN | epoch=027/100 | batch=02300/03355 | total=3.90212e-02 | object=3.90212e-02 | physics=0.00000e+00 | elapsed=01:13:46 | eta=00:33:50 | data_wait=1.08s
+2026-09-15 23:26:05 | INFO    | TRAIN | epoch=027/100 | batch=02350/03355 | total=4.34240e-02 | object=4.34240e-02 | physics=0.00000e+00 | elapsed=01:15:26 | eta=00:32:16 | data_wait=1.09s
+2026-09-15 23:27:38 | INFO    | TRAIN | epoch=027/100 | batch=02400/03355 | total=3.69505e-02 | object=3.69505e-02 | physics=0.00000e+00 | elapsed=01:16:59 | eta=00:30:38 | data_wait=1.10s
+2026-09-15 23:29:18 | INFO    | TRAIN | epoch=027/100 | batch=02450/03355 | total=3.97030e-02 | object=3.97030e-02 | physics=0.00000e+00 | elapsed=01:18:39 | eta=00:29:03 | data_wait=1.11s
+2026-09-15 23:30:52 | INFO    | TRAIN | epoch=027/100 | batch=02500/03355 | total=3.51753e-02 | object=3.51753e-02 | physics=0.00000e+00 | elapsed=01:20:13 | eta=00:27:26 | data_wait=1.12s
+2026-09-15 23:32:26 | INFO    | TRAIN | epoch=027/100 | batch=02550/03355 | total=4.29538e-02 | object=4.29538e-02 | physics=0.00000e+00 | elapsed=01:21:47 | eta=00:25:49 | data_wait=1.13s
+2026-09-15 23:34:05 | INFO    | TRAIN | epoch=027/100 | batch=02600/03355 | total=3.84088e-02 | object=3.84088e-02 | physics=0.00000e+00 | elapsed=01:23:27 | eta=00:24:14 | data_wait=1.14s
+2026-09-15 23:35:38 | INFO    | TRAIN | epoch=027/100 | batch=02650/03355 | total=4.05426e-02 | object=4.05426e-02 | physics=0.00000e+00 | elapsed=01:24:59 | eta=00:22:37 | data_wait=1.15s
+2026-09-15 23:37:15 | INFO    | TRAIN | epoch=027/100 | batch=02700/03355 | total=3.93068e-02 | object=3.93068e-02 | physics=0.00000e+00 | elapsed=01:26:36 | eta=00:21:01 | data_wait=1.16s
+/home/oyys/anaconda3/envs/mamba/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 40 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
