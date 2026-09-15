@@ -176,6 +176,26 @@ feature channels, preserving the former refiner's effective Mamba width.
 Run records stay under `artifacts/training/pytorch_realspace_momamba/`; large
 checkpoints stay under the configured external checkpoint root.
 
+Evaluate the complete cascade on its particle-disjoint author-data test split:
+
+```bash
+cd /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN
+
+python -u -m pytorch_autophasenn.evaluate_refiner \
+  --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/<run-name>/checkpoint_best.pt \
+  --data-dir /data_ssd/oyys/high_strain_cnn/dataset \
+  --split test \
+  --batch-size 24 \
+  --num-workers 4
+```
+
+This evaluator reports the same ambiguity-aligned complex component MAE used
+for training, Fourier-modulus MAE, reciprocal-phase WCA, and thresholded
+support metrics both before and after MoMamba. Results are written to
+`artifacts/evaluations/pytorch_realspace_momamba/<run-name>_test/`, so the
+second stage's contribution is measured directly instead of being mixed with
+the phase U-Net's standalone evaluation.
+
 ## Install
 
 The training port supports Python 3.10 and PyTorch 2.x:
