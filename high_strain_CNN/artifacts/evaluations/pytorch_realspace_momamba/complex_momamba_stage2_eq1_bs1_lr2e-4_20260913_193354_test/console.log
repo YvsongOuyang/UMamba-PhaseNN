@@ -1,0 +1,9 @@
+2026-09-15 22:51:46 | INFO    | Checkpoint=/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/complex_momamba_stage2_eq1_bs1_lr2e-4_20260913_193354/checkpoint_best.pt | epoch=26 | phase=reduced_bn_no_outer_skip (frozen) | split=test | samples=2524 | batch=24 | device=cuda
+2026-09-15 22:52:11 | INFO    | batch=00020/00106 | samples=480/2524 | initial=3.57509e-01 | refined=6.55100e-02 | elapsed=24.9s | eta=107.0s
+2026-09-15 22:52:35 | INFO    | batch=00040/00106 | samples=960/2524 | initial=3.08286e-01 | refined=5.29171e-02 | elapsed=48.9s | eta=80.7s
+2026-09-15 22:52:59 | INFO    | batch=00060/00106 | samples=1440/2524 | initial=3.24431e-01 | refined=5.24803e-02 | elapsed=72.9s | eta=55.9s
+2026-09-15 22:53:22 | INFO    | batch=00080/00106 | samples=1920/2524 | initial=3.34943e-01 | refined=6.12504e-02 | elapsed=96.3s | eta=31.3s
+2026-09-15 22:53:46 | INFO    | batch=00100/00106 | samples=2400/2524 | initial=3.19413e-01 | refined=6.33215e-02 | elapsed=120.1s | eta=7.2s
+2026-09-15 22:53:52 | INFO    | batch=00106/00106 | samples=2524/2524 | initial=4.21192e-01 | refined=7.05694e-02 | elapsed=126.2s | eta=0.0s
+2026-09-15 22:53:52 | INFO    | Object MAE 0.323396 -> 0.0581391 | WCA 0.470103 -> 0.372879 | Fourier MAE 0.00338507 -> 0.00347651 | support IoU 0.825085 -> 0.864267
+2026-09-15 22:53:52 | INFO    | Results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/evaluations/pytorch_realspace_momamba/complex_momamba_stage2_eq1_bs1_lr2e-4_20260913_193354_test

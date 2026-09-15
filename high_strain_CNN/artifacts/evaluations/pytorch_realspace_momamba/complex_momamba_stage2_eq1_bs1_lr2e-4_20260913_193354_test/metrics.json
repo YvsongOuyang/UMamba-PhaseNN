@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "run": {
+    "checkpoint": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/complex_momamba_stage2_eq1_bs1_lr2e-4_20260913_193354/checkpoint_best.pt",
+    "checkpoint_epoch": 26,
+    "phase_model_variant": "reduced_bn_no_outer_skip",
+    "split": "test",
+    "support_threshold": 0.3,
+    "device": "cuda"
+  },
+  "runtime": {
+    "project_version": "1.9.0",
+    "git_commit": "09b2fcdb80d328564efbb82b93a3519fd7121bed",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "data": {
+    "format": "author_npz",
+    "root": "/data_ssd/oyys/high_strain_cnn/dataset",
+    "split": "test",
+    "num_samples": 2524,
+    "available_samples": 2524,
+    "unfiltered_samples": 2524,
+    "oversampling_filter": {
+      "min_exclusive_per_axis": null,
+      "source": "manifest measured_object_oversampling_xyz; no array modification",
+      "original_split_counts": {
+        "train": 80531,
+        "val": 3383,
+        "test": 2524
+      },
+      "eligible_split_counts": {
+        "train": 80531,
+        "val": 3383,
+        "test": 2524
+      },
+      "excluded_split_counts": {
+        "train": 0,
+        "val": 0,
+        "test": 0
+      }
+    },
+    "selection": "all_eligible",
+    "selected_filenames_sha256": "0bc176c22af33e58e7b8524161ef8a81cb543a5524f783c54c57f72b5e0783c8",
+    "shape": [
+      64,
+      64,
+      64
+    ],
+    "manifest_sha256": "f493eb3c51bf5373cdcbee71362c24fe3afc98d7998b13d0f4b3958109db1ce2",
+    "index_filter": {
+      "min_exclusive_per_axis": 2.0,
+      "source": "metadata.measured_object_oversampling_xyz",
+      "original_manifest": "dataset_manifest.unfiltered.json",
+      "original_manifest_sha256": "e484dbb704eeeec92833ffdf0610ac6af35e9ddd6f3f6313c7a55eac581ef933",
+      "original_num_samples": 102000,
+      "original_splits": {
+        "train": 95000,
+        "val": 4000,
+        "test": 3000
+      },
+      "excluded_counts": {
+        "train": 14469,
+        "val": 617,
+        "test": 476
+      },
+      "created_at_utc": "2026-08-31T15:28:24.931441+00:00"
+    },
+    "storage_schema": "author_compact_v1",
+    "generator_protocol": "author_calls_v2",
+    "source": [
+      {
+        "name": "Global_utilities.py",
+        "bytes": 11371,
+        "sha256": "4ff1efcada4e1299ff0c24f7eeae88c6bac9ccb80c01f3ec88fbd91b49cb6f52"
+      },
+      {
+        "name": "Main_files/pot/GOLD/Au-Grochola-JCP05.eam.alloy",
+        "bytes": 630452,
+        "sha256": "1c49ca7ef48df27f7cb371f44fb9b54d0a8359c69a4033e5f3f3ac2fc2b05b29"
+      },
+      {
+        "name": "Main_files/pot/GOLD/Au_GROCHOLA.eam",
+        "bytes": 1380103,
+        "sha256": "10687fdd338b11ca9c480c00856bdd59fd32700a9f2ddb65f0319c6eda5b8398"
+      },
+      {
+        "name": "Object_utilities.py",
+        "bytes": 13832,
+        "sha256": "9b1b34b967bef872dd78392ad233e9252e0bc6b464c3f70ed65aa0c7df30f2c4"
+      },
+      {
+        "name": "Particle.py",
+        "bytes": 7866,
+        "sha256": "588f7d4ce20bf0748ece92f7b7a7e618914dd1614a19b8d203b968ed4efbce9e"
+      },
+      {
+        "name": "Plot_utilities.py",
+        "bytes": 51508,
+        "sha256": "ca88879388aeb7986f9f7547f8473f1d6c15a83791459195df4189371ce8d092"
+      },
+      {
+        "name": "PostProcessing.py",
+        "bytes": 5785,
+        "sha256": "e88bb0cbccdb288c4df4660643c41b0e02aeb76382f10ec45ce521b41b5d3d5e"
+      },
+      {
+        "name": "ShapedParticle.py",
+        "bytes": 21082,
+        "sha256": "27985a1fb5d038ce9eb592470d281b7e7028f59cc320ccb3ad0ac2b8ed3eba68"
+      },
+      {
+        "name": "diffraction_noise_functions.py",
+        "bytes": 33600,
+        "sha256": "b18a7b8a55c1c59503ef0f87935be98c18e5df52021c866ef89b15077f5ef461"
+      },
+      {
+        "name": "particle_and_diffraction.ipynb",
+        "bytes": 334945,
+        "sha256": "08d2c63184b6c594be8a5dfffcad1664b95b131c8918d3b2e6b5c37ee6b157ab"
+      },
+      {
+        "name": "rotation_matrices.py",
+        "bytes": 3113,
+        "sha256": "985b4b60718e507251908fa78f53ea443631d648d17a0d0a9d2035013ccb91ae"
+      }
+    ],
+    "backend": {
+      "name": "pynx_cuda",
+      "python": "3.10.18 (main, Jun  5 2025, 13:14:17) [GCC 11.2.0]",
+      "packages": {
+        "numpy": "1.26.4",
+        "scipy": "1.12.0",
+        "ase": "3.29.0",
+        "pynx": "2026.2b0",
+        "pycuda": "2026.1"
+      },
+      "scattering": "native PyNX CUDA",
+      "thomson_factor": "native PyNX",
+      "coordinate_io": "in-memory positions; no eight-decimal LMP roundtrip",
+      "visible_devices": [
+        "NVIDIA GeForce RTX 4090"
+      ],
+      "CUDA_VISIBLE_DEVICES": "0"
+    },
+    "input": "minmax(log1p(I))",
+    "target": "stored phi or clean object FFT; subtract central phase; no COM correction",
+    "refinement_targets": true,
+    "refinement_input": "sqrt(I) divided by its per-volume maximum",
+    "noise": "fixed stored I; no resampling",
+    "split_unit": "particle"
+  },
+  "num_samples": 2524,
+  "num_batches": 106,
+  "elapsed_seconds": 126.24069245602004,
+  "metrics": {
+    "initial": {
+      "object_mae": 0.3233957478626028,
+      "real_mae": 0.1611397107221812,
+      "imag_mae": 0.16225603716403672,
+      "fourier_modulus_mae": 0.003385068366832429,
+      "phase_wca": 0.47010264343769537,
+      "twin_fraction": 0.4076862238855256,
+      "support_iou": 0.8250845360869273,
+      "support_dice": 0.8991916463038812,
+      "support_volume_ratio": 0.9386388673646325
+    },
+    "refined": {
+      "object_mae": 0.058139058742111345,
+      "real_mae": 0.02899864742240135,
+      "imag_mae": 0.029140411514535003,
+      "fourier_modulus_mae": 0.0034765076732023864,
+      "phase_wca": 0.37287938887646005,
+      "twin_fraction": 0.40808242072960843,
+      "support_iou": 0.8642673158985688,
+      "support_dice": 0.925150361567405,
+      "support_volume_ratio": 1.0189474324227892
+    }
+  },
+  "comparison": {
+    "fourier_modulus_mae": {
+      "initial": 0.003385068366832429,
+      "refined": 0.0034765076732023864,
+      "refined_minus_initial": 9.14393063699572e-05,
+      "improvement_percent": -2.701254345876664
+    },
+    "imag_mae": {
+      "initial": 0.16225603716403672,
+      "refined": 0.029140411514535003,
+      "refined_minus_initial": -0.13311562564950172,
+      "improvement_percent": 82.04047625970627
+    },
+    "object_mae": {
+      "initial": 0.3233957478626028,
+      "refined": 0.058139058742111345,
+      "refined_minus_initial": -0.26525668912049144,
+      "improvement_percent": 82.02231812682578
+    },
+    "phase_wca": {
+      "initial": 0.47010264343769537,
+      "refined": 0.37287938887646005,
+      "refined_minus_initial": -0.09722325456123532,
+      "improvement_percent": 20.68128225152614
+    },
+    "real_mae": {
+      "initial": 0.1611397107221812,
+      "refined": 0.02899864742240135,
+      "refined_minus_initial": -0.13214106329977984,
+      "improvement_percent": 82.00403408170594
+    },
+    "support_dice": {
+      "initial": 0.8991916463038812,
+      "refined": 0.925150361567405,
+      "refined_minus_initial": 0.02595871526352389,
+      "improvement_percent": 2.886894620321146
+    },
+    "support_iou": {
+      "initial": 0.8250845360869273,
+      "refined": 0.8642673158985688,
+      "refined_minus_initial": 0.03918277981164142,
+      "improvement_percent": 4.74894124152065
+    },
+    "support_volume_ratio": {
+      "initial": 0.9386388673646325,
+      "refined": 1.0189474324227892,
+      "refined_minus_initial": 0.08030856505815664,
+      "improvement_percent": 69.1214428270377
+    },
+    "twin_fraction": {
+      "initial": 0.4076862238855256,
+      "refined": 0.40808242072960843,
+      "refined_minus_initial": 0.00039619684408281897,
+      "improvement_percent": null
+    }
+  },
+  "metric_notes": {
+    "object_mae": "Training-aligned RMS-normalized real MAE plus imaginary MAE; lower is better.",
+    "fourier_modulus_mae": "Unit-maximum Fourier-modulus MAE after applying the selected ground-truth support; lower is better.",
+    "phase_wca": "Symmetry-aware WCA after Fourier-transforming each real-space object; lower is better.",
+    "support": "Predicted support is unit-maximum amplitude >= support_threshold; IoU/Dice are higher-is-better and volume ratio is best near one."
+  }
+}
