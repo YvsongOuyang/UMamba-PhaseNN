@@ -12,11 +12,18 @@ import time
 from pathlib import Path
 
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from .author_data import AuthorNPZPhaseDataset, initialize_data_worker
+from .data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
 from .losses import phase_retrieval_wca_components
-from .management import runtime_manifest
+from .management import (
+    DEFAULT_DATA_CONFIG,
+    build_data_manifest,
+    load_data_config,
+    require_data_files,
+    runtime_manifest,
+)
 from .momamba_refiner import (
     HighStrainMoMambaCascade,
     ambiguity_aware_component_mae,
@@ -30,6 +37,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_ROOT = (
     PROJECT_DIR / "artifacts" / "evaluations" / "pytorch_realspace_momamba"
 )
+DEFAULT_AUTHOR_DATA_DIR = "/data_ssd/oyys/high_strain_cnn/dataset"
 LOGGER = logging.getLogger("high_strain.evaluate_refiner")
 
 LOWER_IS_BETTER = {
@@ -47,9 +55,21 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument(
-        "--data-dir",
-        default="/data_ssd/oyys/high_strain_cnn/dataset",
+        "--dataset-format",
+        choices=("author_npz", "autophasenn_memmap"),
+        default="author_npz",
     )
+    parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    parser.add_argument(
+        "--data-dir",
+        default="",
+        help=(
+            "Dataset root. Empty uses the author-data default or the root from "
+            "--data-config, according to --dataset-format."
+        ),
+    )
+    parser.add_argument("--data-diff", default="")
+    parser.add_argument("--data-real", default="")
     parser.add_argument("--split", choices=("train", "val", "test"), default="test")
     parser.add_argument(
         "--num-samples",
@@ -64,8 +84,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--support-threshold",
         type=float,
-        default=0.3,
-        help="Threshold on each prediction's unit-maximum real-space amplitude.",
+        default=None,
+        help=(
+            "Threshold on unit-maximum predicted amplitude and, for AutoPhaseNN, "
+            "stored target amplitude. Defaults to 0.3 for author NPZ and 0.1 for "
+            "AutoPhaseNN."
+        ),
     )
     parser.add_argument("--print-freq", type=int, default=20)
     parser.add_argument("--output-dir", default="")
@@ -75,6 +99,10 @@ def parse_args() -> argparse.Namespace:
         default="INFO",
     )
     args = parser.parse_args()
+    if args.support_threshold is None:
+        args.support_threshold = (
+            0.1 if args.dataset_format == "autophasenn_memmap" else 0.3
+        )
     if args.num_samples < 0:
         parser.error("--num-samples cannot be negative.")
     if min(args.batch_size, args.prefetch_factor, args.print_freq) < 1:
@@ -97,7 +125,10 @@ def resolve_output_dir(args: argparse.Namespace, checkpoint_path: Path) -> Path:
     if args.output_dir:
         return Path(args.output_dir).expanduser().resolve()
     run_name = checkpoint_path.parent.name
-    return (DEFAULT_OUTPUT_ROOT / f"{run_name}_{args.split}").resolve()
+    dataset_label = (
+        "autophasenn" if args.dataset_format == "autophasenn_memmap" else "author"
+    )
+    return (DEFAULT_OUTPUT_ROOT / f"{run_name}_{dataset_label}_{args.split}").resolve()
 
 
 def configure_logging(output_dir: Path, level: str) -> None:
@@ -131,12 +162,13 @@ def load_model(
     return model, checkpoint, model_args, phase_variant
 
 
-def build_dataset(
+def build_author_dataset(
     args: argparse.Namespace,
     model_args: argparse.Namespace,
-) -> AuthorNPZPhaseDataset:
-    return AuthorNPZPhaseDataset(
-        args.data_dir,
+) -> tuple[AuthorNPZPhaseDataset, dict[str, object]]:
+    root = args.data_dir or DEFAULT_AUTHOR_DATA_DIR
+    dataset = AuthorNPZPhaseDataset(
+        root,
         args.split,
         num_samples=args.num_samples or None,
         shape=(int(model_args.shape),) * 3,
@@ -144,10 +176,86 @@ def build_dataset(
         min_oversampling=model_args.author_min_oversampling,
         return_refinement_targets=True,
     )
+    return dataset, dataset.manifest
+
+
+def build_autophasenn_dataset(
+    args: argparse.Namespace,
+    model_args: argparse.Namespace,
+) -> tuple[AutoPhaseNNPhaseDataset, dict[str, object]]:
+    config = load_data_config(args.data_config)
+    if args.split not in config["splits"]:
+        available = ", ".join(sorted(config["splits"]))
+        raise ValueError(
+            f"AutoPhaseNN config has no {args.split!r} split; available: {available}."
+        )
+    configured_shape = tuple(int(size) for size in config["shape"])
+    model_shape = (int(model_args.shape),) * 3
+    if configured_shape != model_shape:
+        raise ValueError(
+            f"AutoPhaseNN shape {configured_shape} does not match checkpoint "
+            f"shape {model_shape}."
+        )
+    split_config = dict(config["splits"][args.split])
+    declared_samples = int(split_config["num_samples"])
+    selected_samples = args.num_samples or declared_samples
+    if selected_samples > declared_samples:
+        raise ValueError(
+            f"Requested {selected_samples} samples but {args.split} has "
+            f"{declared_samples}."
+        )
+    root = Path(args.data_dir or config["root"]).expanduser().resolve()
+    split_config["diffraction"] = args.data_diff or split_config["diffraction"]
+    split_config["realspace"] = args.data_real or split_config["realspace"]
+    split_config["num_samples"] = selected_samples
+    manifest = build_data_manifest(
+        config=config,
+        root=root,
+        shape=configured_shape,
+        diffraction_dtype=config["dtypes"]["diffraction"],
+        realspace_dtype=config["dtypes"]["realspace"],
+        splits={args.split: split_config},
+        input_log_data=bool(model_args.input_log_data),
+    )
+    require_data_files(manifest)
+    resolved = manifest["splits"][args.split]
+    dataset = AutoPhaseNNPhaseDataset(
+        resolved["diffraction"],
+        resolved["realspace"],
+        selected_samples,
+        shape=configured_shape,
+        diffraction_dtype=config["dtypes"]["diffraction"],
+        realspace_dtype=config["dtypes"]["realspace"],
+        input_log_data=bool(model_args.input_log_data),
+        return_diffraction_modulus=True,
+    )
+    manifest["evaluation_split"] = args.split
+    manifest["declared_split_samples"] = declared_samples
+    manifest["selected_samples"] = selected_samples
+    manifest["selection"] = (
+        "complete_split" if selected_samples == declared_samples else "split_prefix"
+    )
+    manifest["refinement_targets"] = {
+        "realspace": "stored complex object",
+        "reciprocal_phase": (
+            "FFT of realspace after amplitude-COM translation canonicalization"
+        ),
+        "support": "stored amplitude >= support_threshold",
+    }
+    return dataset, manifest
+
+
+def build_dataset(
+    args: argparse.Namespace,
+    model_args: argparse.Namespace,
+) -> tuple[Dataset, dict[str, object]]:
+    if args.dataset_format == "autophasenn_memmap":
+        return build_autophasenn_dataset(args, model_args)
+    return build_author_dataset(args, model_args)
 
 
 def build_loader(
-    dataset: AuthorNPZPhaseDataset,
+    dataset: Dataset,
     args: argparse.Namespace,
     device: torch.device,
 ) -> DataLoader:
@@ -166,6 +274,24 @@ def build_loader(
             multiprocessing_context="spawn",
         )
     return DataLoader(dataset, **kwargs)
+
+
+def prepare_targets(
+    batch: dict[str, torch.Tensor],
+    args: argparse.Namespace,
+    device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    target = batch["realspace"].to(device, non_blocking=True)
+    if args.dataset_format == "author_npz":
+        support = batch["support"].to(device, non_blocking=True)
+        target_phase = batch["target_phase"].to(
+            device,
+            non_blocking=True,
+        ).float()
+    else:
+        support = target.abs() >= args.support_threshold
+        target_phase = reciprocal_phase_from_realspace(target).float()
+    return target, support, target_phase
 
 
 def reciprocal_phase(realspace: torch.Tensor) -> torch.Tensor:
@@ -282,9 +408,7 @@ def evaluate(
         for batch_index, batch in enumerate(loader, start=1):
             model_input = batch["input"].to(device, non_blocking=True).float()
             modulus = batch["diffraction"].to(device, non_blocking=True).float()
-            target = batch["realspace"].to(device, non_blocking=True)
-            support = batch["support"].to(device, non_blocking=True)
-            target_phase = batch["target_phase"].to(device, non_blocking=True).float()
+            target, support, target_phase = prepare_targets(batch, args, device)
             output = model(model_input, modulus)
             current = {
                 "initial": stage_metrics(
@@ -385,14 +509,15 @@ def main() -> int:
     configure_logging(output_dir, args.log_level)
     device = choose_device(args.device)
     model, checkpoint, model_args, phase_variant = load_model(checkpoint_path, device)
-    dataset = build_dataset(args, model_args)
+    dataset, data_manifest = build_dataset(args, model_args)
     loader = build_loader(dataset, args, device)
     LOGGER.info(
-        "Checkpoint=%s | epoch=%s | phase=%s (frozen) | split=%s | "
+        "Checkpoint=%s | epoch=%s | phase=%s (frozen) | data=%s/%s | "
         "samples=%d | batch=%d | device=%s",
         checkpoint_path,
         checkpoint.get("epoch"),
         phase_variant,
+        args.dataset_format,
         args.split,
         len(dataset),
         args.batch_size,
@@ -405,12 +530,13 @@ def main() -> int:
             "checkpoint": str(checkpoint_path),
             "checkpoint_epoch": checkpoint.get("epoch"),
             "phase_model_variant": phase_variant,
+            "dataset_format": args.dataset_format,
             "split": args.split,
             "support_threshold": args.support_threshold,
             "device": str(device),
         },
         "runtime": runtime_manifest(device),
-        "data": dataset.manifest,
+        "data": data_manifest,
         **result,
         "metric_notes": {
             "object_mae": (
@@ -427,6 +553,8 @@ def main() -> int:
             ),
             "support": (
                 "Predicted support is unit-maximum amplitude >= support_threshold; "
+                "AutoPhaseNN target support uses stored target amplitude >= the same "
+                "threshold, while author NPZ uses its explicit stored support. "
                 "IoU/Dice are higher-is-better and volume ratio is best near one."
             ),
         },

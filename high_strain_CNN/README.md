@@ -192,9 +192,29 @@ python -u -m pytorch_autophasenn.evaluate_refiner \
 This evaluator reports the same ambiguity-aligned complex component MAE used
 for training, Fourier-modulus MAE, reciprocal-phase WCA, and thresholded
 support metrics both before and after MoMamba. Results are written to
-`artifacts/evaluations/pytorch_realspace_momamba/<run-name>_test/`, so the
-second stage's contribution is measured directly instead of being mixed with
-the phase U-Net's standalone evaluation.
+`artifacts/evaluations/pytorch_realspace_momamba/<run-name>_<dataset>_<split>/`,
+so the second stage's contribution is measured directly instead of being mixed
+with the phase U-Net's standalone evaluation.
+
+The same frozen high-strain cascade can be tested for cross-dataset
+generalization on the AutoPhaseNN validation memmaps:
+
+```bash
+python -u -m pytorch_autophasenn.evaluate_refiner \
+  --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/<run-name>/checkpoint_best.pt \
+  --dataset-format autophasenn_memmap \
+  --data-config configs/autophasenn_data.json \
+  --split val \
+  --batch-size 24 \
+  --num-workers 4
+```
+
+This route reuses the configured AutoPhaseNN diffraction modulus and complex
+real-space target. It derives target support as `abs(target) >= 0.1`, matching
+the baseline AutoPhaseNN threshold, and derives the target reciprocal phase
+with the existing amplitude-center translation canonicalization. It is a
+cross-dataset test of the high-strain-trained checkpoint, not retraining on
+AutoPhaseNN.
 
 ## Install
 

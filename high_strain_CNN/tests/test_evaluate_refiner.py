@@ -1,11 +1,18 @@
 """Focused tests for second-stage evaluation metrics."""
 
+import argparse
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
+import numpy as np
 import torch
 
 from pytorch_autophasenn.evaluate_refiner import (
+    build_autophasenn_dataset,
     phase_wca,
+    prepare_targets,
     relative_improvement,
     support_metrics,
 )
@@ -13,6 +20,87 @@ from pytorch_autophasenn.reconstruction import realspace_from_modulus_phase
 
 
 class EvaluateRefinerTest(unittest.TestCase):
+    def test_autophasenn_targets_derive_support_and_reciprocal_phase(self) -> None:
+        realspace = torch.zeros(1, 4, 4, 4, dtype=torch.complex64)
+        realspace[:, 1:3, 1:3, 1:3] = 0.5 + 0.25j
+        args = argparse.Namespace(
+            dataset_format="autophasenn_memmap",
+            support_threshold=0.1,
+        )
+        target, support, target_phase = prepare_targets(
+            {"realspace": realspace},
+            args,
+            torch.device("cpu"),
+        )
+        torch.testing.assert_close(target, realspace)
+        torch.testing.assert_close(support, realspace.abs() >= 0.1)
+        self.assertEqual(tuple(target_phase.shape), (1, 4, 4, 4))
+        self.assertTrue(torch.isfinite(target_phase).all())
+        self.assertEqual(float(target_phase[0, 2, 2, 2]), 0.0)
+
+    def test_autophasenn_dataset_uses_shared_memmap_config(self) -> None:
+        shape = (4, 4, 4)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            diffraction = np.memmap(
+                root / "val_diff.npy",
+                dtype="float32",
+                mode="w+",
+                shape=(2,) + shape,
+            )
+            diffraction[:] = 1.0
+            diffraction.flush()
+            realspace = np.memmap(
+                root / "val_real.npy",
+                dtype="complex64",
+                mode="w+",
+                shape=(2,) + shape,
+            )
+            realspace[:] = 1.0 + 0.0j
+            realspace.flush()
+            del diffraction, realspace
+            config_path = root / "data.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "dataset_name": "AutoPhaseNN",
+                        "dataset_version": "test",
+                        "root": str(root),
+                        "shape": list(shape),
+                        "dtypes": {
+                            "diffraction": "float32",
+                            "realspace": "complex64",
+                        },
+                        "splits": {
+                            "val": {
+                                "diffraction": "val_diff.npy",
+                                "realspace": "val_real.npy",
+                                "num_samples": 2,
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args = argparse.Namespace(
+                data_config=str(config_path),
+                data_dir="",
+                data_diff="",
+                data_real="",
+                split="val",
+                num_samples=1,
+            )
+            model_args = argparse.Namespace(shape=4, input_log_data=True)
+            dataset, manifest = build_autophasenn_dataset(args, model_args)
+            self.assertEqual(len(dataset), 1)
+            self.assertEqual(manifest["selection"], "split_prefix")
+            self.assertEqual(manifest["declared_split_samples"], 2)
+            self.assertIn("diffraction", dataset[0])
+            dataset.diffraction._mmap.close()
+            dataset.realspace._mmap.close()
+            del dataset
+
     def test_phase_wca_is_zero_for_matching_object(self) -> None:
         modulus = torch.rand(2, 1, 4, 4, 4) + 0.1
         target_phase = torch.randn(2, 4, 4, 4)
