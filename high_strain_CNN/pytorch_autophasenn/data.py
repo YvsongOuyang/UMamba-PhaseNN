@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from .management import build_data_manifest, load_data_config, require_data_files
+
 
 class AutoPhaseNNPhaseDataset(Dataset):
     """Read AutoPhaseNN diffraction/object memmaps for the PhaseUNet."""
@@ -70,6 +72,73 @@ class AutoPhaseNNPhaseDataset(Dataset):
         if self.return_diffraction_modulus:
             sample["diffraction"] = torch.from_numpy(diffraction_modulus[None])
         return sample
+
+
+def build_autophasenn_refinement_dataset(
+    *,
+    data_config: str | Path,
+    data_dir: str | Path | None,
+    split: str,
+    num_samples: int | None,
+    shape: tuple[int, int, int],
+    input_log_data: bool,
+    diffraction_path: str | Path | None = None,
+    realspace_path: str | Path | None = None,
+) -> tuple[AutoPhaseNNPhaseDataset, dict[str, object]]:
+    """Build one configured AutoPhaseNN split with real-space refinement fields."""
+
+    config = load_data_config(data_config)
+    if split not in config["splits"]:
+        available = ", ".join(sorted(config["splits"]))
+        raise ValueError(
+            f"AutoPhaseNN config has no {split!r} split; available: {available}."
+        )
+    configured_shape = tuple(int(size) for size in config["shape"])
+    if configured_shape != shape:
+        raise ValueError(
+            f"AutoPhaseNN shape {configured_shape} does not match requested "
+            f"shape {shape}."
+        )
+    split_config = dict(config["splits"][split])
+    declared_samples = int(split_config["num_samples"])
+    selected_samples = num_samples or declared_samples
+    if not 0 < selected_samples <= declared_samples:
+        raise ValueError(
+            f"Requested {selected_samples} samples but {split} has "
+            f"{declared_samples}."
+        )
+    root = Path(data_dir or config["root"]).expanduser().resolve()
+    split_config["diffraction"] = diffraction_path or split_config["diffraction"]
+    split_config["realspace"] = realspace_path or split_config["realspace"]
+    split_config["num_samples"] = selected_samples
+    manifest = build_data_manifest(
+        config=config,
+        root=root,
+        shape=configured_shape,
+        diffraction_dtype=config["dtypes"]["diffraction"],
+        realspace_dtype=config["dtypes"]["realspace"],
+        splits={split: split_config},
+        input_log_data=input_log_data,
+    )
+    manifest["file_status"] = require_data_files(manifest)
+    resolved = manifest["splits"][split]
+    dataset = AutoPhaseNNPhaseDataset(
+        resolved["diffraction"],
+        resolved["realspace"],
+        selected_samples,
+        shape=configured_shape,
+        diffraction_dtype=config["dtypes"]["diffraction"],
+        realspace_dtype=config["dtypes"]["realspace"],
+        input_log_data=input_log_data,
+        return_diffraction_modulus=True,
+    )
+    manifest["selected_split"] = split
+    manifest["declared_split_samples"] = declared_samples
+    manifest["selected_samples"] = selected_samples
+    manifest["selection"] = (
+        "complete_split" if selected_samples == declared_samples else "split_prefix"
+    )
+    return dataset, manifest
 
 
 def _amplitude_center_offset(realspace: torch.Tensor) -> torch.Tensor:

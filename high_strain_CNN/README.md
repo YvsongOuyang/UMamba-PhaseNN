@@ -176,6 +176,23 @@ feature channels, preserving the former refiner's effective Mamba width.
 Run records stay under `artifacts/training/pytorch_realspace_momamba/`; large
 checkpoints stay under the configured external checkpoint root.
 
+To train the same second stage from scratch on the AutoPhaseNN memmaps, load
+the matching AutoPhaseNN-trained `reduced_bn_no_outer_skip` phase checkpoint:
+
+```bash
+python -u -m pytorch_autophasenn.train_refiner \
+  --data-format autophasenn \
+  --data-config configs/autophasenn_data.json \
+  --phase-checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/checkpoint_best.pt \
+  --batch-size 24
+```
+
+This uses all configured `25,000/5,000` train/validation samples. The phase
+U-Net remains frozen, the MoMamba refiner starts from its identity
+initialization, and AutoPhaseNN target support is derived as
+`abs(realspace) >= 0.1`. The optimizer, loss, scheduler, and remaining model
+settings are unchanged from the author-data second-stage experiment.
+
 Evaluate the complete cascade on its particle-disjoint author-data test split:
 
 ```bash

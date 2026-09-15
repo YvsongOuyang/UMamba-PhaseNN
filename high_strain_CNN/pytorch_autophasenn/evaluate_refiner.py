@@ -15,15 +15,13 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from .author_data import AuthorNPZPhaseDataset, initialize_data_worker
-from .data import AutoPhaseNNPhaseDataset, reciprocal_phase_from_realspace
-from .losses import phase_retrieval_wca_components
-from .management import (
-    DEFAULT_DATA_CONFIG,
-    build_data_manifest,
-    load_data_config,
-    require_data_files,
-    runtime_manifest,
+from .data import (
+    AutoPhaseNNPhaseDataset,
+    build_autophasenn_refinement_dataset,
+    reciprocal_phase_from_realspace,
 )
+from .losses import phase_retrieval_wca_components
+from .management import DEFAULT_DATA_CONFIG, runtime_manifest
 from .momamba_refiner import (
     HighStrainMoMambaCascade,
     ambiguity_aware_component_mae,
@@ -183,57 +181,16 @@ def build_autophasenn_dataset(
     args: argparse.Namespace,
     model_args: argparse.Namespace,
 ) -> tuple[AutoPhaseNNPhaseDataset, dict[str, object]]:
-    config = load_data_config(args.data_config)
-    if args.split not in config["splits"]:
-        available = ", ".join(sorted(config["splits"]))
-        raise ValueError(
-            f"AutoPhaseNN config has no {args.split!r} split; available: {available}."
-        )
-    configured_shape = tuple(int(size) for size in config["shape"])
     model_shape = (int(model_args.shape),) * 3
-    if configured_shape != model_shape:
-        raise ValueError(
-            f"AutoPhaseNN shape {configured_shape} does not match checkpoint "
-            f"shape {model_shape}."
-        )
-    split_config = dict(config["splits"][args.split])
-    declared_samples = int(split_config["num_samples"])
-    selected_samples = args.num_samples or declared_samples
-    if selected_samples > declared_samples:
-        raise ValueError(
-            f"Requested {selected_samples} samples but {args.split} has "
-            f"{declared_samples}."
-        )
-    root = Path(args.data_dir or config["root"]).expanduser().resolve()
-    split_config["diffraction"] = args.data_diff or split_config["diffraction"]
-    split_config["realspace"] = args.data_real or split_config["realspace"]
-    split_config["num_samples"] = selected_samples
-    manifest = build_data_manifest(
-        config=config,
-        root=root,
-        shape=configured_shape,
-        diffraction_dtype=config["dtypes"]["diffraction"],
-        realspace_dtype=config["dtypes"]["realspace"],
-        splits={args.split: split_config},
+    dataset, manifest = build_autophasenn_refinement_dataset(
+        data_config=args.data_config,
+        data_dir=args.data_dir or None,
+        split=args.split,
+        num_samples=args.num_samples or None,
+        shape=model_shape,
         input_log_data=bool(model_args.input_log_data),
-    )
-    require_data_files(manifest)
-    resolved = manifest["splits"][args.split]
-    dataset = AutoPhaseNNPhaseDataset(
-        resolved["diffraction"],
-        resolved["realspace"],
-        selected_samples,
-        shape=configured_shape,
-        diffraction_dtype=config["dtypes"]["diffraction"],
-        realspace_dtype=config["dtypes"]["realspace"],
-        input_log_data=bool(model_args.input_log_data),
-        return_diffraction_modulus=True,
-    )
-    manifest["evaluation_split"] = args.split
-    manifest["declared_split_samples"] = declared_samples
-    manifest["selected_samples"] = selected_samples
-    manifest["selection"] = (
-        "complete_split" if selected_samples == declared_samples else "split_prefix"
+        diffraction_path=args.data_diff or None,
+        realspace_path=args.data_real or None,
     )
     manifest["refinement_targets"] = {
         "realspace": "stored complex object",

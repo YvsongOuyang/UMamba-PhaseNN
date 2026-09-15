@@ -14,10 +14,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from .author_data import AuthorNPZPhaseDataset, initialize_data_worker
-from .management import runtime_manifest
+from .data import build_autophasenn_refinement_dataset
+from .management import DEFAULT_DATA_CONFIG, load_data_config, runtime_manifest
 from .model import MODEL_VARIANTS, HighStrainPhaseUNet, infer_model_variant
 from .momamba_refiner import (
     ComplexMoMambaRefiner,
@@ -33,6 +34,7 @@ DEFAULT_RUNS_DIR = PROJECT_DIR / "artifacts" / "training" / "pytorch_realspace_m
 DEFAULT_CHECKPOINT_ROOT = Path(
     "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner"
 )
+DEFAULT_AUTHOR_DATA_DIR = "/data_ssd/oyys/high_strain_cnn/dataset"
 LOGGER = logging.getLogger("high_strain.train_refiner")
 
 
@@ -51,11 +53,44 @@ def configure_logging() -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    bootstrap = argparse.ArgumentParser(add_help=False)
+    bootstrap.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    bootstrap_args, _ = bootstrap.parse_known_args()
+    data_config = load_data_config(bootstrap_args.data_config)
+    configured_shape = tuple(int(size) for size in data_config["shape"])
+    if len(set(configured_shape)) != 1:
+        raise ValueError("The MoMamba cascade requires a cubic data shape.")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--data-format",
+        choices=("author_npz", "autophasenn"),
+        default="author_npz",
+    )
+    parser.add_argument("--data-config", default=str(DEFAULT_DATA_CONFIG))
+    parser.add_argument(
         "--data-dir",
-        default="/data_ssd/oyys/high_strain_cnn/dataset",
-        help="Author-generated compact NPZ dataset root.",
+        default="",
+        help=(
+            "Dataset root. Empty uses the author-data default or the root from "
+            "--data-config, according to --data-format."
+        ),
+    )
+    parser.add_argument(
+        "--train-diff",
+        default=data_config["splits"]["train"]["diffraction"],
+    )
+    parser.add_argument(
+        "--train-real",
+        default=data_config["splits"]["train"]["realspace"],
+    )
+    parser.add_argument(
+        "--val-diff",
+        default=data_config["splits"]["val"]["diffraction"],
+    )
+    parser.add_argument(
+        "--val-real",
+        default=data_config["splits"]["val"]["realspace"],
     )
     parser.add_argument("--phase-checkpoint", default="")
     parser.add_argument(
@@ -66,12 +101,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resume", default="")
     parser.add_argument("--num-samples-train", type=int, default=None)
     parser.add_argument("--num-samples-val", type=int, default=None)
-    parser.add_argument("--shape", type=int, default=64)
+    parser.add_argument("--shape", type=int, default=configured_shape[0])
     parser.add_argument("--author-min-oversampling", type=float, default=None)
     parser.add_argument(
         "--input-log-data",
         action=argparse.BooleanOptionalAction,
-        default=True,
+        default=(
+            data_config.get("input_preprocessing", {}).get("transform") == "log1p"
+        ),
     )
 
     parser.add_argument(
@@ -97,7 +134,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=24)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--prefetch-factor", type=int, default=2)
     parser.add_argument("--learning-rate", type=float, default=2e-4)
@@ -109,6 +146,15 @@ def parse_args() -> argparse.Namespace:
         help="'full' follows Yu et al. Eq. (1); support_balanced is an ablation.",
     )
     parser.add_argument("--outside-support-weight", type=float, default=0.25)
+    parser.add_argument(
+        "--support-threshold",
+        type=float,
+        default=None,
+        help=(
+            "AutoPhaseNN only: derive target support as abs(realspace) >= this "
+            "value. Defaults to 0.1. Author NPZ uses its stored support."
+        ),
+    )
     parser.add_argument(
         "--physics-loss-weight",
         type=float,
@@ -133,12 +179,38 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-batches-per-epoch", type=int, default=0)
     args = parser.parse_args()
 
+    if args.support_threshold is None:
+        args.support_threshold = 0.1
+    if not args.data_dir:
+        args.data_dir = (
+            data_config["root"]
+            if args.data_format == "autophasenn"
+            else DEFAULT_AUTHOR_DATA_DIR
+        )
+    if args.data_format == "autophasenn":
+        if args.num_samples_train is None:
+            args.num_samples_train = int(
+                data_config["splits"]["train"]["num_samples"]
+            )
+        if args.num_samples_val is None:
+            args.num_samples_val = int(
+                data_config["splits"]["val"]["num_samples"]
+            )
+
     if not args.phase_checkpoint and not args.resume:
         parser.error("Provide --phase-checkpoint for a new run, or --resume.")
     if min(args.epochs, args.batch_size, args.prefetch_factor) < 1:
         parser.error("Epochs, batch size, and prefetch factor must be positive.")
     if args.num_workers < 0 or args.max_batches_per_epoch < 0 or args.save_every < 0:
         parser.error("Workers, batch limit, and save interval must be nonnegative.")
+    if args.author_min_oversampling is not None:
+        if args.data_format != "author_npz":
+            parser.error("--author-min-oversampling requires --data-format author_npz.")
+        if (
+            not np.isfinite(args.author_min_oversampling)
+            or args.author_min_oversampling <= 0
+        ):
+            parser.error("Minimum oversampling must be finite and positive.")
     if args.shape % 16:
         parser.error("--shape must be divisible by 16.")
     if args.top_k < 1 or any(value < args.top_k for value in args.num_experts):
@@ -159,10 +231,17 @@ def parse_args() -> argparse.Namespace:
         args.router_z_weight,
         args.gradient_clip,
     )
-    if args.learning_rate <= 0 or min(nonnegative) < 0:
+    if (
+        args.learning_rate <= 0
+        or min(nonnegative) < 0
+        or not np.isfinite(args.support_threshold)
+        or args.support_threshold < 0
+    ):
         parser.error(
-            "Learning rate must be positive and loss/regularization values nonnegative."
+            "Learning rate must be positive and loss/regularization/threshold "
+            "values nonnegative."
         )
+    args.data_config = str(Path(args.data_config).expanduser().resolve())
     return args
 
 
@@ -249,7 +328,7 @@ def build_cascade(
     return cascade.to(device), variant
 
 
-def build_dataset(
+def build_author_dataset(
     args: argparse.Namespace,
     split: str,
     num_samples: int | None,
@@ -265,8 +344,54 @@ def build_dataset(
     )
 
 
+def build_datasets(
+    args: argparse.Namespace,
+) -> tuple[Dataset, Dataset, dict[str, object]]:
+    shape = (args.shape,) * 3
+    if args.data_format == "author_npz":
+        train = build_author_dataset(args, "train", args.num_samples_train)
+        val = build_author_dataset(args, "val", args.num_samples_val)
+        if train.manifest["manifest_sha256"] != val.manifest["manifest_sha256"]:
+            raise ValueError("Dataset manifest changed while initializing splits.")
+        args.num_samples_train = len(train)
+        args.num_samples_val = len(val)
+        return train, val, {
+            "format": "author_npz_compact",
+            "support_source": "stored synthetic ground-truth support",
+            "splits": {"train": train.manifest, "val": val.manifest},
+        }
+
+    train, train_manifest = build_autophasenn_refinement_dataset(
+        data_config=args.data_config,
+        data_dir=args.data_dir,
+        split="train",
+        num_samples=args.num_samples_train,
+        shape=shape,
+        input_log_data=args.input_log_data,
+        diffraction_path=args.train_diff,
+        realspace_path=args.train_real,
+    )
+    val, val_manifest = build_autophasenn_refinement_dataset(
+        data_config=args.data_config,
+        data_dir=args.data_dir,
+        split="val",
+        num_samples=args.num_samples_val,
+        shape=shape,
+        input_log_data=args.input_log_data,
+        diffraction_path=args.val_diff,
+        realspace_path=args.val_real,
+    )
+    args.num_samples_train = len(train)
+    args.num_samples_val = len(val)
+    return train, val, {
+        "format": "autophasenn_memmap",
+        "support_source": f"stored target amplitude >= {args.support_threshold:g}",
+        "splits": {"train": train_manifest, "val": val_manifest},
+    }
+
+
 def build_loader(
-    dataset: AuthorNPZPhaseDataset,
+    dataset: Dataset,
     args: argparse.Namespace,
     device: torch.device,
     *,
@@ -284,14 +409,27 @@ def build_loader(
         kwargs.update(
             prefetch_factor=args.prefetch_factor,
             worker_init_fn=initialize_data_worker,
-            multiprocessing_context="spawn",
         )
+        if args.data_format == "author_npz":
+            kwargs["multiprocessing_context"] = "spawn"
     loader = DataLoader(dataset, **kwargs)
     if not len(loader):
         raise ValueError(
             "No batches: reduce batch size or increase the selected split."
         )
     return loader
+
+
+def target_support(
+    batch: dict[str, torch.Tensor],
+    target: torch.Tensor,
+    args: argparse.Namespace,
+) -> torch.Tensor:
+    """Return explicit author support or the standard AutoPhaseNN amplitude mask."""
+
+    if args.data_format == "author_npz":
+        return batch["support"]
+    return target.abs() >= args.support_threshold
 
 
 def run_epoch(
@@ -329,7 +467,10 @@ def run_epoch(
             model_input = batch["input"].to(device, non_blocking=True).float()
             modulus = batch["diffraction"].to(device, non_blocking=True).float()
             target = batch["realspace"].to(device, non_blocking=True)
-            support = batch["support"].to(device, non_blocking=True)
+            support = target_support(batch, target, args).to(
+                device,
+                non_blocking=True,
+            )
             if training:
                 optimizer.zero_grad(set_to_none=True)
 
@@ -458,22 +599,14 @@ def main() -> None:
     device = choose_device(args.device)
     resume_checkpoint = checkpoint_state(args.resume, device) if args.resume else None
 
-    train_dataset = build_dataset(args, "train", args.num_samples_train)
-    val_dataset = build_dataset(args, "val", args.num_samples_val)
-    if (
-        train_dataset.manifest["manifest_sha256"]
-        != val_dataset.manifest["manifest_sha256"]
-    ):
-        raise ValueError("Dataset manifest changed while initializing splits.")
-    args.num_samples_train = len(train_dataset)
-    args.num_samples_val = len(val_dataset)
+    train_dataset, val_dataset, data_manifest = build_datasets(args)
     model, phase_variant = build_cascade(args, device, resume_checkpoint)
 
     if not args.run_name:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.run_name = (
-            f"{timestamp}_realspace_momamba_{phase_variant}_bs-{args.batch_size}"
-            f"_lr-{args.learning_rate:g}_seed-{args.seed}"
+            f"{timestamp}_{args.data_format}_realspace_momamba_{phase_variant}"
+            f"_bs-{args.batch_size}_lr-{args.learning_rate:g}_seed-{args.seed}"
         )
     run_dir = Path(args.runs_dir).expanduser() / args.run_name
     checkpoint_dir = Path(args.checkpoint_root).expanduser() / args.run_name
@@ -488,11 +621,7 @@ def main() -> None:
         "schema_version": 1,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "runtime": runtime_manifest(device),
-        "data": {
-            "format": "author_npz_compact",
-            "train": train_dataset.manifest,
-            "val": val_dataset.manifest,
-        },
+        "data": data_manifest,
         "pipeline": {
             "phase_model_variant": phase_variant,
             "phase_checkpoint": (
@@ -514,7 +643,7 @@ def main() -> None:
                 "name": "normalized Fourier-modulus MAE",
                 "paper_equation": 2,
                 "weight": args.physics_loss_weight,
-                "support": "stored synthetic ground-truth support",
+                "support": data_manifest["support_source"],
             },
         },
         "training": vars(args),
@@ -560,9 +689,10 @@ def main() -> None:
         LOGGER.info("Resumed %s at epoch %d", args.resume, start_epoch)
 
     LOGGER.info(
-        "Run=%s | phase=%s (frozen) | refiner trainable parameters=%s | "
+        "Run=%s | data=%s | phase=%s (frozen) | refiner trainable parameters=%s | "
         "device=%s | train/val=%s/%s | checkpoints=%s",
         args.run_name,
+        args.data_format,
         phase_variant,
         f"{count_trainable_parameters(model):,}",
         device,
@@ -584,10 +714,11 @@ def main() -> None:
     )
     LOGGER.info(
         "Object loss=aligned component MAE (%s) | physics weight=%.3g | "
-        "Fourier metric=%s",
+        "Fourier metric=%s | support=%s",
         args.object_loss_scope,
         args.physics_loss_weight,
         "train+validation" if args.physics_loss_weight > 0 else "validation only",
+        data_manifest["support_source"],
     )
     writer = SummaryWriter(log_dir=str(tensorboard_dir))
     run_started = time.monotonic()

@@ -17,9 +17,29 @@ from pytorch_autophasenn.evaluate_refiner import (
     support_metrics,
 )
 from pytorch_autophasenn.reconstruction import realspace_from_modulus_phase
+from pytorch_autophasenn.train_refiner import target_support
 
 
 class EvaluateRefinerTest(unittest.TestCase):
+    def test_refiner_training_uses_dataset_specific_support(self) -> None:
+        target = torch.zeros(1, 4, 4, 4, dtype=torch.complex64)
+        target[:, 1:3, 1:3, 1:3] = 0.5 + 0.0j
+        autophasenn_args = argparse.Namespace(
+            data_format="autophasenn",
+            support_threshold=0.1,
+        )
+        torch.testing.assert_close(
+            target_support({}, target, autophasenn_args),
+            target.abs() >= 0.1,
+        )
+
+        stored = torch.ones_like(target, dtype=torch.bool)
+        author_args = argparse.Namespace(
+            data_format="author_npz",
+            support_threshold=0.1,
+        )
+        self.assertIs(target_support({"support": stored}, target, author_args), stored)
+
     def test_autophasenn_targets_derive_support_and_reciprocal_phase(self) -> None:
         realspace = torch.zeros(1, 4, 4, 4, dtype=torch.complex64)
         realspace[:, 1:3, 1:3, 1:3] = 0.5 + 0.25j
