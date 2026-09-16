@@ -65,6 +65,7 @@ class ObjectLoss:
     twin_fraction: torch.Tensor
     real_mae: torch.Tensor
     imag_mae: torch.Tensor
+    selected_twin: torch.Tensor
     selected_support: torch.Tensor
 
 
@@ -863,6 +864,7 @@ def ambiguity_aware_component_mae(
         twin_fraction=select_twin.float().mean(),
         real_mae=torch.where(select_twin, twin_real, direct_real).mean(),
         imag_mae=torch.where(select_twin, twin_imag, direct_imag).mean(),
+        selected_twin=select_twin,
         selected_support=torch.where(
             select_twin[:, None, None, None, None],
             twin_support,

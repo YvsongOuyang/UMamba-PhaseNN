@@ -207,8 +207,11 @@ python -u -m pytorch_autophasenn.evaluate_refiner \
 ```
 
 This evaluator reports the same ambiguity-aligned complex component MAE used
-for training, Fourier-modulus MAE, reciprocal-phase WCA, and thresholded
-support metrics both before and after MoMamba. Results are written to
+for training, Fourier-modulus MAE, reciprocal-phase WCA, complex NRMSE,
+amplitude PSNR in dB, and thresholded support metrics both before and after
+MoMamba. Complex NRMSE and amplitude PSNR reuse the selected twin-equivalent
+target; NRMSE also uses the training-aligned RMS scale and global phase, while
+PSNR compares unit-maximum-normalized amplitude volumes. Results are written to
 `artifacts/evaluations/pytorch_realspace_momamba/<run-name>_<dataset>_<split>/`,
 so the second stage's contribution is measured directly instead of being mixed
 with the phase U-Net's standalone evaluation.

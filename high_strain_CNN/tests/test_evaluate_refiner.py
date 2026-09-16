@@ -10,12 +10,14 @@ import numpy as np
 import torch
 
 from pytorch_autophasenn.evaluate_refiner import (
+    ambiguity_aligned_reconstruction_metrics,
     build_autophasenn_dataset,
     phase_wca,
     prepare_targets,
     relative_improvement,
     support_metrics,
 )
+from pytorch_autophasenn.momamba_refiner import ambiguity_aware_component_mae
 from pytorch_autophasenn.reconstruction import realspace_from_modulus_phase
 from pytorch_autophasenn.train_refiner import target_support
 
@@ -141,7 +143,58 @@ class EvaluateRefinerTest(unittest.TestCase):
         self.assertAlmostEqual(float(values["support_dice"]), 1.0)
         self.assertAlmostEqual(float(values["support_volume_ratio"]), 1.0)
 
+    def test_reconstruction_metrics_ignore_scale_phase_and_twin_ambiguity(self) -> None:
+        generator = torch.Generator().manual_seed(7)
+        target = torch.complex(
+            torch.rand(2, 4, 4, 4, generator=generator),
+            torch.rand(2, 4, 4, 4, generator=generator),
+        )
+        support = torch.ones_like(target, dtype=torch.bool)
+        direct = target[0:1] * torch.exp(torch.tensor(0.7j)) * 2.5
+        twin = torch.conj(
+            torch.roll(
+                torch.flip(target[1:2], dims=(-3, -2, -1)),
+                shifts=(1, 1, 1),
+                dims=(-3, -2, -1),
+            )
+        )
+        prediction = torch.cat((direct, twin), dim=0)
+        object_loss = ambiguity_aware_component_mae(prediction, target, support)
+        metrics = ambiguity_aligned_reconstruction_metrics(
+            prediction,
+            target,
+            object_loss.selected_support,
+            object_loss.selected_twin,
+        )
+        self.assertLess(float(metrics["complex_nrmse"]), 1e-6)
+        self.assertGreater(float(metrics["amplitude_psnr_db"]), 100.0)
+        torch.testing.assert_close(
+            object_loss.selected_twin,
+            torch.tensor([False, True]),
+        )
+
+    def test_reconstruction_metrics_report_degradation(self) -> None:
+        target = torch.ones(1, 4, 4, 4, dtype=torch.complex64)
+        prediction = target.clone()
+        prediction[:, :2] = 0.0
+        support = torch.ones_like(target, dtype=torch.bool)
+        object_loss = ambiguity_aware_component_mae(prediction, target, support)
+        metrics = ambiguity_aligned_reconstruction_metrics(
+            prediction,
+            target,
+            object_loss.selected_support,
+            object_loss.selected_twin,
+        )
+        self.assertGreater(float(metrics["complex_nrmse"]), 0.0)
+        self.assertTrue(torch.isfinite(metrics["amplitude_psnr_db"]))
+        self.assertLess(float(metrics["amplitude_psnr_db"]), 20.0)
+
     def test_relative_improvement_obeys_metric_direction(self) -> None:
+        self.assertAlmostEqual(relative_improvement("complex_nrmse", 0.2, 0.1), 50.0)
+        self.assertAlmostEqual(
+            relative_improvement("amplitude_psnr_db", 20.0, 25.0),
+            25.0,
+        )
         self.assertAlmostEqual(relative_improvement("object_mae", 0.2, 0.1), 50.0)
         self.assertAlmostEqual(relative_improvement("support_iou", 0.4, 0.6), 50.0)
         self.assertAlmostEqual(

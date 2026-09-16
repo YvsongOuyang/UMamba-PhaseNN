@@ -39,13 +39,14 @@ DEFAULT_AUTHOR_DATA_DIR = "/data_ssd/oyys/high_strain_cnn/dataset"
 LOGGER = logging.getLogger("high_strain.evaluate_refiner")
 
 LOWER_IS_BETTER = {
+    "complex_nrmse",
     "object_mae",
     "real_mae",
     "imag_mae",
     "fourier_modulus_mae",
     "phase_wca",
 }
-HIGHER_IS_BETTER = {"support_iou", "support_dice"}
+HIGHER_IS_BETTER = {"amplitude_psnr_db", "support_iou", "support_dice"}
 NEAR_ONE_IS_BETTER = {"support_volume_ratio"}
 
 
@@ -297,6 +298,98 @@ def support_metrics(
     }
 
 
+def ambiguity_aligned_reconstruction_metrics(
+    prediction: torch.Tensor,
+    target: torch.Tensor,
+    selected_support: torch.Tensor,
+    selected_twin: torch.Tensor,
+) -> dict[str, torch.Tensor]:
+    """Return scale-, phase-, and twin-aligned complex reconstruction metrics.
+
+    Complex NRMSE uses the same per-object RMS normalization, support-weighted
+    global phase alignment, and twin selection as the component-MAE objective.
+    Amplitude PSNR compares independently unit-maximum-normalized full volumes,
+    so its data range is one and its unit is decibels.
+    """
+
+    if prediction.ndim == 4:
+        prediction = prediction[:, None]
+    if target.ndim == 4:
+        target = target[:, None]
+    if selected_support.ndim == 4:
+        selected_support = selected_support[:, None]
+    if prediction.shape != target.shape or selected_support.shape != target.shape:
+        raise ValueError("Prediction, target, and support shapes must match.")
+    if not torch.is_complex(prediction) or not torch.is_complex(target):
+        raise ValueError("Prediction and target must be complex tensors.")
+    if selected_twin.ndim != 1 or selected_twin.shape[0] != target.shape[0]:
+        raise ValueError("selected_twin must contain one decision per sample.")
+
+    twin_target = torch.conj(
+        torch.roll(
+            torch.flip(target, dims=(-3, -2, -1)),
+            shifts=(1, 1, 1),
+            dims=(-3, -2, -1),
+        )
+    )
+    selected_target = torch.where(
+        selected_twin[:, None, None, None, None],
+        twin_target,
+        target,
+    )
+    spatial_dims = (-3, -2, -1)
+    real_dtype = prediction.real.dtype
+    eps = torch.finfo(real_dtype).eps
+    prediction = prediction / prediction.abs().square().mean(
+        dim=spatial_dims,
+        keepdim=True,
+    ).sqrt().clamp_min(eps)
+    selected_target = selected_target / selected_target.abs().square().mean(
+        dim=spatial_dims,
+        keepdim=True,
+    ).sqrt().clamp_min(eps)
+
+    mask = selected_support.to(dtype=real_dtype)
+    correlation = (selected_target.conj() * prediction * mask).sum(
+        dim=spatial_dims,
+        keepdim=True,
+    )
+    phase_offset = torch.angle(correlation)
+    prediction = prediction * torch.complex(
+        torch.cos(-phase_offset),
+        torch.sin(-phase_offset),
+    )
+
+    squared_error = (prediction - selected_target).abs().square().sum(
+        dim=spatial_dims,
+    )
+    target_energy = selected_target.abs().square().sum(dim=spatial_dims).clamp_min(
+        eps
+    )
+    complex_nrmse = torch.sqrt(squared_error / target_energy)[:, 0]
+
+    prediction_amplitude = prediction.abs()
+    target_amplitude = selected_target.abs()
+    prediction_amplitude = prediction_amplitude / prediction_amplitude.amax(
+        dim=spatial_dims,
+        keepdim=True,
+    ).clamp_min(eps)
+    target_amplitude = target_amplitude / target_amplitude.amax(
+        dim=spatial_dims,
+        keepdim=True,
+    ).clamp_min(eps)
+    amplitude_mse = (prediction_amplitude - target_amplitude).square().mean(
+        dim=spatial_dims,
+    )[:, 0]
+    amplitude_psnr = 10.0 * torch.log10(
+        amplitude_mse.clamp_min(torch.finfo(real_dtype).tiny).reciprocal()
+    )
+    return {
+        "complex_nrmse": complex_nrmse.mean(),
+        "amplitude_psnr_db": amplitude_psnr.mean(),
+    }
+
+
 def stage_metrics(
     realspace: torch.Tensor,
     target: torch.Tensor,
@@ -326,6 +419,14 @@ def stage_metrics(
         "phase_wca": phase_wca(realspace, target_phase, weights),
         "twin_fraction": object_loss.twin_fraction,
     }
+    values.update(
+        ambiguity_aligned_reconstruction_metrics(
+            realspace,
+            target,
+            object_loss.selected_support,
+            object_loss.selected_twin,
+        )
+    )
     values.update(
         support_metrics(realspace, object_loss.selected_support, support_threshold)
     )
@@ -508,6 +609,16 @@ def main() -> int:
                 "Symmetry-aware WCA after Fourier-transforming each real-space "
                 "object; lower is better."
             ),
+            "complex_nrmse": (
+                "Full-volume complex NRMSE after per-object RMS normalization, "
+                "support-weighted global-phase alignment, and the component-MAE "
+                "twin selection; lower is better."
+            ),
+            "amplitude_psnr_db": (
+                "Full-volume amplitude PSNR in dB after independently normalizing "
+                "the selected target and prediction amplitudes to unit maximum; "
+                "higher is better."
+            ),
             "support": (
                 "Predicted support is unit-maximum amplitude >= support_threshold; "
                 "AutoPhaseNN target support uses stored target amplitude >= the same "
@@ -525,11 +636,16 @@ def main() -> int:
     refined = report["metrics"]["refined"]
     LOGGER.info(
         "Object MAE %.6g -> %.6g | WCA %.6g -> %.6g | "
+        "complex NRMSE %.6g -> %.6g | amplitude PSNR %.4f -> %.4f dB | "
         "Fourier MAE %.6g -> %.6g | support IoU %.6g -> %.6g",
         initial["object_mae"],
         refined["object_mae"],
         initial["phase_wca"],
         refined["phase_wca"],
+        initial["complex_nrmse"],
+        refined["complex_nrmse"],
+        initial["amplitude_psnr_db"],
+        refined["amplitude_psnr_db"],
         initial["fourier_modulus_mae"],
         refined["fourier_modulus_mae"],
         initial["support_iou"],
