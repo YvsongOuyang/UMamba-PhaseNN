@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-15T16:00:20.872061+00:00",
+  "runtime": {
+    "project_version": "1.9.0",
+    "git_commit": "278cd6019f82050a58f9421d1f2c5a6a2a5dc938",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "data": {
+    "format": "autophasenn_memmap",
+    "support_source": "stored target amplitude >= 0.1",
+    "splits": {
+      "train": {
+        "schema_version": 1,
+        "dataset_name": "AutoPhaseNN",
+        "dataset_version": "autophasenn_64_memmap_v2_centered_phase",
+        "source_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+        "storage": "raw_numpy_memmap_without_npy_header",
+        "root": "/data_ssd/oyys/autophasenn",
+        "shape": [
+          64,
+          64,
+          64
+        ],
+        "dtypes": {
+          "diffraction": "float32",
+          "realspace": "complex64"
+        },
+        "input_log_data": true,
+        "input_preprocessing": {
+          "modulus_to_intensity": "square",
+          "transform": "log1p",
+          "normalization": "per_volume_minmax_0_1"
+        },
+        "target_preprocessing": {
+          "transform": "fftshift(fftn(ifftshift(realspace)))",
+          "translation_canonicalization": "remove_linear_phase_ramp_from_amplitude_center_of_mass",
+          "target": "centered_particle_reciprocal_phase_minus_center_phase"
+        },
+        "semantics": {
+          "diffraction": "centered reciprocal-space modulus abs(FFT)",
+          "realspace": "centered complex-valued object"
+        },
+        "splits": {
+          "train": {
+            "num_samples": 25000,
+            "diffraction": "/data_ssd/oyys/autophasenn/train_diff.npy",
+            "realspace": "/data_ssd/oyys/autophasenn/train_real.npy",
+            "expected_diffraction_bytes": 26214400000,
+            "expected_realspace_bytes": 52428800000
+          }
+        },
+        "file_status": {
+          "train": {
+            "diffraction": {
+              "path": "/data_ssd/oyys/autophasenn/train_diff.npy",
+              "exists": true,
+              "expected_bytes": 26214400000,
+              "actual_bytes": 26214400000,
+              "size_valid": true
+            },
+            "realspace": {
+              "path": "/data_ssd/oyys/autophasenn/train_real.npy",
+              "exists": true,
+              "expected_bytes": 52428800000,
+              "actual_bytes": 52428800000,
+              "size_valid": true
+            }
+          }
+        },
+        "selected_split": "train",
+        "declared_split_samples": 25000,
+        "selected_samples": 25000,
+        "selection": "complete_split"
+      },
+      "val": {
+        "schema_version": 1,
+        "dataset_name": "AutoPhaseNN",
+        "dataset_version": "autophasenn_64_memmap_v2_centered_phase",
+        "source_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+        "storage": "raw_numpy_memmap_without_npy_header",
+        "root": "/data_ssd/oyys/autophasenn",
+        "shape": [
+          64,
+          64,
+          64
+        ],
+        "dtypes": {
+          "diffraction": "float32",
+          "realspace": "complex64"
+        },
+        "input_log_data": true,
+        "input_preprocessing": {
+          "modulus_to_intensity": "square",
+          "transform": "log1p",
+          "normalization": "per_volume_minmax_0_1"
+        },
+        "target_preprocessing": {
+          "transform": "fftshift(fftn(ifftshift(realspace)))",
+          "translation_canonicalization": "remove_linear_phase_ramp_from_amplitude_center_of_mass",
+          "target": "centered_particle_reciprocal_phase_minus_center_phase"
+        },
+        "semantics": {
+          "diffraction": "centered reciprocal-space modulus abs(FFT)",
+          "realspace": "centered complex-valued object"
+        },
+        "splits": {
+          "val": {
+            "num_samples": 5000,
+            "diffraction": "/data_ssd/oyys/autophasenn/val_diff.npy",
+            "realspace": "/data_ssd/oyys/autophasenn/val_real.npy",
+            "expected_diffraction_bytes": 5242880000,
+            "expected_realspace_bytes": 10485760000
+          }
+        },
+        "file_status": {
+          "val": {
+            "diffraction": {
+              "path": "/data_ssd/oyys/autophasenn/val_diff.npy",
+              "exists": true,
+              "expected_bytes": 5242880000,
+              "actual_bytes": 5242880000,
+              "size_valid": true
+            },
+            "realspace": {
+              "path": "/data_ssd/oyys/autophasenn/val_real.npy",
+              "exists": true,
+              "expected_bytes": 10485760000,
+              "actual_bytes": 10485760000,
+              "size_valid": true
+            }
+          }
+        },
+        "selected_split": "val",
+        "declared_split_samples": 5000,
+        "selected_samples": 5000,
+        "selection": "complete_split"
+      }
+    }
+  },
+  "pipeline": {
+    "phase_model_variant": "reduced_bn_no_outer_skip",
+    "phase_checkpoint": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/checkpoint_best.pt",
+    "phase_model_frozen": true,
+    "inverse_fft": "pytorch_autophasenn.reconstruction convention",
+    "refiner": "complex-convolution sparse MoMamba 3D U-Net",
+    "measured_modulus_projection": false,
+    "object_loss": {
+      "name": "aligned real MAE + imaginary MAE",
+      "paper_equation": 1,
+      "scope": "full",
+      "alignment": "RMS scale, global phase, direct/twin selection"
+    },
+    "physics_loss": {
+      "name": "normalized Fourier-modulus MAE",
+      "paper_equation": 2,
+      "weight": 0.0,
+      "support": "stored target amplitude >= 0.1"
+    }
+  },
+  "training": {
+    "data_format": "autophasenn",
+    "data_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "data_dir": "/data_ssd/oyys/autophasenn",
+    "train_diff": "train_diff.npy",
+    "train_real": "train_real.npy",
+    "val_diff": "val_diff.npy",
+    "val_real": "val_real.npy",
+    "phase_checkpoint": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn/high_strain_reduced_bn_no_outer_skip_scratch_bs16_lr1e-3_20260825_153347/checkpoint_best.pt",
+    "phase_model_variant": "auto",
+    "resume": "",
+    "num_samples_train": 25000,
+    "num_samples_val": 5000,
+    "shape": 64,
+    "author_min_oversampling": null,
+    "input_log_data": true,
+    "base_channels": 4,
+    "num_experts": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "top_k": 2,
+    "router_heads": 2,
+    "router_dropout": 0.2,
+    "position_dropout": 0.1,
+    "codec_dropout": 0.1,
+    "mamba_d_state": 16,
+    "mamba_d_conv": 4,
+    "mamba_expand": 2,
+    "project_measured_modulus": false,
+    "epochs": 100,
+    "batch_size": 24,
+    "num_workers": 4,
+    "prefetch_factor": 2,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.0,
+    "object_loss_scope": "full",
+    "outside_support_weight": 0.25,
+    "support_threshold": 0.1,
+    "physics_loss_weight": 0.0,
+    "load_balance_weight": 0.0,
+    "router_z_weight": 0.0,
+    "gradient_clip": 1.0,
+    "lr_scheduler": "cosine",
+    "device": "cuda",
+    "seed": 42,
+    "run_name": "autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/pytorch_realspace_momamba",
+    "checkpoint_root": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner",
+    "save_every": 10,
+    "print_freq": 50,
+    "max_batches_per_epoch": 0,
+    "run_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/pytorch_realspace_momamba/autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016",
+    "checkpoint_dir": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016"
+  }
+}

@@ -1,0 +1,29 @@
+319331
+
+
+cd /home/oyys/code/UMamba-AutoPhaseNN
+cd high_strain_CNN
+RUN_NAME="autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016"
+CHECKPOINT="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/${RUN_NAME}/checkpoint_best.pt"
+EVAL_DIR="$PWD/artifacts/evaluations/pytorch_realspace_momamba/${RUN_NAME}_autophasenn_val"
+
+mkdir -p "${EVAL_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=1 python -u \
+  -m pytorch_autophasenn.evaluate_refiner \
+  --checkpoint "${CHECKPOINT}" \
+  --dataset-format autophasenn_memmap \
+  --data-config configs/autophasenn_data.json \
+  --split val \
+  --batch-size 24 \
+  --num-workers 4 \
+  --output-dir "${EVAL_DIR}" \
+  > "${EVAL_DIR}/nohup.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${EVAL_DIR}/evaluate.pid"
+
+echo "评估已启动"
+echo "PID      : ${PID}"
+echo "评估目录 : ${EVAL_DIR}"
+echo "运行日志 : ${EVAL_DIR}/console.log"

@@ -1,0 +1,14 @@
+2026-09-16 22:11:53 | INFO    | Checkpoint=/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016/checkpoint_best.pt | epoch=30 | phase=reduced_bn_no_outer_skip (frozen) | data=autophasenn_memmap/val | samples=5000 | batch=24 | device=cuda
+2026-09-16 22:15:13 | INFO    | batch=00020/00209 | samples=480/5000 | initial=3.96360e-01 | refined=5.95626e-02 | elapsed=199.7s | eta=1887.3s
+2026-09-16 22:15:39 | INFO    | batch=00040/00209 | samples=960/5000 | initial=3.98624e-01 | refined=6.02688e-02 | elapsed=226.0s | eta=954.7s
+2026-09-16 22:16:06 | INFO    | batch=00060/00209 | samples=1440/5000 | initial=3.92245e-01 | refined=6.75084e-02 | elapsed=252.5s | eta=627.1s
+2026-09-16 22:16:32 | INFO    | batch=00080/00209 | samples=1920/5000 | initial=4.01470e-01 | refined=6.30737e-02 | elapsed=279.2s | eta=450.2s
+2026-09-16 22:16:59 | INFO    | batch=00100/00209 | samples=2400/5000 | initial=4.07267e-01 | refined=5.90718e-02 | elapsed=305.3s | eta=332.8s
+2026-09-16 22:17:21 | INFO    | batch=00120/00209 | samples=2880/5000 | initial=4.00016e-01 | refined=5.43427e-02 | elapsed=327.7s | eta=243.1s
+2026-09-16 22:17:45 | INFO    | batch=00140/00209 | samples=3360/5000 | initial=3.92247e-01 | refined=5.65676e-02 | elapsed=351.3s | eta=173.1s
+2026-09-16 22:18:11 | INFO    | batch=00160/00209 | samples=3840/5000 | initial=3.99875e-01 | refined=5.83630e-02 | elapsed=377.9s | eta=115.7s
+2026-09-16 22:18:37 | INFO    | batch=00180/00209 | samples=4320/5000 | initial=4.12717e-01 | refined=6.57129e-02 | elapsed=404.0s | eta=65.1s
+2026-09-16 22:19:05 | INFO    | batch=00200/00209 | samples=4800/5000 | initial=3.88677e-01 | refined=5.65368e-02 | elapsed=431.3s | eta=19.4s
+2026-09-16 22:19:15 | INFO    | batch=00209/00209 | samples=5000/5000 | initial=4.15145e-01 | refined=5.90977e-02 | elapsed=442.2s | eta=0.0s
+2026-09-16 22:19:15 | INFO    | Object MAE 0.395031 -> 0.0588412 | WCA 0.63433 -> 0.958155 | complex NRMSE 0.711933 -> 0.375505 | amplitude PSNR 22.5817 -> 27.9748 dB | Fourier MAE 0.00196969 -> 0.00139856 | support IoU 0.484174 -> 0.786784
+2026-09-16 22:19:15 | INFO    | Results: /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/evaluations/pytorch_realspace_momamba/autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016_autophasenn_val
