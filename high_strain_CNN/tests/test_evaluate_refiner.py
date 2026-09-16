@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -14,6 +15,7 @@ from pytorch_autophasenn.evaluate_refiner import (
     build_autophasenn_dataset,
     phase_wca,
     prepare_targets,
+    parse_args,
     relative_improvement,
     support_metrics,
 )
@@ -27,6 +29,22 @@ from pytorch_autophasenn.visualize_refiner import (
 
 
 class EvaluateRefinerTest(unittest.TestCase):
+    def test_autophasenn_evaluation_defaults_to_support_threshold_point_three(
+        self,
+    ) -> None:
+        with patch(
+            "sys.argv",
+            [
+                "evaluate_refiner",
+                "--checkpoint",
+                "checkpoint.pt",
+                "--dataset-format",
+                "autophasenn_memmap",
+            ],
+        ):
+            args = parse_args()
+        self.assertEqual(args.support_threshold, 0.3)
+
     def test_refiner_training_uses_dataset_specific_support(self) -> None:
         target = torch.zeros(1, 4, 4, 4, dtype=torch.complex64)
         target[:, 1:3, 1:3, 1:3] = 0.5 + 0.0j

@@ -12,10 +12,14 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from .data import build_autophasenn_refinement_dataset
+from .data import (
+    build_autophasenn_refinement_dataset,
+    reciprocal_phase_from_realspace,
+)
 from .evaluate_refiner import choose_device, load_model
 from .management import DEFAULT_DATA_CONFIG
 from .momamba_refiner import ambiguity_aware_component_mae
+from .reconstruction import reciprocal_field_from_realspace
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -29,7 +33,11 @@ from autophasenn_training_pipeline.visualize_postprocessed import (  # noqa: E40
     wrap_phase,
 )
 
-from .visualize import plot_image_grid  # noqa: E402
+from .visualize import (  # noqa: E402
+    masked_phase,
+    normalized_modulus,
+    plot_image_grid,
+)
 
 
 LOGGER = logging.getLogger("high_strain.visualize_refiner")
@@ -75,7 +83,10 @@ def parse_args() -> argparse.Namespace:
         help="Zero-based indices within the selected split.",
     )
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
-    parser.add_argument("--support-threshold", type=float, default=0.1)
+    parser.add_argument("--support-threshold", type=float, default=0.3)
+    parser.add_argument("--reciprocal-phase-threshold", type=float, default=0.02)
+    parser.add_argument("--reciprocal-surface-level", type=float, default=0.02)
+    parser.add_argument("--diffraction-difference-threshold", type=float, default=1e-6)
     parser.add_argument("--slice-axis", type=int, choices=(0, 1, 2), default=0)
     parser.add_argument(
         "--slice-index",
@@ -106,6 +117,12 @@ def parse_args() -> argparse.Namespace:
         parser.error("--slice-index must be -1 or nonnegative.")
     if args.amplitude_error_level <= 0:
         parser.error("--amplitude-error-level must be positive.")
+    if args.reciprocal_phase_threshold < 0:
+        parser.error("--reciprocal-phase-threshold must be nonnegative.")
+    if args.reciprocal_surface_level <= 0:
+        parser.error("--reciprocal-surface-level must be positive.")
+    if args.diffraction_difference_threshold <= 0:
+        parser.error("--diffraction-difference-threshold must be positive.")
     if args.max_volume_points < 1 or args.volume_point_size <= 0:
         parser.error("3D point count and point size must be positive.")
     if not 0 < args.volume_alpha <= 1:
@@ -218,6 +235,13 @@ def main() -> int:
         list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
     ] = []
     phase_rows: list[list[tuple[np.ndarray | None, np.ndarray | None, str, float]]] = []
+    reciprocal_slice_rows: list[list[np.ndarray]] = []
+    diffraction_modulus_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
+    ] = []
+    diffraction_phase_rows: list[
+        list[tuple[np.ndarray | None, np.ndarray | None, str, float]]
+    ] = []
     names: list[str] = []
     sample_metadata: list[dict[str, object]] = []
 
@@ -240,6 +264,52 @@ def main() -> int:
             target,
             target_support,
         )
+
+        measured_np = diffraction_modulus.detach().cpu().numpy()[0, 0]
+        measured_norm = normalized_modulus(measured_np)
+        measured_scale = max(float(measured_np.max()), np.finfo(np.float32).eps)
+        initial_reciprocal = reciprocal_field_from_realspace(initial)
+        refined_reciprocal = reciprocal_field_from_realspace(refined)
+        initial_modulus = initial_reciprocal.abs().detach().cpu().numpy()[0, 0]
+        refined_modulus = refined_reciprocal.abs().detach().cpu().numpy()[0, 0]
+        initial_modulus_norm = initial_modulus / measured_scale
+        refined_modulus_norm = refined_modulus / measured_scale
+        initial_modulus_error = initial_modulus_norm - measured_norm
+        refined_modulus_error = refined_modulus_norm - measured_norm
+
+        target_reciprocal_phase = reciprocal_phase_from_realspace(target[:, 0])
+        initial_reciprocal_phase = reciprocal_phase_from_realspace(initial[:, 0])
+        refined_reciprocal_phase = reciprocal_phase_from_realspace(refined[:, 0])
+        target_reciprocal_phase_np = target_reciprocal_phase.detach().cpu().numpy()[0]
+        initial_reciprocal_phase_np = initial_reciprocal_phase.detach().cpu().numpy()[0]
+        refined_reciprocal_phase_np = refined_reciprocal_phase.detach().cpu().numpy()[0]
+        initial_phase_geometry = np.minimum(measured_norm, initial_modulus_norm)
+        refined_phase_geometry = np.minimum(measured_norm, refined_modulus_norm)
+        target_reciprocal_phase_display = masked_phase(
+            target_reciprocal_phase_np,
+            measured_norm,
+            args.reciprocal_phase_threshold,
+        )
+        initial_reciprocal_phase_display = masked_phase(
+            initial_reciprocal_phase_np,
+            initial_phase_geometry,
+            args.reciprocal_phase_threshold,
+        )
+        refined_reciprocal_phase_display = masked_phase(
+            refined_reciprocal_phase_np,
+            refined_phase_geometry,
+            args.reciprocal_phase_threshold,
+        )
+        initial_reciprocal_phase_error = np.where(
+            initial_phase_geometry > args.reciprocal_phase_threshold,
+            wrap_phase(initial_reciprocal_phase_np - target_reciprocal_phase_np),
+            np.nan,
+        ).astype(np.float32)
+        refined_reciprocal_phase_error = np.where(
+            refined_phase_geometry > args.reciprocal_phase_threshold,
+            wrap_phase(refined_reciprocal_phase_np - target_reciprocal_phase_np),
+            np.nan,
+        ).astype(np.float32)
 
         target_amp, target_phase = post_process_object(target, args.support_threshold)
         initial_amp, initial_phase = post_process_object(
@@ -326,6 +396,128 @@ def main() -> int:
                 ),
             ]
         )
+        reciprocal_slice_rows.append(
+            [
+                take_slice(
+                    np.log10(np.clip(measured_norm, 1e-6, None)),
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    np.log10(np.clip(initial_modulus_norm, 1e-6, None)),
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    np.log10(np.clip(refined_modulus_norm, 1e-6, None)),
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    initial_modulus_error,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    refined_modulus_error,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    target_reciprocal_phase_display,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    initial_reciprocal_phase_display,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    refined_reciprocal_phase_display,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    initial_reciprocal_phase_error,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+                take_slice(
+                    refined_reciprocal_phase_error,
+                    args.slice_axis,
+                    args.slice_index,
+                ),
+            ]
+        )
+        diffraction_modulus_rows.append(
+            [
+                (
+                    measured_norm,
+                    np.log10(np.clip(measured_norm, 1e-6, None)),
+                    "Measured modulus",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    initial_modulus_norm,
+                    np.log10(np.clip(initial_modulus_norm, 1e-6, None)),
+                    "U-Net initial reprojection",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    refined_modulus_norm,
+                    np.log10(np.clip(refined_modulus_norm, 1e-6, None)),
+                    "MoMamba refined reprojection",
+                    args.reciprocal_surface_level,
+                ),
+                (
+                    np.abs(initial_modulus_error),
+                    initial_modulus_error,
+                    "Initial - measured",
+                    args.diffraction_difference_threshold,
+                ),
+                (
+                    np.abs(refined_modulus_error),
+                    refined_modulus_error,
+                    "Refined - measured",
+                    args.diffraction_difference_threshold,
+                ),
+            ]
+        )
+        diffraction_phase_rows.append(
+            [
+                (
+                    measured_norm,
+                    target_reciprocal_phase_np,
+                    "Target reciprocal phase",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    initial_modulus_norm,
+                    initial_reciprocal_phase_np,
+                    "U-Net initial reciprocal phase",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    refined_modulus_norm,
+                    refined_reciprocal_phase_np,
+                    "MoMamba refined reciprocal phase",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    initial_phase_geometry,
+                    initial_reciprocal_phase_error,
+                    "Initial - target",
+                    args.reciprocal_phase_threshold,
+                ),
+                (
+                    refined_phase_geometry,
+                    refined_reciprocal_phase_error,
+                    "Refined - target",
+                    args.reciprocal_phase_threshold,
+                ),
+            ]
+        )
         sample_name = str(sample["name"])
         names.append(sample_name)
         sample_metadata.append(
@@ -336,6 +528,12 @@ def main() -> int:
                 "refined_twin_aligned": refined_twin,
                 "initial_object_mae": initial_mae,
                 "refined_object_mae": refined_mae,
+                "initial_diffraction_modulus_mae": float(
+                    np.mean(np.abs(initial_modulus_error))
+                ),
+                "refined_diffraction_modulus_mae": float(
+                    np.mean(np.abs(refined_modulus_error))
+                ),
             }
         )
         LOGGER.info(
@@ -414,6 +612,70 @@ def main() -> int:
         absolute_limits=(-float(np.pi), float(np.pi)),
         difference_limits=(-float(np.pi), float(np.pi)),
     )
+    plot_image_grid(
+        reciprocal_slice_rows,
+        names,
+        [
+            "Measured modulus (log10 normalized)",
+            "U-Net initial modulus (log10 normalized)",
+            "MoMamba refined modulus (log10 normalized)",
+            "Initial modulus error",
+            "Refined modulus error",
+            "Target reciprocal phase",
+            "U-Net initial reciprocal phase",
+            "MoMamba refined reciprocal phase",
+            "Initial reciprocal phase error",
+            "Refined reciprocal phase error",
+        ],
+        [
+            "magma",
+            "magma",
+            "magma",
+            "coolwarm",
+            "coolwarm",
+            "twilight",
+            "twilight",
+            "twilight",
+            "coolwarm",
+            "coolwarm",
+        ],
+        output_dir / "visualization_reciprocal_2d.png",
+        "MoMamba reciprocal-space reconstruction",
+        phase_rows={5, 6, 7, 8, 9},
+        difference_rows={3, 4, 8, 9},
+    )
+    plot_five_panel_volume(
+        diffraction_modulus_rows,
+        names,
+        output_dir / "visualization_diffraction_modulus_3d.png",
+        "Diffraction-space modulus",
+        "magma",
+        "coolwarm",
+        "log10 normalized diffraction modulus",
+        "Signed normalized modulus difference",
+        args.max_volume_points,
+        args.volume_point_size,
+        args.volume_alpha,
+        args.view_elevation,
+        args.view_azimuth,
+    )
+    plot_five_panel_volume(
+        diffraction_phase_rows,
+        names,
+        output_dir / "visualization_diffraction_phase_3d.png",
+        "Diffraction-space phase",
+        "twilight",
+        "coolwarm",
+        "Wrapped diffraction phase (rad)",
+        "Wrapped diffraction-phase difference (rad)",
+        args.max_volume_points,
+        args.volume_point_size,
+        args.volume_alpha,
+        args.view_elevation,
+        args.view_azimuth,
+        absolute_limits=(-float(np.pi), float(np.pi)),
+        difference_limits=(-float(np.pi), float(np.pi)),
+    )
 
     metadata = {
         "checkpoint": str(checkpoint_path),
@@ -435,6 +697,9 @@ def main() -> int:
             "slices": "visualization_2d.png",
             "amplitude_3d": "visualization_amplitude_3d.png",
             "phase_3d": "visualization_phase_3d.png",
+            "reciprocal_slices": "visualization_reciprocal_2d.png",
+            "diffraction_modulus_3d": "visualization_diffraction_modulus_3d.png",
+            "diffraction_phase_3d": "visualization_diffraction_phase_3d.png",
         },
     }
     metadata_path = output_dir / "visualization_metadata.json"

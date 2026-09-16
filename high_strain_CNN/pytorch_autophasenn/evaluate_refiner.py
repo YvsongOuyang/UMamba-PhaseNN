@@ -86,8 +86,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Threshold on unit-maximum predicted amplitude and, for AutoPhaseNN, "
-            "stored target amplitude. Defaults to 0.3 for author NPZ and 0.1 for "
-            "AutoPhaseNN."
+            "stored target amplitude. Defaults to 0.3 for both dataset routes."
         ),
     )
     parser.add_argument("--print-freq", type=int, default=20)
@@ -99,9 +98,7 @@ def parse_args() -> argparse.Namespace:
     )
     args = parser.parse_args()
     if args.support_threshold is None:
-        args.support_threshold = (
-            0.1 if args.dataset_format == "autophasenn_memmap" else 0.3
-        )
+        args.support_threshold = 0.3
     if args.num_samples < 0:
         parser.error("--num-samples cannot be negative.")
     if min(args.batch_size, args.prefetch_factor, args.print_freq) < 1:

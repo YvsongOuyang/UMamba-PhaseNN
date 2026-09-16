@@ -225,16 +225,18 @@ python -u -m pytorch_autophasenn.evaluate_refiner \
   --dataset-format autophasenn_memmap \
   --data-config configs/autophasenn_data.json \
   --split val \
+  --support-threshold 0.3 \
   --batch-size 24 \
   --num-workers 4
 ```
 
 This route reuses the configured AutoPhaseNN diffraction modulus and complex
-real-space target. It derives target support as `abs(target) >= 0.1`, matching
-the baseline AutoPhaseNN threshold, and derives the target reciprocal phase
-with the existing amplitude-center translation canonicalization. It is a
-cross-dataset test of the high-strain-trained checkpoint, not retraining on
-AutoPhaseNN.
+real-space target. Its default evaluation support threshold is `0.3`, matching
+the validated operating point of the frozen high-strain U-Net; pass
+`--support-threshold 0.1` only to reproduce the support convention used while
+training the current AutoPhaseNN MoMamba checkpoint. Target reciprocal phase
+uses the existing amplitude-center translation canonicalization. This command
+evaluates fixed outputs and does not retrain either stage.
 
 Visualize an AutoPhaseNN-trained cascade on selected validation samples:
 
@@ -244,10 +246,12 @@ python -u -m pytorch_autophasenn.visualize_refiner \
   --data-config configs/autophasenn_data.json \
   --data-dir /data_ssd/oyys/autophasenn \
   --split val \
-  --sample-indices 0 1000 2000
+  --sample-indices 0 1000 2000 \
+  --support-threshold 0.3
 ```
 
-The command writes a center-slice overview plus separate 3D amplitude and phase
+The command writes real-space and reciprocal-space center-slice overviews plus
+separate 3D amplitude, phase, diffraction-modulus, and diffraction-phase
 figures under
 `artifacts/visualizations/pytorch_realspace_momamba/<run-name>_val/`. Every
 figure compares the target, frozen U-Net initialization, MoMamba refinement,
