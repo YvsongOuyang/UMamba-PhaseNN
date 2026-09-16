@@ -20,6 +20,10 @@ from pytorch_autophasenn.evaluate_refiner import (
 from pytorch_autophasenn.momamba_refiner import ambiguity_aware_component_mae
 from pytorch_autophasenn.reconstruction import realspace_from_modulus_phase
 from pytorch_autophasenn.train_refiner import target_support
+from pytorch_autophasenn.visualize_refiner import (
+    align_reconstruction_for_display,
+    twin_transform,
+)
 
 
 class EvaluateRefinerTest(unittest.TestCase):
@@ -202,6 +206,25 @@ class EvaluateRefinerTest(unittest.TestCase):
             50.0,
         )
         self.assertIsNone(relative_improvement("twin_fraction", 0.4, 0.5))
+
+    def test_display_alignment_resolves_twin_and_global_phase(self) -> None:
+        generator = torch.Generator().manual_seed(11)
+        target = torch.complex(
+            torch.rand(1, 1, 4, 4, 4, generator=generator),
+            torch.rand(1, 1, 4, 4, 4, generator=generator),
+        )
+        support = torch.ones_like(target, dtype=torch.bool)
+        phase = torch.exp(torch.tensor(0.7j))
+        prediction = twin_transform(target) * phase * 2.0
+        aligned, selected_twin, _ = align_reconstruction_for_display(
+            prediction,
+            target,
+            support,
+        )
+        self.assertTrue(selected_twin)
+        aligned = aligned / aligned.abs().square().mean().sqrt()
+        target = target / target.abs().square().mean().sqrt()
+        torch.testing.assert_close(aligned, target, atol=1e-5, rtol=1e-5)
 
 
 if __name__ == "__main__":

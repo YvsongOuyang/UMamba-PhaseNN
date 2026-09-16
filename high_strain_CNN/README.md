@@ -236,6 +236,26 @@ with the existing amplitude-center translation canonicalization. It is a
 cross-dataset test of the high-strain-trained checkpoint, not retraining on
 AutoPhaseNN.
 
+Visualize an AutoPhaseNN-trained cascade on selected validation samples:
+
+```bash
+python -u -m pytorch_autophasenn.visualize_refiner \
+  --checkpoint /data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/<run-name>/checkpoint_best.pt \
+  --data-config configs/autophasenn_data.json \
+  --data-dir /data_ssd/oyys/autophasenn \
+  --split val \
+  --sample-indices 0 1000 2000
+```
+
+The command writes a center-slice overview plus separate 3D amplitude and phase
+figures under
+`artifacts/visualizations/pytorch_realspace_momamba/<run-name>_val/`. Every
+figure compares the target, frozen U-Net initialization, MoMamba refinement,
+and both errors. Display-only processing resolves the conjugate/twin and global
+phase ambiguities and applies the established AutoPhaseNN center-of-mass
+alignment; `visualization_metadata.json` records those choices and the selected
+sample indices.
+
 ## Install
 
 The training port supports Python 3.10 and PyTorch 2.x:
