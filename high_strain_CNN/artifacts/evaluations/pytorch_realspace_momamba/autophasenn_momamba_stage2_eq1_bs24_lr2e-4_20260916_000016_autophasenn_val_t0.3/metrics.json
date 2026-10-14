@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "run": {
+    "checkpoint": "/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016/checkpoint_best.pt",
+    "checkpoint_epoch": 68,
+    "phase_model_variant": "reduced_bn_no_outer_skip",
+    "dataset_format": "autophasenn_memmap",
+    "split": "val",
+    "support_threshold": 0.3,
+    "device": "cuda"
+  },
+  "runtime": {
+    "project_version": "1.9.0",
+    "git_commit": "2a3153fbe0a720aba6f820e730f9113a74eeafb6",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "data": {
+    "schema_version": 1,
+    "dataset_name": "AutoPhaseNN",
+    "dataset_version": "autophasenn_64_memmap_v2_centered_phase",
+    "source_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/configs/autophasenn_data.json",
+    "storage": "raw_numpy_memmap_without_npy_header",
+    "root": "/data_ssd/oyys/autophasenn",
+    "shape": [
+      64,
+      64,
+      64
+    ],
+    "dtypes": {
+      "diffraction": "float32",
+      "realspace": "complex64"
+    },
+    "input_log_data": true,
+    "input_preprocessing": {
+      "modulus_to_intensity": "square",
+      "transform": "log1p",
+      "normalization": "per_volume_minmax_0_1"
+    },
+    "target_preprocessing": {
+      "transform": "fftshift(fftn(ifftshift(realspace)))",
+      "translation_canonicalization": "remove_linear_phase_ramp_from_amplitude_center_of_mass",
+      "target": "centered_particle_reciprocal_phase_minus_center_phase"
+    },
+    "semantics": {
+      "diffraction": "centered reciprocal-space modulus abs(FFT)",
+      "realspace": "centered complex-valued object"
+    },
+    "splits": {
+      "val": {
+        "num_samples": 5000,
+        "diffraction": "/data_ssd/oyys/autophasenn/val_diff.npy",
+        "realspace": "/data_ssd/oyys/autophasenn/val_real.npy",
+        "expected_diffraction_bytes": 5242880000,
+        "expected_realspace_bytes": 10485760000
+      }
+    },
+    "file_status": {
+      "val": {
+        "diffraction": {
+          "path": "/data_ssd/oyys/autophasenn/val_diff.npy",
+          "exists": true,
+          "expected_bytes": 5242880000,
+          "actual_bytes": 5242880000,
+          "size_valid": true
+        },
+        "realspace": {
+          "path": "/data_ssd/oyys/autophasenn/val_real.npy",
+          "exists": true,
+          "expected_bytes": 10485760000,
+          "actual_bytes": 10485760000,
+          "size_valid": true
+        }
+      }
+    },
+    "selected_split": "val",
+    "declared_split_samples": 5000,
+    "selected_samples": 5000,
+    "selection": "complete_split",
+    "refinement_targets": {
+      "realspace": "stored complex object",
+      "reciprocal_phase": "FFT of realspace after amplitude-COM translation canonicalization",
+      "support": "stored amplitude >= support_threshold"
+    }
+  },
+  "num_samples": 5000,
+  "num_batches": 209,
+  "elapsed_seconds": 231.62876267789397,
+  "metrics": {
+    "initial": {
+      "object_mae": 0.3950234712600708,
+      "real_mae": 0.20043420486450195,
+      "imag_mae": 0.1945892644405365,
+      "fourier_modulus_mae": 0.002049705491028726,
+      "phase_wca": 0.634330153465271,
+      "twin_fraction": 0.515000014591217,
+      "complex_nrmse": 0.7119347503662109,
+      "amplitude_psnr_db": 22.58171618347168,
+      "support_iou": 0.5946446009635925,
+      "support_dice": 0.7366798138618469,
+      "support_volume_ratio": 1.020097966861725
+    },
+    "refined": {
+      "object_mae": 0.04922766036391258,
+      "real_mae": 0.02540357433259487,
+      "imag_mae": 0.023824086090922354,
+      "fourier_modulus_mae": 0.0013237831069156528,
+      "phase_wca": 0.9586710234642029,
+      "twin_fraction": 0.483600013256073,
+      "complex_nrmse": 0.3223556731939316,
+      "amplitude_psnr_db": 29.195313024902344,
+      "support_iou": 0.8400681318283081,
+      "support_dice": 0.9093798593521119,
+      "support_volume_ratio": 1.0865129211425781
+    }
+  },
+  "comparison": {
+    "amplitude_psnr_db": {
+      "initial": 22.58171618347168,
+      "refined": 29.195313024902344,
+      "refined_minus_initial": 6.613596841430663,
+      "improvement_percent": 29.287396882046444
+    },
+    "complex_nrmse": {
+      "initial": 0.7119347503662109,
+      "refined": 0.3223556731939316,
+      "refined_minus_initial": -0.3895790771722793,
+      "improvement_percent": 54.72117732304603
+    },
+    "fourier_modulus_mae": {
+      "initial": 0.002049705491028726,
+      "refined": 0.0013237831069156528,
+      "refined_minus_initial": -0.0007259223841130733,
+      "improvement_percent": 35.4159359620362
+    },
+    "imag_mae": {
+      "initial": 0.1945892644405365,
+      "refined": 0.023824086090922354,
+      "refined_minus_initial": -0.17076517834961416,
+      "improvement_percent": 87.75673151372509
+    },
+    "object_mae": {
+      "initial": 0.3950234712600708,
+      "refined": 0.04922766036391258,
+      "refined_minus_initial": -0.34579581089615824,
+      "improvement_percent": 87.53804167461668
+    },
+    "phase_wca": {
+      "initial": 0.634330153465271,
+      "refined": 0.9586710234642029,
+      "refined_minus_initial": 0.32434086999893186,
+      "improvement_percent": -51.13123950155858
+    },
+    "real_mae": {
+      "initial": 0.20043420486450195,
+      "refined": 0.02540357433259487,
+      "refined_minus_initial": -0.17503063053190707,
+      "improvement_percent": 87.32572898434763
+    },
+    "support_dice": {
+      "initial": 0.7366798138618469,
+      "refined": 0.9093798593521119,
+      "refined_minus_initial": 0.17270004549026496,
+      "improvement_percent": 23.443026704496102
+    },
+    "support_iou": {
+      "initial": 0.5946446009635925,
+      "refined": 0.8400681318283081,
+      "refined_minus_initial": 0.24542353086471558,
+      "improvement_percent": 41.272304577729074
+    },
+    "support_volume_ratio": {
+      "initial": 1.020097966861725,
+      "refined": 1.0865129211425781,
+      "refined_minus_initial": 0.0664149542808532,
+      "improvement_percent": -330.4560841292632
+    },
+    "twin_fraction": {
+      "initial": 0.515000014591217,
+      "refined": 0.483600013256073,
+      "refined_minus_initial": -0.031400001335144034,
+      "improvement_percent": null
+    }
+  },
+  "metric_notes": {
+    "object_mae": "Training-aligned RMS-normalized real MAE plus imaginary MAE; lower is better.",
+    "fourier_modulus_mae": "Unit-maximum Fourier-modulus MAE after applying the selected ground-truth support; lower is better.",
+    "phase_wca": "Symmetry-aware WCA after Fourier-transforming each real-space object; lower is better.",
+    "complex_nrmse": "Full-volume complex NRMSE after per-object RMS normalization, support-weighted global-phase alignment, and the component-MAE twin selection; lower is better.",
+    "amplitude_psnr_db": "Full-volume amplitude PSNR in dB after independently normalizing the selected target and prediction amplitudes to unit maximum; higher is better.",
+    "support": "Predicted support is unit-maximum amplitude >= support_threshold; AutoPhaseNN target support uses stored target amplitude >= the same threshold, while author NPZ uses its explicit stored support. IoU/Dice are higher-is-better and volume ratio is best near one."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "output_root": "/data_ssd/oyys/eCDI",
+  "train_count": 9000,
+  "test_count": 1000,
+  "validation_count_within_train": 500,
+  "split_seed": 20261016,
+  "max_fourier_nrmse": 0.00001,
+  "estimated_compressed_mib_per_sample": 3.0,
+  "free_space_reserve_gib": 10.0
+}

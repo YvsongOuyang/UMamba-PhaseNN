@@ -1,0 +1,21 @@
+# Layered LiCoO2; COD 1533825 / Hong and Oh (2003).
+# https://www.crystallography.net/cod/1533825.html
+data_licoo2
+_chemical_formula_sum 'Li3 Co3 O6'
+_space_group_IT_number 166
+_symmetry_space_group_name_H-M 'R -3 m :H'
+_cell_length_a 2.814
+_cell_length_b 2.814
+_cell_length_c 14.048
+_cell_angle_alpha 90
+_cell_angle_beta 90
+_cell_angle_gamma 120
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+Co1 Co 0 0 0
+Li1 Li 0 0 0.5
+O1 O 0 0 0.2268
