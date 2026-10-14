@@ -15,7 +15,9 @@ def _weighted_circular_average(
         dim=spatial_dims,
         keepdim=True,
     )
-    normalized_weights = weights / weights.sum(dim=spatial_dims, keepdim=True)
+    normalized_weights = weights / weights.sum(
+        dim=spatial_dims, keepdim=True
+    ).clamp_min(torch.finfo(weights.dtype).eps)
     phase_error = target_phase - predicted_phase - global_shift
     error = normalized_weights.to(torch.complex64) * torch.exp(
         torch.complex(torch.zeros_like(phase_error), phase_error)
@@ -53,13 +55,16 @@ def phase_retrieval_wca_components(
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Return direct and conjugate/twin WCA errors for every sample."""
 
-    if predicted_phase.ndim == 5 and predicted_phase.shape[1] == 1:
+    if predicted_phase.ndim in (4, 5) and predicted_phase.shape[1] == 1:
         predicted_phase = predicted_phase[:, 0]
-    if target_phase.ndim == 5 and target_phase.shape[1] == 1:
+    if target_phase.ndim in (4, 5) and target_phase.shape[1] == 1:
         target_phase = target_phase[:, 0]
-    if weights.ndim == 5 and weights.shape[1] == 1:
+    if weights.ndim in (4, 5) and weights.shape[1] == 1:
         weights = weights[:, 0]
-    if predicted_phase.shape != target_phase.shape or weights.shape != target_phase.shape:
+    if (
+        predicted_phase.shape != target_phase.shape
+        or weights.shape != target_phase.shape
+    ):
         raise ValueError(
             "Predicted phase, target phase, and weights must have the same spatial shape."
         )

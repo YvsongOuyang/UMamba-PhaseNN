@@ -1,0 +1,6 @@
+# Install PyTorch for the target GPU separately, then install these helpers.
+# NumPy 1.x also works with the existing server's PyTorch 2.2 wheels.
+numpy>=1.26,<2
+h5py>=3.11,<4
+matplotlib>=3.8,<4
+# Stage 2 also needs the official CUDA Mamba dependency in mamba.txt.

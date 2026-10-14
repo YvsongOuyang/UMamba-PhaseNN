@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from functools import partial
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.modules.utils import _triple
+from torch.nn.modules.utils import _pair, _triple
 
 from .mamba_block import BidirectionalMamba3D, MambaFactory
 
@@ -35,7 +36,7 @@ MAMBA_EXPAND = 2
 
 
 class TensorFlowSameConv3d(nn.Module):
-    """Conv3D with TensorFlow SAME padding for stride one."""
+    """TensorFlow SAME padding; 3D by default, or 2D with spatial_dims=2."""
 
     def __init__(
         self,
@@ -43,17 +44,20 @@ class TensorFlowSameConv3d(nn.Module):
         out_channels: int,
         kernel_size: int,
         dilation: int = 1,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
-        kernel = _triple(kernel_size)
-        dilation_3d = _triple(dilation)
+        self.spatial_dims = spatial_dims
+        expand = _pair if spatial_dims == 2 else _triple
+        kernel = expand(kernel_size)
+        dilation_3d = expand(dilation)
         padding: list[int] = []
         for size, rate in reversed(tuple(zip(kernel, dilation_3d))):
             total = rate * (size - 1)
             before = total // 2
             padding.extend((before, total - before))
         self.pad = tuple(padding)
-        self.conv = nn.Conv3d(
+        self.conv = (nn.Conv2d if spatial_dims == 2 else nn.Conv3d)(
             in_channels,
             out_channels,
             kernel_size=kernel,
@@ -68,13 +72,20 @@ class TensorFlowSameConv3d(nn.Module):
 
 
 class TensorFlowSameConvTranspose3d(nn.Module):
-    """Conv3DTranspose matching Keras SAME size and voxel alignment."""
+    """Transposed convolution matching Keras SAME size in 2D or 3D."""
 
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int) -> None:
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        spatial_dims: int = 3,
+    ) -> None:
         super().__init__()
-        kernel = _triple(kernel_size)
+        self.spatial_dims = spatial_dims
+        kernel = (_pair if spatial_dims == 2 else _triple)(kernel_size)
         self.crop_before = tuple(max((size - 2) // 2, 0) for size in kernel)
-        self.deconv = nn.ConvTranspose3d(
+        self.deconv = (nn.ConvTranspose2d if spatial_dims == 2 else nn.ConvTranspose3d)(
             in_channels,
             out_channels,
             kernel_size=kernel,
@@ -85,19 +96,17 @@ class TensorFlowSameConvTranspose3d(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        target_shape = tuple(size * 2 for size in x.shape[-3:])
+        target_shape = tuple(size * 2 for size in x.shape[-self.spatial_dims :])
         full = self.deconv(x)
-        depth, height, width = self.crop_before
-        return full[
-            ...,
-            depth : depth + target_shape[0],
-            height : height + target_shape[1],
-            width : width + target_shape[2],
-        ]
+        slices = tuple(
+            slice(start, start + size)
+            for start, size in zip(self.crop_before, target_shape)
+        )
+        return full[(slice(None), slice(None)) + slices]
 
 
 class HighStrainPhaseUNet(nn.Module):
-    """3D U-Net that predicts reciprocal-space phase.
+    """U-Net that predicts reciprocal-space phase; defaults to 3D.
 
     Input and output use PyTorch's ``[batch, channel, depth, height, width]``
     layout. ``reduced`` removes the deepest encoder-decoder scale and caps the
@@ -107,6 +116,8 @@ class HighStrainPhaseUNet(nn.Module):
     adds bidirectional global context at the 8-cubed decoder scale.
     ``published`` retains the numerically matched six-level Keras architecture
     with a 2048-channel bottleneck.
+    Explicit ``spatial_dims=2`` selects NCHW convolutions, pooling and BatchNorm
+    with the same layer graph. 3D state dictionary names stay unchanged.
     """
 
     def __init__(
@@ -114,8 +125,12 @@ class HighStrainPhaseUNet(nn.Module):
         model_variant: str = DEFAULT_MODEL_VARIANT,
         *,
         mamba_factory: MambaFactory | None = None,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
+        if spatial_dims not in (2, 3):
+            raise ValueError("spatial_dims must be 2 or 3.")
+        self.spatial_dims = spatial_dims
         if model_variant not in MODEL_VARIANTS:
             raise ValueError(
                 f"Unknown model variant {model_variant!r}; expected one of {MODEL_VARIANTS}."
@@ -134,65 +149,61 @@ class HighStrainPhaseUNet(nn.Module):
         }
         self.is_published = model_variant == PUBLISHED_MODEL_VARIANT
 
+        same_conv = partial(TensorFlowSameConv3d, spatial_dims=spatial_dims)
+        same_deconv = partial(TensorFlowSameConvTranspose3d, spatial_dims=spatial_dims)
         layers: dict[str, nn.Module] = {
-            "conv3d": TensorFlowSameConv3d(1, 8, 5, dilation=8),
-            "conv3d_1": TensorFlowSameConv3d(1, 8, 5, dilation=5),
-            "conv3d_2": TensorFlowSameConv3d(1, 8, 5, dilation=3),
-            "conv3d_3": TensorFlowSameConv3d(1, 8, 5, dilation=1),
-            "conv3d_4": TensorFlowSameConv3d(33, 16, 5, dilation=6),
-            "conv3d_5": TensorFlowSameConv3d(33, 16, 5, dilation=4),
-            "conv3d_6": TensorFlowSameConv3d(33, 16, 5, dilation=2),
-            "conv3d_7": TensorFlowSameConv3d(33, 16, 5, dilation=1),
-            "conv3d_8": TensorFlowSameConv3d(97, 128, 4),
-            "conv3d_9": TensorFlowSameConv3d(128, 256, 3),
-            "conv3d_10": TensorFlowSameConv3d(256, 512, 3),
+            "conv3d": same_conv(1, 8, 5, dilation=8),
+            "conv3d_1": same_conv(1, 8, 5, dilation=5),
+            "conv3d_2": same_conv(1, 8, 5, dilation=3),
+            "conv3d_3": same_conv(1, 8, 5, dilation=1),
+            "conv3d_4": same_conv(33, 16, 5, dilation=6),
+            "conv3d_5": same_conv(33, 16, 5, dilation=4),
+            "conv3d_6": same_conv(33, 16, 5, dilation=2),
+            "conv3d_7": same_conv(33, 16, 5, dilation=1),
+            "conv3d_8": same_conv(97, 128, 4),
+            "conv3d_9": same_conv(128, 256, 3),
+            "conv3d_10": same_conv(256, 512, 3),
         }
         if self.is_published:
-            layers["conv3d_11"] = TensorFlowSameConv3d(512, 1024, 3)
+            layers["conv3d_11"] = same_conv(512, 1024, 3)
         if self.use_outer_skip:
-            layers["conv3d_12"] = TensorFlowSameConv3d(33, 16, 3)
+            layers["conv3d_12"] = same_conv(33, 16, 3)
         layers.update(
             {
-                "conv3d_13": TensorFlowSameConv3d(97, 48, 3),
-                "conv3d_14": TensorFlowSameConv3d(128, 64, 3),
-                "conv3d_15": TensorFlowSameConv3d(256, 128, 3),
-                "conv3d_16": TensorFlowSameConv3d(512, 256, 3),
+                "conv3d_13": same_conv(97, 48, 3),
+                "conv3d_14": same_conv(128, 64, 3),
+                "conv3d_15": same_conv(256, 128, 3),
+                "conv3d_16": same_conv(512, 256, 3),
             }
         )
         if self.is_published:
             layers.update(
                 {
-                    "conv3d_17": TensorFlowSameConv3d(1024, 512, 3),
-                    "conv3d_18": TensorFlowSameConv3d(1024, 2048, 2),
-                    "conv3d_transpose": TensorFlowSameConvTranspose3d(
-                        2048, 1024, 3
-                    ),
-                    "conv3d_transpose_1": TensorFlowSameConvTranspose3d(
-                        1536, 512, 3
-                    ),
+                    "conv3d_17": same_conv(1024, 512, 3),
+                    "conv3d_18": same_conv(1024, 2048, 2),
+                    "conv3d_transpose": same_deconv(2048, 1024, 3),
+                    "conv3d_transpose_1": same_deconv(1536, 512, 3),
                 }
             )
         else:
             layers.update(
                 {
-                    "conv3d_18": TensorFlowSameConv3d(512, 1024, 2),
-                    "conv3d_transpose": TensorFlowSameConvTranspose3d(
-                        1024, 512, 3
-                    ),
+                    "conv3d_18": same_conv(512, 1024, 2),
+                    "conv3d_transpose": same_deconv(1024, 512, 3),
                 }
             )
         layers.update(
             {
-                "conv3d_transpose_2": TensorFlowSameConvTranspose3d(768, 256, 3),
-                "conv3d_transpose_3": TensorFlowSameConvTranspose3d(384, 128, 4),
-                "conv3d_transpose_4": TensorFlowSameConvTranspose3d(192, 64, 5),
-                "conv3d_transpose_5": TensorFlowSameConvTranspose3d(112, 32, 5),
-                "conv3d_19": TensorFlowSameConv3d(
+                "conv3d_transpose_2": same_deconv(768, 256, 3),
+                "conv3d_transpose_3": same_deconv(384, 128, 4),
+                "conv3d_transpose_4": same_deconv(192, 64, 5),
+                "conv3d_transpose_5": same_deconv(112, 32, 5),
+                "conv3d_19": same_conv(
                     48 if self.use_outer_skip else 32,
                     16,
                     5,
                 ),
-                "conv3d_20": TensorFlowSameConv3d(16, 1, 5),
+                "conv3d_20": same_conv(16, 1, 5),
             }
         )
         self.layers = nn.ModuleDict(layers)
@@ -205,7 +216,9 @@ class HighStrainPhaseUNet(nn.Module):
                     channels = layer.conv.out_channels
                 else:
                     channels = layer.deconv.out_channels
-                self.batch_norms[name] = nn.BatchNorm3d(
+                self.batch_norms[name] = (
+                    nn.BatchNorm2d if spatial_dims == 2 else nn.BatchNorm3d
+                )(
                     channels,
                     eps=BN_EPS,
                     momentum=BN_MOMENTUM,
@@ -228,6 +241,7 @@ class HighStrainPhaseUNet(nn.Module):
                     d_conv=MAMBA_D_CONV,
                     expand=MAMBA_EXPAND,
                     mixer_factory=mamba_factory,
+                    spatial_dims=spatial_dims,
                 )
         self.reset_parameters()
 
@@ -235,7 +249,9 @@ class HighStrainPhaseUNet(nn.Module):
         """Match Keras Glorot-uniform kernels and zero biases."""
 
         for module in self.layers.modules():
-            if isinstance(module, (nn.Conv3d, nn.ConvTranspose3d)):
+            if isinstance(
+                module, (nn.Conv2d, nn.ConvTranspose2d, nn.Conv3d, nn.ConvTranspose3d)
+            ):
                 nn.init.xavier_uniform_(module.weight)
                 nn.init.zeros_(module.bias)
 
@@ -249,7 +265,8 @@ class HighStrainPhaseUNet(nn.Module):
             output = self.layers[name](x)
             features.append(self._normalize(output, name))
         skip = self.activation(torch.cat(features, dim=1))
-        return F.max_pool3d(skip, kernel_size=2, stride=2), skip
+        pool = F.max_pool2d if self.spatial_dims == 2 else F.max_pool3d
+        return pool(skip, kernel_size=2, stride=2), skip
 
     def _normalize(self, x: torch.Tensor, layer_name: str) -> torch.Tensor:
         if layer_name in self.batch_norms:
@@ -266,7 +283,8 @@ class HighStrainPhaseUNet(nn.Module):
         layer_name: str,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         skip = self._hidden_layer(x, layer_name)
-        return F.max_pool3d(skip, kernel_size=2, stride=2), skip
+        pool = F.max_pool2d if self.spatial_dims == 2 else F.max_pool3d
+        return pool(skip, kernel_size=2, stride=2), skip
 
     def _skip(self, x: torch.Tensor, layer_name: str) -> torch.Tensor:
         return self._hidden_layer(x, layer_name)
@@ -293,7 +311,13 @@ class HighStrainPhaseUNet(nn.Module):
         return weighted
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Map ``[B, 1, 64, 64, 64]`` input to an equal-shaped phase volume."""
+        """Map single-channel 2D/3D input to equal-shaped reciprocal phase."""
+
+        divisor = 64 if self.is_published else 32
+        if x.ndim != self.spatial_dims + 2 or x.shape[1] != 1:
+            raise ValueError(f"Expected single-channel {self.spatial_dims}D input.")
+        if any(size % divisor for size in x.shape[2:]):
+            raise ValueError(f"Spatial dimensions must be divisible by {divisor}.")
 
         x, s1 = self._modified_encoder(
             x,

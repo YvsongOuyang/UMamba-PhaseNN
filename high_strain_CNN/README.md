@@ -15,6 +15,9 @@ retrieval algorithm.
 
 ## Implementations
 
+- `ecdi_training/`: native 512 x 512 U-Net + complex MoMamba two-stage workflow;
+  code, HDF5/NPY configs, background launcher, requirements, tests and docs are
+  grouped here. See [`ecdi_training/README.md`](ecdi_training/README.md).
 - `tensorflow_reference/`: original TensorFlow training code from upstream and
   the home for future official-model AutoPhaseNN adapters.
 - `pytorch_autophasenn/model.py`: reduced and published

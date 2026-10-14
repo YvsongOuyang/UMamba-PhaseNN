@@ -253,9 +253,11 @@ class MoMambaBlock3D(nn.Module):
         d_conv: int,
         expand: int,
         mixer_factory: MambaFactory | None,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
         self.channels = channels
+        self.spatial_dims = spatial_dims
         self.norm = nn.LayerNorm(channels)
         self.mixture = SparseMixtureOfMambas(
             channels,
@@ -272,9 +274,9 @@ class MoMambaBlock3D(nn.Module):
         self.gamma = nn.Parameter(torch.full((channels,), 1e-6))
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, RoutingLosses]:
-        """Map an NCDHW feature volume to the same shape."""
+        """Map a 2D/3D feature tensor to the same shape through token routing."""
 
-        if x.ndim != 5 or x.shape[1] != self.channels:
+        if x.ndim != self.spatial_dims + 2 or x.shape[1] != self.channels:
             raise ValueError(
                 f"Expected [B, {self.channels}, D, H, W], got {tuple(x.shape)}."
             )
@@ -291,7 +293,7 @@ def _split_complex_channels(
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Split concatenated real/imaginary feature channels."""
 
-    if value.ndim != 5 or value.shape[1] != 2 * expected_channels:
+    if value.ndim not in (4, 5) or value.shape[1] != 2 * expected_channels:
         raise ValueError(
             f"Expected [B, {2 * expected_channels}, D, H, W], got "
             f"{tuple(value.shape)}."
@@ -306,7 +308,7 @@ def _merge_complex_channels(real: torch.Tensor, imag: torch.Tensor) -> torch.Ten
 
 
 class ComplexConv3d(nn.Module):
-    """Complex 3D convolution implemented with two real-valued kernels."""
+    """Complex convolution with two real kernels; 3D default or spatial_dims=2."""
 
     def __init__(
         self,
@@ -317,13 +319,15 @@ class ComplexConv3d(nn.Module):
         stride: int | tuple[int, int, int] = 1,
         padding: int | tuple[int, int, int] = 0,
         bias: bool = True,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
         if min(in_channels, out_channels) < 1:
             raise ValueError("Complex convolution channel counts must be positive.")
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.real_kernel = nn.Conv3d(
+        conv = nn.Conv2d if spatial_dims == 2 else nn.Conv3d
+        self.real_kernel = conv(
             in_channels,
             out_channels,
             kernel_size,
@@ -331,7 +335,7 @@ class ComplexConv3d(nn.Module):
             padding=padding,
             bias=False,
         )
-        self.imag_kernel = nn.Conv3d(
+        self.imag_kernel = conv(
             in_channels,
             out_channels,
             kernel_size,
@@ -349,14 +353,14 @@ class ComplexConv3d(nn.Module):
         output_real = self.real_kernel(real) - self.imag_kernel(imag)
         output_imag = self.real_kernel(imag) + self.imag_kernel(real)
         if self.real_bias is not None:
-            shape = (1, self.out_channels, 1, 1, 1)
+            shape = (1, self.out_channels) + (1,) * (x.ndim - 2)
             output_real = output_real + self.real_bias.view(shape)
             output_imag = output_imag + self.imag_bias.view(shape)
         return _merge_complex_channels(output_real, output_imag)
 
 
 class ComplexConvTranspose3d(nn.Module):
-    """Complex transposed 3D convolution with shared complex algebra."""
+    """Complex transposed convolution in the selected spatial dimensionality."""
 
     def __init__(
         self,
@@ -367,13 +371,15 @@ class ComplexConvTranspose3d(nn.Module):
         stride: int | tuple[int, int, int] = 1,
         padding: int | tuple[int, int, int] = 0,
         bias: bool = True,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
         if min(in_channels, out_channels) < 1:
             raise ValueError("Complex convolution channel counts must be positive.")
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.real_kernel = nn.ConvTranspose3d(
+        conv = nn.ConvTranspose2d if spatial_dims == 2 else nn.ConvTranspose3d
+        self.real_kernel = conv(
             in_channels,
             out_channels,
             kernel_size,
@@ -381,7 +387,7 @@ class ComplexConvTranspose3d(nn.Module):
             padding=padding,
             bias=False,
         )
-        self.imag_kernel = nn.ConvTranspose3d(
+        self.imag_kernel = conv(
             in_channels,
             out_channels,
             kernel_size,
@@ -399,7 +405,7 @@ class ComplexConvTranspose3d(nn.Module):
         output_real = self.real_kernel(real) - self.imag_kernel(imag)
         output_imag = self.real_kernel(imag) + self.imag_kernel(real)
         if self.real_bias is not None:
-            shape = (1, self.out_channels, 1, 1, 1)
+            shape = (1, self.out_channels) + (1,) * (x.ndim - 2)
             output_real = output_real + self.real_bias.view(shape)
             output_imag = output_imag + self.imag_bias.view(shape)
         return _merge_complex_channels(output_real, output_imag)
@@ -408,11 +414,12 @@ class ComplexConvTranspose3d(nn.Module):
 class ComplexBatchNorm3d(nn.Module):
     """Normalize real and imaginary components independently."""
 
-    def __init__(self, channels: int) -> None:
+    def __init__(self, channels: int, spatial_dims: int = 3) -> None:
         super().__init__()
         self.channels = channels
-        self.real_norm = nn.BatchNorm3d(channels)
-        self.imag_norm = nn.BatchNorm3d(channels)
+        norm = nn.BatchNorm2d if spatial_dims == 2 else nn.BatchNorm3d
+        self.real_norm = norm(channels)
+        self.imag_norm = norm(channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         real, imag = _split_complex_channels(x, self.channels)
@@ -433,17 +440,25 @@ class ComplexLeakyReLU(nn.Module):
 class ComplexDropout3d(nn.Module):
     """Drop matching real/imaginary feature maps with one shared mask."""
 
-    def __init__(self, channels: int, probability: float) -> None:
+    def __init__(
+        self, channels: int, probability: float, spatial_dims: int = 3
+    ) -> None:
         super().__init__()
         self.channels = channels
         self.probability = probability
+        self.spatial_dims = spatial_dims
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if not self.training or self.probability == 0:
             return x
         real, imag = _split_complex_channels(x, self.channels)
         mask = torch.ones_like(real)
-        mask = torch.nn.functional.dropout3d(
+        dropout = (
+            torch.nn.functional.dropout2d
+            if self.spatial_dims == 2
+            else torch.nn.functional.dropout3d
+        )
+        mask = dropout(
             mask,
             p=self.probability,
             training=True,
@@ -454,17 +469,35 @@ class ComplexDropout3d(nn.Module):
 class ComplexResidualConvBlock3D(nn.Module):
     """Two complex convolutions with a complex residual projection."""
 
-    def __init__(self, in_channels: int, out_channels: int) -> None:
+    def __init__(
+        self, in_channels: int, out_channels: int, spatial_dims: int = 3
+    ) -> None:
         super().__init__()
-        self.conv1 = ComplexConv3d(in_channels, out_channels, 3, padding=1, bias=False)
-        self.norm1 = ComplexBatchNorm3d(out_channels)
-        self.conv2 = ComplexConv3d(out_channels, out_channels, 3, padding=1, bias=False)
-        self.norm2 = ComplexBatchNorm3d(out_channels)
+        self.conv1 = ComplexConv3d(
+            in_channels,
+            out_channels,
+            3,
+            padding=1,
+            bias=False,
+            spatial_dims=spatial_dims,
+        )
+        self.norm1 = ComplexBatchNorm3d(out_channels, spatial_dims)
+        self.conv2 = ComplexConv3d(
+            out_channels,
+            out_channels,
+            3,
+            padding=1,
+            bias=False,
+            spatial_dims=spatial_dims,
+        )
+        self.norm2 = ComplexBatchNorm3d(out_channels, spatial_dims)
         self.activation = ComplexLeakyReLU(negative_slope=0.01)
         self.projection = (
             nn.Sequential(
-                ComplexConv3d(in_channels, out_channels, 1, bias=False),
-                ComplexBatchNorm3d(out_channels),
+                ComplexConv3d(
+                    in_channels, out_channels, 1, bias=False, spatial_dims=spatial_dims
+                ),
+                ComplexBatchNorm3d(out_channels, spatial_dims),
             )
             if in_channels != out_channels
             else nn.Identity()
@@ -494,6 +527,7 @@ class MoMCodec3D(nn.Module):
         d_conv: int,
         expand: int,
         mixer_factory: MambaFactory | None,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
         real_channels = 2 * channels
@@ -508,12 +542,13 @@ class MoMCodec3D(nn.Module):
             d_conv=d_conv,
             expand=expand,
             mixer_factory=mixer_factory,
+            spatial_dims=spatial_dims,
         )
-        self.conv1 = ComplexResidualConvBlock3D(channels, channels)
-        self.conv2 = ComplexResidualConvBlock3D(channels, channels)
+        self.conv1 = ComplexResidualConvBlock3D(channels, channels, spatial_dims)
+        self.conv2 = ComplexResidualConvBlock3D(channels, channels, spatial_dims)
         self.residual_projection = nn.Sequential(
-            ComplexDropout3d(channels, codec_dropout),
-            ComplexConv3d(channels, channels, 1),
+            ComplexDropout3d(channels, codec_dropout, spatial_dims),
+            ComplexConv3d(channels, channels, 1, spatial_dims=spatial_dims),
         )
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, RoutingLosses]:
@@ -524,15 +559,26 @@ class MoMCodec3D(nn.Module):
 
 class DownMoMStage(nn.Module):
     def __init__(
-        self, in_channels: int, out_channels: int, **mom_kwargs: object
+        self,
+        in_channels: int,
+        out_channels: int,
+        spatial_dims: int = 3,
+        **mom_kwargs: object,
     ) -> None:
         super().__init__()
         self.downsample = nn.Sequential(
-            ComplexConv3d(in_channels, out_channels, 2, stride=2, bias=False),
-            ComplexBatchNorm3d(out_channels),
+            ComplexConv3d(
+                in_channels,
+                out_channels,
+                2,
+                stride=2,
+                bias=False,
+                spatial_dims=spatial_dims,
+            ),
+            ComplexBatchNorm3d(out_channels, spatial_dims),
             ComplexLeakyReLU(0.01),
         )
-        self.codec = MoMCodec3D(out_channels, **mom_kwargs)
+        self.codec = MoMCodec3D(out_channels, spatial_dims=spatial_dims, **mom_kwargs)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, RoutingLosses]:
         return self.codec(self.downsample(x))
@@ -540,12 +586,20 @@ class DownMoMStage(nn.Module):
 
 class UpMoMStage(nn.Module):
     def __init__(
-        self, in_channels: int, out_channels: int, **mom_kwargs: object
+        self,
+        in_channels: int,
+        out_channels: int,
+        spatial_dims: int = 3,
+        **mom_kwargs: object,
     ) -> None:
         super().__init__()
-        self.upsample = ComplexConvTranspose3d(in_channels, out_channels, 2, stride=2)
-        self.fusion = ComplexResidualConvBlock3D(out_channels, out_channels)
-        self.codec = MoMCodec3D(out_channels, **mom_kwargs)
+        self.upsample = ComplexConvTranspose3d(
+            in_channels, out_channels, 2, stride=2, spatial_dims=spatial_dims
+        )
+        self.fusion = ComplexResidualConvBlock3D(
+            out_channels, out_channels, spatial_dims
+        )
+        self.codec = MoMCodec3D(out_channels, spatial_dims=spatial_dims, **mom_kwargs)
 
     def forward(
         self,
@@ -561,7 +615,7 @@ class UpMoMStage(nn.Module):
 
 
 class ComplexMoMambaRefiner(nn.Module):
-    """U-shaped sparse-MoMamba residual refiner for a complex 3D object.
+    """U-shaped sparse-MoMamba residual refiner for a complex 2D/3D object.
 
     The first MoM stage runs at half resolution, as in the authors' backbone;
     the full-resolution path remains convolutional to bound memory use.
@@ -580,14 +634,18 @@ class ComplexMoMambaRefiner(nn.Module):
         d_conv: int = 4,
         expand: int = 2,
         mixer_factory: MambaFactory | None = None,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
+        if spatial_dims not in (2, 3):
+            raise ValueError("spatial_dims must be 2 or 3.")
+        self.spatial_dims = spatial_dims
         if base_channels < 1:
             raise ValueError("base_channels must be positive.")
         if len(num_experts) != 4 or min(num_experts) < 1:
             raise ValueError("num_experts must contain four positive stage values.")
         channels = [base_channels * (2**index) for index in range(5)]
-        self.stem = ComplexResidualConvBlock3D(1, channels[0])
+        self.stem = ComplexResidualConvBlock3D(1, channels[0], spatial_dims)
 
         def stage_kwargs(stage: int) -> dict[str, object]:
             experts = int(num_experts[stage])
@@ -602,6 +660,7 @@ class ComplexMoMambaRefiner(nn.Module):
                 "d_conv": d_conv,
                 "expand": expand,
                 "mixer_factory": mixer_factory,
+                "spatial_dims": spatial_dims,
             }
 
         self.encoder1 = DownMoMStage(channels[0], channels[1], **stage_kwargs(0))
@@ -612,12 +671,12 @@ class ComplexMoMambaRefiner(nn.Module):
         self.decoder2 = UpMoMStage(channels[3], channels[2], **stage_kwargs(1))
         self.decoder1 = UpMoMStage(channels[2], channels[1], **stage_kwargs(0))
         self.full_resolution_up = ComplexConvTranspose3d(
-            channels[1], channels[0], 2, stride=2
+            channels[1], channels[0], 2, stride=2, spatial_dims=spatial_dims
         )
         self.full_resolution_fusion = ComplexResidualConvBlock3D(
-            channels[0], channels[0]
+            channels[0], channels[0], spatial_dims
         )
-        self.output = ComplexConv3d(channels[0], 1, 1)
+        self.output = ComplexConv3d(channels[0], 1, 1, spatial_dims=spatial_dims)
         nn.init.zeros_(self.output.real_kernel.weight)
         nn.init.zeros_(self.output.imag_kernel.weight)
 
@@ -625,23 +684,27 @@ class ComplexMoMambaRefiner(nn.Module):
         self,
         initial_object: torch.Tensor,
     ) -> tuple[torch.Tensor, RoutingLosses]:
-        """Refine complex ``[B, 1, D, H, W]`` data without changing its shape."""
+        """Refine complex single-channel 2D/3D data without changing its shape."""
 
-        if initial_object.ndim != 5 or initial_object.shape[1] != 1:
-            raise ValueError("initial_object must have shape [B, 1, D, H, W].")
+        if initial_object.ndim != self.spatial_dims + 2 or initial_object.shape[1] != 1:
+            raise ValueError(
+                f"initial_object must be single-channel {self.spatial_dims}D complex data."
+            )
         if not torch.is_complex(initial_object):
             raise ValueError("initial_object must be complex.")
-        if any(size % 16 for size in initial_object.shape[-3:]):
+        if any(size % 16 for size in initial_object.shape[2:]):
             raise ValueError("Every spatial dimension must be divisible by 16.")
 
         scale = (
             initial_object.abs()
             .square()
-            .mean(dim=(-3, -2, -1), keepdim=True)
+            .mean(dim=tuple(range(2, initial_object.ndim)), keepdim=True)
             .sqrt()
             .clamp_min(torch.finfo(initial_object.real.dtype).eps)
         )
-        normalized = complex_to_channels(initial_object / scale)
+        normalized = complex_to_channels(
+            initial_object / scale, spatial_dims=self.spatial_dims
+        )
         skip0 = self.stem(normalized)
         skip1, losses = self.encoder1(skip0)
         skip2, current = self.encoder2(skip1)
@@ -660,7 +723,10 @@ class ComplexMoMambaRefiner(nn.Module):
         x = self.full_resolution_fusion(x + skip0)
         delta = self.output(x)
         refined = normalized + delta
-        return channels_to_complex(refined) * scale, losses
+        return (
+            channels_to_complex(refined, spatial_dims=self.spatial_dims) * scale,
+            losses,
+        )
 
 
 class HighStrainMoMambaCascade(nn.Module):
@@ -677,6 +743,7 @@ class HighStrainMoMambaCascade(nn.Module):
         super().__init__()
         self.phase_model = phase_model
         self.refiner = refiner
+        self.spatial_dims = refiner.spatial_dims
         self.freeze_phase_model = freeze_phase_model
         self.project_measured_modulus = project_measured_modulus
         if freeze_phase_model:
@@ -702,16 +769,21 @@ class HighStrainMoMambaCascade(nn.Module):
                 reciprocal_phase = self.phase_model(model_input)
         else:
             reciprocal_phase = self.phase_model(model_input)
-        center = tuple(size // 2 for size in reciprocal_phase.shape[-3:])
+        center = tuple(size // 2 for size in reciprocal_phase.shape[2:])
         center_phase = reciprocal_phase[(slice(None), slice(None)) + center]
-        reciprocal_phase = reciprocal_phase - center_phase[..., None, None, None]
+        reciprocal_phase = reciprocal_phase - center_phase.reshape(
+            reciprocal_phase.shape[:2] + (1,) * self.spatial_dims
+        )
         initial_object = realspace_from_modulus_phase(
             diffraction_modulus,
             reciprocal_phase,
+            spatial_dims=self.spatial_dims,
         )
         proposal_object, routing_losses = self.refiner(initial_object)
         refined_object = (
-            project_to_measured_modulus(proposal_object, diffraction_modulus)
+            project_to_measured_modulus(
+                proposal_object, diffraction_modulus, spatial_dims=self.spatial_dims
+            )
             if self.project_measured_modulus
             else proposal_object
         )
@@ -724,22 +796,32 @@ class HighStrainMoMambaCascade(nn.Module):
         )
 
 
-def _as_complex_volume(value: torch.Tensor, name: str) -> torch.Tensor:
-    if value.ndim == 4:
+def _as_complex_volume(
+    value: torch.Tensor, name: str, spatial_dims: int = 3
+) -> torch.Tensor:
+    if value.ndim == spatial_dims + 1:
         value = value[:, None]
-    if value.ndim != 5 or value.shape[1] != 1 or not torch.is_complex(value):
-        raise ValueError(f"{name} must be complex [B, 1, D, H, W] or [B, D, H, W].")
+    if (
+        value.ndim != spatial_dims + 2
+        or value.shape[1] != 1
+        or not torch.is_complex(value)
+    ):
+        raise ValueError(
+            f"{name} must be batched single-channel complex {spatial_dims}D data."
+        )
     return value
 
 
 def complex_component_mae(
     prediction: torch.Tensor,
     target: torch.Tensor,
+    *,
+    spatial_dims: int = 3,
 ) -> torch.Tensor:
     """Yu et al. Eq. (1): MAE(real) + MAE(imaginary)."""
 
-    prediction = _as_complex_volume(prediction, "prediction")
-    target = _as_complex_volume(target, "target")
+    prediction = _as_complex_volume(prediction, "prediction", spatial_dims)
+    target = _as_complex_volume(target, "target", spatial_dims)
     if prediction.shape != target.shape:
         raise ValueError("prediction and target shapes must match.")
     return (prediction.real - target.real).abs().mean() + (
@@ -755,21 +837,22 @@ def _candidate_component_mae(
     loss_scope: str,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     eps = torch.finfo(prediction.real.dtype).eps
+    spatial_dims = tuple(range(2, prediction.ndim))
     mask = support.to(dtype=prediction.real.dtype)
     pred_scale = (
         prediction.abs()
         .square()
-        .mean(dim=(-3, -2, -1), keepdim=True)
+        .mean(dim=spatial_dims, keepdim=True)
         .sqrt()
         .clamp_min(eps)
     )
     target_scale = (
-        target.abs().square().mean(dim=(-3, -2, -1), keepdim=True).sqrt().clamp_min(eps)
+        target.abs().square().mean(dim=spatial_dims, keepdim=True).sqrt().clamp_min(eps)
     )
     prediction = prediction / pred_scale
     target = target / target_scale
     correlation = (target.conj() * prediction * mask).sum(
-        dim=(-3, -2, -1), keepdim=True
+        dim=spatial_dims, keepdim=True
     )
     phase_offset = torch.angle(correlation)
     prediction = prediction * torch.complex(
@@ -778,7 +861,6 @@ def _candidate_component_mae(
     )
     real_error = (prediction.real - target.real).abs()
     imag_error = (prediction.imag - target.imag).abs()
-    spatial_dims = (-3, -2, -1)
     if loss_scope == "full":
         real_mae = real_error.mean(dim=spatial_dims)[:, 0]
         imag_mae = imag_error.mean(dim=spatial_dims)[:, 0]
@@ -810,6 +892,7 @@ def ambiguity_aware_component_mae(
     *,
     outside_weight: float = 0.25,
     loss_scope: str = "full",
+    spatial_dims: int = 3,
 ) -> ObjectLoss:
     """Apply Eq. (1) after resolving unavoidable BCDI ambiguities.
 
@@ -820,13 +903,14 @@ def ambiguity_aware_component_mae(
 
     if outside_weight < 0:
         raise ValueError("outside_weight must be nonnegative.")
-    prediction = _as_complex_volume(prediction, "prediction")
-    target = _as_complex_volume(target, "target")
-    if support.ndim == 4:
+    prediction = _as_complex_volume(prediction, "prediction", spatial_dims)
+    target = _as_complex_volume(target, "target", spatial_dims)
+    if support.ndim == spatial_dims + 1:
         support = support[:, None]
     if support.shape != target.shape:
         raise ValueError("support and target shapes must match.")
     support = support.bool()
+    axes = tuple(range(2, target.ndim))
     direct, direct_real, direct_imag = _candidate_component_mae(
         prediction,
         target,
@@ -838,15 +922,15 @@ def ambiguity_aware_component_mae(
     # conjugate inversion plus one wrapped voxel along every spatial axis.
     twin_target = torch.conj(
         torch.roll(
-            torch.flip(target, dims=(-3, -2, -1)),
-            shifts=(1, 1, 1),
-            dims=(-3, -2, -1),
+            torch.flip(target, dims=axes),
+            shifts=(1,) * spatial_dims,
+            dims=axes,
         )
     )
     twin_support = torch.roll(
-        torch.flip(support, dims=(-3, -2, -1)),
-        shifts=(1, 1, 1),
-        dims=(-3, -2, -1),
+        torch.flip(support, dims=axes),
+        shifts=(1,) * spatial_dims,
+        dims=axes,
     )
     twin, twin_real, twin_imag = _candidate_component_mae(
         prediction,
@@ -866,7 +950,7 @@ def ambiguity_aware_component_mae(
         imag_mae=torch.where(select_twin, twin_imag, direct_imag).mean(),
         selected_twin=select_twin,
         selected_support=torch.where(
-            select_twin[:, None, None, None, None],
+            select_twin.reshape((select_twin.shape[0],) + (1,) * (spatial_dims + 1)),
             twin_support,
             support,
         ),
@@ -895,6 +979,8 @@ def diffraction_modulus_mae(
     realspace: torch.Tensor,
     measured_modulus: torch.Tensor,
     support: torch.Tensor | None = None,
+    *,
+    spatial_dims: int = 3,
 ) -> torch.Tensor:
     """Yu et al. Eq. (2): normalized Fourier-modulus MAE.
 
@@ -904,23 +990,22 @@ def diffraction_modulus_mae(
     diffraction amplitude is normalized to [0, 1].
     """
 
-    realspace = _as_complex_volume(realspace, "realspace")
+    realspace = _as_complex_volume(realspace, "realspace", spatial_dims)
     if support is not None:
-        if support.ndim == 4:
+        if support.ndim == spatial_dims + 1:
             support = support[:, None]
         if support.shape != realspace.shape:
             raise ValueError("support and realspace shapes must match.")
         realspace = realspace * support.to(dtype=realspace.real.dtype)
-    predicted = farfield_modulus_from_realspace(realspace)
-    if measured_modulus.ndim == 4:
+    predicted = farfield_modulus_from_realspace(realspace, spatial_dims=spatial_dims)
+    if measured_modulus.ndim == spatial_dims + 1:
         measured_modulus = measured_modulus[:, None]
     if predicted.shape != measured_modulus.shape:
         raise ValueError("Predicted and measured modulus shapes must match.")
     eps = torch.finfo(predicted.dtype).eps
-    predicted_scale = predicted.amax(dim=(-3, -2, -1), keepdim=True).clamp_min(eps)
-    measured_scale = measured_modulus.amax(dim=(-3, -2, -1), keepdim=True).clamp_min(
-        eps
-    )
+    axes = tuple(range(2, predicted.ndim))
+    predicted_scale = predicted.amax(dim=axes, keepdim=True).clamp_min(eps)
+    measured_scale = measured_modulus.amax(dim=axes, keepdim=True).clamp_min(eps)
     return (
         (predicted / predicted_scale - measured_modulus / measured_scale).abs().mean()
     )

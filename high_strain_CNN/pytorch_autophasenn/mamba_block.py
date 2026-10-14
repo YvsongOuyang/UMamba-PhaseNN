@@ -36,14 +36,19 @@ class BidirectionalMamba3D(nn.Module):
         d_conv: int,
         expand: int,
         mixer_factory: MambaFactory | None = None,
+        spatial_dims: int = 3,
     ) -> None:
         super().__init__()
         if min(channels, d_model, d_state, d_conv, expand) < 1:
             raise ValueError("Mamba dimensions must all be positive.")
 
         factory = mixer_factory or build_official_mamba
+        if spatial_dims not in (2, 3):
+            raise ValueError("spatial_dims must be 2 or 3.")
+        self.spatial_dims = spatial_dims
+        conv = nn.Conv2d if spatial_dims == 2 else nn.Conv3d
         self.channels = channels
-        self.input_projection = nn.Conv3d(channels, d_model, kernel_size=1)
+        self.input_projection = conv(channels, d_model, kernel_size=1)
         self.norm = nn.LayerNorm(d_model)
         self.mixer = factory(
             d_model=d_model,
@@ -51,7 +56,7 @@ class BidirectionalMamba3D(nn.Module):
             d_conv=d_conv,
             expand=expand,
         )
-        self.output_projection = nn.Conv3d(d_model, channels, kernel_size=1)
+        self.output_projection = conv(d_model, channels, kernel_size=1)
         self.alpha = nn.Parameter(torch.zeros(()))
         self.reset_adapter_parameters()
 
@@ -67,7 +72,7 @@ class BidirectionalMamba3D(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Map ``[B, C, D, H, W]`` to the same shape with global context."""
 
-        if x.ndim != 5 or x.shape[1] != self.channels:
+        if x.ndim != self.spatial_dims + 2 or x.shape[1] != self.channels:
             raise ValueError(
                 f"Expected [B, {self.channels}, D, H, W], got {tuple(x.shape)}."
             )

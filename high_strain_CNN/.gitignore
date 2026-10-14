@@ -11,6 +11,7 @@ __pycache__/
 /artifacts/simulation/
 /artifacts/upstream_data/
 /artifacts/visualizations/
+/artifacts/test_tmp/
 
 # Legacy output locations retained so older commands do not pollute Git status.
 /exp_data/

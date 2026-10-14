@@ -11,27 +11,36 @@ SPATIAL_DIMS = (-3, -2, -1)
 def _without_singleton_channel(
     value: torch.Tensor,
     name: str,
+    spatial_dims: int = 3,
 ) -> tuple[torch.Tensor, bool]:
-    if value.ndim == 5 and value.shape[1] == 1:
+    if spatial_dims not in (2, 3):
+        raise ValueError("spatial_dims must be 2 or 3.")
+    if value.ndim == spatial_dims + 2 and value.shape[1] == 1:
         return value[:, 0], True
-    if value.ndim == 4:
+    if value.ndim == spatial_dims + 1:
         return value, False
-    raise ValueError(f"{name} must have shape [B, D, H, W] or [B, 1, D, H, W].")
+    raise ValueError(
+        f"{name} must be batched {spatial_dims}D data with an optional singleton channel."
+    )
 
 
 def reciprocal_field_from_modulus_phase(
     diffraction_modulus: torch.Tensor,
     reciprocal_phase: torch.Tensor,
+    *,
+    spatial_dims: int = 3,
 ) -> torch.Tensor:
     """Combine measured modulus and predicted phase into a complex spectrum."""
 
     modulus, modulus_had_channel = _without_singleton_channel(
         diffraction_modulus,
         "diffraction_modulus",
+        spatial_dims,
     )
     phase, phase_had_channel = _without_singleton_channel(
         reciprocal_phase,
         "reciprocal_phase",
+        spatial_dims,
     )
     if modulus.shape != phase.shape:
         raise ValueError("Diffraction modulus and reciprocal phase must share shape.")
@@ -42,49 +51,67 @@ def reciprocal_field_from_modulus_phase(
 def realspace_from_modulus_phase(
     diffraction_modulus: torch.Tensor,
     reciprocal_phase: torch.Tensor,
+    *,
+    spatial_dims: int = 3,
 ) -> torch.Tensor:
-    """Reconstruct the complex real-space object with the inverse 3D FFT."""
+    """Reconstruct with a centered inverse FFT over two or three spatial axes."""
 
     reciprocal = reciprocal_field_from_modulus_phase(
         diffraction_modulus,
         reciprocal_phase,
+        spatial_dims=spatial_dims,
     )
-    field, had_channel = _without_singleton_channel(reciprocal, "reciprocal_field")
-    shifted = torch.fft.ifftshift(field, dim=SPATIAL_DIMS)
-    realspace = torch.fft.ifftn(shifted, dim=SPATIAL_DIMS)
-    realspace = torch.fft.fftshift(realspace, dim=SPATIAL_DIMS)
+    dims = tuple(range(-spatial_dims, 0))
+    field, had_channel = _without_singleton_channel(
+        reciprocal, "reciprocal_field", spatial_dims
+    )
+    shifted = torch.fft.ifftshift(field, dim=dims)
+    realspace = torch.fft.ifftn(shifted, dim=dims)
+    realspace = torch.fft.fftshift(realspace, dim=dims)
     return realspace[:, None] if had_channel else realspace
 
 
-def reciprocal_field_from_realspace(realspace: torch.Tensor) -> torch.Tensor:
+def reciprocal_field_from_realspace(
+    realspace: torch.Tensor, *, spatial_dims: int = 3
+) -> torch.Tensor:
     """Transform a complex real-space object to the centered reciprocal grid."""
 
-    field, had_channel = _without_singleton_channel(realspace, "realspace")
+    field, had_channel = _without_singleton_channel(
+        realspace, "realspace", spatial_dims
+    )
     if not torch.is_complex(field):
         raise ValueError("realspace must be a complex tensor.")
-    shifted = torch.fft.ifftshift(field, dim=SPATIAL_DIMS)
-    reciprocal = torch.fft.fftn(shifted, dim=SPATIAL_DIMS)
-    reciprocal = torch.fft.fftshift(reciprocal, dim=SPATIAL_DIMS)
+    dims = tuple(range(-spatial_dims, 0))
+    shifted = torch.fft.ifftshift(field, dim=dims)
+    reciprocal = torch.fft.fftn(shifted, dim=dims)
+    reciprocal = torch.fft.fftshift(reciprocal, dim=dims)
     return reciprocal[:, None] if had_channel else reciprocal
 
 
-def farfield_modulus_from_realspace(realspace: torch.Tensor) -> torch.Tensor:
+def farfield_modulus_from_realspace(
+    realspace: torch.Tensor, *, spatial_dims: int = 3
+) -> torch.Tensor:
     """Project a complex object back to diffraction modulus for evaluation."""
 
-    return reciprocal_field_from_realspace(realspace).abs()
+    return reciprocal_field_from_realspace(realspace, spatial_dims=spatial_dims).abs()
 
 
 def project_to_measured_modulus(
     realspace: torch.Tensor,
     diffraction_modulus: torch.Tensor,
+    *,
+    spatial_dims: int = 3,
 ) -> torch.Tensor:
     """Apply one differentiable Fourier-modulus projection to an object."""
 
-    reciprocal = reciprocal_field_from_realspace(realspace)
-    field, had_channel = _without_singleton_channel(reciprocal, "reciprocal_field")
+    reciprocal = reciprocal_field_from_realspace(realspace, spatial_dims=spatial_dims)
+    field, had_channel = _without_singleton_channel(
+        reciprocal, "reciprocal_field", spatial_dims
+    )
     modulus, _ = _without_singleton_channel(
         diffraction_modulus,
         "diffraction_modulus",
+        spatial_dims,
     )
     if field.shape != modulus.shape:
         raise ValueError("Real-space field and measured modulus must share shape.")
@@ -92,24 +119,31 @@ def project_to_measured_modulus(
         modulus * torch.cos(torch.angle(field)),
         modulus * torch.sin(torch.angle(field)),
     )
-    shifted = torch.fft.ifftshift(projected, dim=SPATIAL_DIMS)
-    result = torch.fft.ifftn(shifted, dim=SPATIAL_DIMS)
-    result = torch.fft.fftshift(result, dim=SPATIAL_DIMS)
+    dims = tuple(range(-spatial_dims, 0))
+    shifted = torch.fft.ifftshift(projected, dim=dims)
+    result = torch.fft.ifftn(shifted, dim=dims)
+    result = torch.fft.fftshift(result, dim=dims)
     return result[:, None] if had_channel else result
 
 
-def complex_to_channels(realspace: torch.Tensor) -> torch.Tensor:
-    """Convert complex ``[B, 1, D, H, W]`` data to two real channels."""
+def complex_to_channels(
+    realspace: torch.Tensor, *, spatial_dims: int = 3
+) -> torch.Tensor:
+    """Convert batched complex 2D/3D objects to two real channels."""
 
-    field, _ = _without_singleton_channel(realspace, "realspace")
+    field, _ = _without_singleton_channel(realspace, "realspace", spatial_dims)
     if not torch.is_complex(field):
         raise ValueError("realspace must be a complex tensor.")
     return torch.stack((field.real, field.imag), dim=1)
 
 
-def channels_to_complex(channels: torch.Tensor) -> torch.Tensor:
-    """Convert real/imaginary ``[B, 2, D, H, W]`` channels to complex data."""
+def channels_to_complex(
+    channels: torch.Tensor, *, spatial_dims: int = 3
+) -> torch.Tensor:
+    """Convert batched real/imaginary 2D/3D channels to complex data."""
 
-    if channels.ndim != 5 or channels.shape[1] != 2:
-        raise ValueError("channels must have shape [B, 2, D, H, W].")
+    if channels.ndim != spatial_dims + 2 or channels.shape[1] != 2:
+        raise ValueError(
+            f"channels must have two channels and {spatial_dims} spatial dimensions."
+        )
     return torch.complex(channels[:, 0], channels[:, 1])[:, None]
