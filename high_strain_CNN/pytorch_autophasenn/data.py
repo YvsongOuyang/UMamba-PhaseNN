@@ -190,6 +190,36 @@ def _remove_translation_phase_ramp(
     return reciprocal * correction
 
 
+def canonicalize_realspace_translation(realspace: torch.Tensor) -> torch.Tensor:
+    """Center complex objects by removing their amplitude-COM translation.
+
+    Diffraction modulus is invariant to real-space translation. The phase U-Net
+    targets already remove the corresponding reciprocal-space linear phase
+    ramp, so the second-stage object target must use the same convention.
+    Inputs may be shaped ``[B, D, H, W]`` or ``[B, 1, D, H, W]``.
+    """
+
+    had_channel = realspace.ndim == 5 and realspace.shape[1] == 1
+    if had_channel:
+        field = realspace[:, 0]
+    elif realspace.ndim == 4:
+        field = realspace
+    else:
+        raise ValueError("realspace must have shape [B, D, H, W] or [B, 1, D, H, W].")
+    if not torch.is_complex(field):
+        raise ValueError("realspace must be a complex tensor.")
+
+    center_offset = _amplitude_center_offset(field)
+    shifted = torch.fft.ifftshift(field, dim=(-3, -2, -1))
+    reciprocal = torch.fft.fftn(shifted, dim=(-3, -2, -1))
+    reciprocal = torch.fft.fftshift(reciprocal, dim=(-3, -2, -1))
+    reciprocal = _remove_translation_phase_ramp(reciprocal, center_offset)
+    centered = torch.fft.ifftshift(reciprocal, dim=(-3, -2, -1))
+    centered = torch.fft.ifftn(centered, dim=(-3, -2, -1))
+    centered = torch.fft.fftshift(centered, dim=(-3, -2, -1))
+    return centered[:, None] if had_channel else centered
+
+
 def reciprocal_phase_from_realspace(realspace: torch.Tensor) -> torch.Tensor:
     """Generate the reciprocal phase for amplitude-centered particles.
 

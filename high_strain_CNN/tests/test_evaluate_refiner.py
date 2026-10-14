@@ -12,13 +12,16 @@ import torch
 
 from pytorch_autophasenn.evaluate_refiner import (
     ambiguity_aligned_reconstruction_metrics,
+    autophasenn_compatible_metrics,
     build_autophasenn_dataset,
     phase_wca,
     prepare_targets,
+    reciprocal_phase,
     parse_args,
     relative_improvement,
     support_metrics,
 )
+from pytorch_autophasenn.data import canonicalize_realspace_translation
 from pytorch_autophasenn.momamba_refiner import ambiguity_aware_component_mae
 from pytorch_autophasenn.reconstruction import realspace_from_modulus_phase
 from pytorch_autophasenn.train_refiner import target_support
@@ -76,11 +79,25 @@ class EvaluateRefinerTest(unittest.TestCase):
             args,
             torch.device("cpu"),
         )
-        torch.testing.assert_close(target, realspace)
-        torch.testing.assert_close(support, realspace.abs() >= 0.1)
+        amplitude = target.abs()
+        coordinates = torch.arange(4, dtype=amplitude.dtype)
+        center_of_mass = (amplitude.sum(dim=(1, 2)) * coordinates[None]).sum()
+        center_of_mass = center_of_mass / amplitude.sum()
+        self.assertLess(abs(float(center_of_mass) - 2.0), 0.25)
+        torch.testing.assert_close(support, target.abs() >= 0.1)
         self.assertEqual(tuple(target_phase.shape), (1, 4, 4, 4))
         self.assertTrue(torch.isfinite(target_phase).all())
         self.assertEqual(float(target_phase[0, 2, 2, 2]), 0.0)
+
+    def test_translation_canonicalization_removes_integer_object_shift(self) -> None:
+        target = torch.zeros(1, 8, 8, 8, dtype=torch.complex64)
+        target[:, 3:5, 2:5, 3:6] = 1.0 + 0.25j
+        shifted = torch.roll(target, shifts=(2, -1, 1), dims=(-3, -2, -1))
+        centered_target = canonicalize_realspace_translation(target)
+        centered_shifted = canonicalize_realspace_translation(shifted)
+        torch.testing.assert_close(
+            centered_shifted, centered_target, atol=1e-5, rtol=1e-5
+        )
 
     def test_autophasenn_dataset_uses_shared_memmap_config(self) -> None:
         shape = (4, 4, 4)
@@ -149,10 +166,11 @@ class EvaluateRefinerTest(unittest.TestCase):
         modulus = torch.rand(2, 1, 4, 4, 4) + 0.1
         target_phase = torch.randn(2, 4, 4, 4)
         center = (2, 2, 2)
-        target_phase = target_phase - target_phase[(slice(None),) + center][
-            :, None, None, None
-        ]
+        target_phase = (
+            target_phase - target_phase[(slice(None),) + center][:, None, None, None]
+        )
         realspace = realspace_from_modulus_phase(modulus, target_phase)
+        target_phase = reciprocal_phase(realspace)
         weights = torch.rand_like(modulus) + 0.1
         self.assertLess(float(phase_wca(realspace, target_phase, weights)), 1e-6)
 
@@ -210,6 +228,44 @@ class EvaluateRefinerTest(unittest.TestCase):
         self.assertGreater(float(metrics["complex_nrmse"]), 0.0)
         self.assertTrue(torch.isfinite(metrics["amplitude_psnr_db"]))
         self.assertLess(float(metrics["amplitude_psnr_db"]), 20.0)
+
+    def test_autophasenn_compatible_metrics_match_shared_metric_names(self) -> None:
+        generator = torch.Generator().manual_seed(13)
+        target = torch.complex(
+            torch.rand(2, 1, 8, 8, 8, generator=generator),
+            torch.rand(2, 1, 8, 8, 8, generator=generator),
+        )
+        support = torch.ones_like(target, dtype=torch.bool)
+        selected_twin = torch.zeros(2, dtype=torch.bool)
+        modulus = torch.fft.fftshift(
+            torch.fft.fftn(
+                torch.fft.ifftshift(target, dim=(-3, -2, -1)), dim=(-3, -2, -1)
+            ),
+            dim=(-3, -2, -1),
+        ).abs()
+        metrics = autophasenn_compatible_metrics(
+            target,
+            target,
+            support,
+            selected_twin,
+            modulus,
+            threshold=0.1,
+            ssim_window_size=3,
+        )
+        expected = {
+            "paper_modulus_mae",
+            "chi2_modulus",
+            "pearson_corr",
+            "real_amp_l1",
+            "real_amp_ssim",
+            "real_support_iou",
+            "real_phase_mae_true_support",
+        }
+        self.assertTrue(expected.issubset(metrics))
+        self.assertLess(float(metrics["paper_modulus_mae"]), 1e-6)
+        self.assertGreater(float(metrics["pearson_corr"]), 0.999)
+        self.assertLess(float(metrics["real_amp_l1"]), 1e-6)
+        self.assertGreater(float(metrics["real_amp_ssim"]), 0.999)
 
     def test_relative_improvement_obeys_metric_direction(self) -> None:
         self.assertAlmostEqual(relative_improvement("complex_nrmse", 0.2, 0.1), 50.0)

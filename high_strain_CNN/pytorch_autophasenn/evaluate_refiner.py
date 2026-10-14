@@ -18,6 +18,7 @@ from .author_data import AuthorNPZPhaseDataset, initialize_data_worker
 from .data import (
     AutoPhaseNNPhaseDataset,
     build_autophasenn_refinement_dataset,
+    canonicalize_realspace_translation,
     reciprocal_phase_from_realspace,
 )
 from .losses import phase_retrieval_wca_components
@@ -27,11 +28,23 @@ from .momamba_refiner import (
     ambiguity_aware_component_mae,
     diffraction_modulus_mae,
 )
-from .reconstruction import reciprocal_field_from_realspace
+from .reconstruction import farfield_modulus_from_realspace
 from .train_refiner import build_cascade, checkpoint_state
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
+WORKSPACE_DIR = PROJECT_DIR.parent
+if str(WORKSPACE_DIR) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_DIR))
+
+from autophasenn_training_pipeline.losses import (  # noqa: E402
+    FIXED_METRIC_DESCRIPTIONS,
+    METRIC_DESCRIPTIONS,
+    fixed_metric_groups,
+    metric_tensor_dict,
+    realspace_metric_tensor_dict,
+)
+
 DEFAULT_OUTPUT_ROOT = (
     PROJECT_DIR / "artifacts" / "evaluations" / "pytorch_realspace_momamba"
 )
@@ -45,9 +58,39 @@ LOWER_IS_BETTER = {
     "imag_mae",
     "fourier_modulus_mae",
     "phase_wca",
+    "paper_modulus_mae",
+    "relative_l1_modulus",
+    "chi2_modulus",
+    "relative_log_mse",
+    "pearson_loss",
+    "voxel_mse",
+    "voxel_rmse",
+    "real_amp_l1",
+    "real_amp_mse",
+    "real_amp_rmse",
+    "real_amp_rel_l1",
+    "real_support_l1",
+    "real_support_mse",
+    "real_support_rmse",
+    "real_support_rel_l1",
+    "real_phase_l1_true_support",
+    "real_phase_mse_true_support",
+    "real_phase_rel_l1_true_support",
+    "real_phase_mae_true_support",
+    "real_phase_mae_intersection",
+    "real_phase_rmse_true_support",
 }
-HIGHER_IS_BETTER = {"amplitude_psnr_db", "support_iou", "support_dice"}
-NEAR_ONE_IS_BETTER = {"support_volume_ratio"}
+HIGHER_IS_BETTER = {
+    "amplitude_psnr_db",
+    "support_iou",
+    "support_dice",
+    "pearson_corr",
+    "real_amp_ssim",
+    "real_amp_global_ssim",
+    "real_support_iou",
+    "real_support_dice",
+}
+NEAR_ONE_IS_BETTER = {"support_volume_ratio", "real_support_volume_ratio"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,6 +132,12 @@ def parse_args() -> argparse.Namespace:
             "stored target amplitude. Defaults to 0.3 for both dataset routes."
         ),
     )
+    parser.add_argument(
+        "--ssim-window-size",
+        type=int,
+        default=7,
+        help="Odd cubic window size for AutoPhaseNN-compatible 3D amplitude SSIM.",
+    )
     parser.add_argument("--print-freq", type=int, default=20)
     parser.add_argument("--output-dir", default="")
     parser.add_argument(
@@ -102,11 +151,15 @@ def parse_args() -> argparse.Namespace:
     if args.num_samples < 0:
         parser.error("--num-samples cannot be negative.")
     if min(args.batch_size, args.prefetch_factor, args.print_freq) < 1:
-        parser.error("Batch size, prefetch factor, and print frequency must be positive.")
+        parser.error(
+            "Batch size, prefetch factor, and print frequency must be positive."
+        )
     if args.num_workers < 0:
         parser.error("--num-workers cannot be negative.")
     if not math.isfinite(args.support_threshold) or args.support_threshold < 0:
         parser.error("--support-threshold must be finite and nonnegative.")
+    if args.ssim_window_size < 1 or args.ssim_window_size % 2 == 0:
+        parser.error("--ssim-window-size must be a positive odd integer.")
     return args
 
 
@@ -191,7 +244,7 @@ def build_autophasenn_dataset(
         realspace_path=args.data_real or None,
     )
     manifest["refinement_targets"] = {
-        "realspace": "stored complex object",
+        "realspace": "stored complex object centered by amplitude COM",
         "reciprocal_phase": (
             "FFT of realspace after amplitude-COM translation canonicalization"
         ),
@@ -239,21 +292,19 @@ def prepare_targets(
     target = batch["realspace"].to(device, non_blocking=True)
     if args.dataset_format == "author_npz":
         support = batch["support"].to(device, non_blocking=True)
-        target_phase = batch["target_phase"].to(
-            device,
-            non_blocking=True,
-        ).float()
     else:
+        target = canonicalize_realspace_translation(target)
         support = target.abs() >= args.support_threshold
-        target_phase = reciprocal_phase_from_realspace(target).float()
+    target_phase = reciprocal_phase(target).float()
     return target, support, target_phase
 
 
 def reciprocal_phase(realspace: torch.Tensor) -> torch.Tensor:
-    phase = torch.angle(reciprocal_field_from_realspace(realspace))
-    center = tuple(size // 2 for size in phase.shape[-3:])
-    center_phase = phase[(slice(None), slice(None)) + center]
-    return phase - center_phase[..., None, None, None]
+    """Return reciprocal phase after removing unobservable object translation."""
+
+    if realspace.ndim == 5 and realspace.shape[1] == 1:
+        realspace = realspace[:, 0]
+    return reciprocal_phase_from_realspace(realspace)
 
 
 def phase_wca(
@@ -276,9 +327,9 @@ def support_metrics(
 ) -> dict[str, torch.Tensor]:
     amplitude = realspace.abs()
     eps = torch.finfo(amplitude.dtype).eps
-    amplitude = amplitude / amplitude.amax(
-        dim=(-3, -2, -1), keepdim=True
-    ).clamp_min(eps)
+    amplitude = amplitude / amplitude.amax(dim=(-3, -2, -1), keepdim=True).clamp_min(
+        eps
+    )
     prediction = amplitude >= threshold
     target = selected_support.bool()
     spatial_dims = (-3, -2, -1)
@@ -295,19 +346,13 @@ def support_metrics(
     }
 
 
-def ambiguity_aligned_reconstruction_metrics(
+def ambiguity_aligned_objects(
     prediction: torch.Tensor,
     target: torch.Tensor,
     selected_support: torch.Tensor,
     selected_twin: torch.Tensor,
-) -> dict[str, torch.Tensor]:
-    """Return scale-, phase-, and twin-aligned complex reconstruction metrics.
-
-    Complex NRMSE uses the same per-object RMS normalization, support-weighted
-    global phase alignment, and twin selection as the component-MAE objective.
-    Amplitude PSNR compares independently unit-maximum-normalized full volumes,
-    so its data range is one and its unit is decibels.
-    """
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return RMS-, global-phase-, and twin-aligned complex object pairs."""
 
     if prediction.ndim == 4:
         prediction = prediction[:, None]
@@ -356,13 +401,36 @@ def ambiguity_aligned_reconstruction_metrics(
         torch.cos(-phase_offset),
         torch.sin(-phase_offset),
     )
+    return prediction, selected_target
 
-    squared_error = (prediction - selected_target).abs().square().sum(
-        dim=spatial_dims,
+
+def ambiguity_aligned_reconstruction_metrics(
+    prediction: torch.Tensor,
+    target: torch.Tensor,
+    selected_support: torch.Tensor,
+    selected_twin: torch.Tensor,
+) -> dict[str, torch.Tensor]:
+    """Return scale-, phase-, and twin-aligned complex reconstruction metrics."""
+
+    prediction, selected_target = ambiguity_aligned_objects(
+        prediction,
+        target,
+        selected_support,
+        selected_twin,
     )
-    target_energy = selected_target.abs().square().sum(dim=spatial_dims).clamp_min(
-        eps
+    spatial_dims = (-3, -2, -1)
+    real_dtype = prediction.real.dtype
+    eps = torch.finfo(real_dtype).eps
+
+    squared_error = (
+        (prediction - selected_target)
+        .abs()
+        .square()
+        .sum(
+            dim=spatial_dims,
+        )
     )
+    target_energy = selected_target.abs().square().sum(dim=spatial_dims).clamp_min(eps)
     complex_nrmse = torch.sqrt(squared_error / target_energy)[:, 0]
 
     prediction_amplitude = prediction.abs()
@@ -375,9 +443,13 @@ def ambiguity_aligned_reconstruction_metrics(
         dim=spatial_dims,
         keepdim=True,
     ).clamp_min(eps)
-    amplitude_mse = (prediction_amplitude - target_amplitude).square().mean(
-        dim=spatial_dims,
-    )[:, 0]
+    amplitude_mse = (
+        (prediction_amplitude - target_amplitude)
+        .square()
+        .mean(
+            dim=spatial_dims,
+        )[:, 0]
+    )
     amplitude_psnr = 10.0 * torch.log10(
         amplitude_mse.clamp_min(torch.finfo(real_dtype).tiny).reciprocal()
     )
@@ -385,6 +457,63 @@ def ambiguity_aligned_reconstruction_metrics(
         "complex_nrmse": complex_nrmse.mean(),
         "amplitude_psnr_db": amplitude_psnr.mean(),
     }
+
+
+def autophasenn_compatible_metrics(
+    prediction: torch.Tensor,
+    target: torch.Tensor,
+    selected_support: torch.Tensor,
+    selected_twin: torch.Tensor,
+    measured_modulus: torch.Tensor,
+    *,
+    threshold: float,
+    ssim_window_size: int,
+) -> dict[str, torch.Tensor]:
+    """Evaluate a complex reconstruction with the shared AutoPhaseNN metrics."""
+
+    prediction, selected_target = ambiguity_aligned_objects(
+        prediction,
+        target,
+        selected_support,
+        selected_twin,
+    )
+    spatial_dims = (-3, -2, -1)
+    eps = torch.finfo(prediction.real.dtype).eps
+    pred_amp = prediction.abs()
+    true_amp = selected_target.abs()
+    pred_amp = pred_amp / pred_amp.amax(dim=spatial_dims, keepdim=True).clamp_min(eps)
+    true_amp = true_amp / true_amp.amax(dim=spatial_dims, keepdim=True).clamp_min(eps)
+
+    reciprocal_modulus = farfield_modulus_from_realspace(prediction)
+    measured_modulus = measured_modulus / measured_modulus.amax(
+        dim=spatial_dims,
+        keepdim=True,
+    ).clamp_min(eps)
+    reciprocal_modulus = reciprocal_modulus / reciprocal_modulus.amax(
+        dim=spatial_dims,
+        keepdim=True,
+    ).clamp_min(eps)
+    values = {
+        name: value.mean()
+        for name, value in metric_tensor_dict(
+            measured_modulus,
+            reciprocal_modulus,
+        ).items()
+    }
+    values.update(
+        {
+            name: value.mean()
+            for name, value in realspace_metric_tensor_dict(
+                true_amp,
+                torch.angle(selected_target),
+                pred_amp,
+                torch.angle(prediction),
+                threshold=threshold,
+                ssim_window_size=ssim_window_size,
+            ).items()
+        }
+    )
+    return values
 
 
 def stage_metrics(
@@ -396,11 +525,27 @@ def stage_metrics(
     weights: torch.Tensor,
     model_args: argparse.Namespace,
     support_threshold: float,
+    ssim_window_size: int,
 ) -> dict[str, torch.Tensor]:
     object_loss = ambiguity_aware_component_mae(
         realspace,
         target,
         support,
+        outside_weight=float(model_args.outside_support_weight),
+        loss_scope=str(model_args.object_loss_scope),
+    )
+    metric_prediction = canonicalize_realspace_translation(realspace)
+    metric_target = canonicalize_realspace_translation(target)
+    target_amplitude = metric_target.abs()
+    target_amplitude = target_amplitude / target_amplitude.amax(
+        dim=(-3, -2, -1),
+        keepdim=True,
+    ).clamp_min(torch.finfo(target_amplitude.dtype).eps)
+    metric_support = target_amplitude >= support_threshold
+    metric_object_loss = ambiguity_aware_component_mae(
+        metric_prediction,
+        metric_target,
+        metric_support,
         outside_weight=float(model_args.outside_support_weight),
         loss_scope=str(model_args.object_loss_scope),
     )
@@ -418,14 +563,29 @@ def stage_metrics(
     }
     values.update(
         ambiguity_aligned_reconstruction_metrics(
-            realspace,
-            target,
-            object_loss.selected_support,
-            object_loss.selected_twin,
+            metric_prediction,
+            metric_target,
+            metric_object_loss.selected_support,
+            metric_object_loss.selected_twin,
         )
     )
     values.update(
-        support_metrics(realspace, object_loss.selected_support, support_threshold)
+        support_metrics(
+            metric_prediction,
+            metric_object_loss.selected_support,
+            support_threshold,
+        )
+    )
+    values.update(
+        autophasenn_compatible_metrics(
+            metric_prediction,
+            metric_target,
+            metric_object_loss.selected_support,
+            metric_object_loss.selected_twin,
+            modulus,
+            threshold=support_threshold,
+            ssim_window_size=ssim_window_size,
+        )
     )
     return values
 
@@ -475,6 +635,7 @@ def evaluate(
                     model_input,
                     model_args,
                     args.support_threshold,
+                    args.ssim_window_size,
                 ),
                 "refined": stage_metrics(
                     output.refined_object,
@@ -485,6 +646,7 @@ def evaluate(
                     model_input,
                     model_args,
                     args.support_threshold,
+                    args.ssim_window_size,
                 ),
             }
             batch_size = model_input.shape[0]
@@ -519,8 +681,7 @@ def evaluate(
         name: {
             "initial": means["initial"][name],
             "refined": means["refined"][name],
-            "refined_minus_initial": means["refined"][name]
-            - means["initial"][name],
+            "refined_minus_initial": means["refined"][name] - means["initial"][name],
             "improvement_percent": relative_improvement(
                 name,
                 means["initial"][name],
@@ -579,8 +740,13 @@ def main() -> int:
         device,
     )
     result = evaluate(model, loader, args, model_args, device)
+    shared_metric_notes = {
+        name: description
+        for name, description in METRIC_DESCRIPTIONS.items()
+        if name in result["metrics"]["initial"]
+    }
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "run": {
             "checkpoint": str(checkpoint_path),
             "checkpoint_epoch": checkpoint.get("epoch"),
@@ -588,12 +754,19 @@ def main() -> int:
             "dataset_format": args.dataset_format,
             "split": args.split,
             "support_threshold": args.support_threshold,
+            "ssim_window_size": args.ssim_window_size,
             "device": str(device),
         },
         "runtime": runtime_manifest(device),
         "data": data_manifest,
         **result,
+        "fixed_metric_groups": {
+            stage: fixed_metric_groups(values)
+            for stage, values in result["metrics"].items()
+        },
+        "fixed_metric_descriptions": FIXED_METRIC_DESCRIPTIONS,
         "metric_notes": {
+            **shared_metric_notes,
             "object_mae": (
                 "Training-aligned RMS-normalized real MAE plus imaginary MAE; "
                 "lower is better."
@@ -603,8 +776,8 @@ def main() -> int:
                 "ground-truth support; lower is better."
             ),
             "phase_wca": (
-                "Symmetry-aware WCA after Fourier-transforming each real-space "
-                "object; lower is better."
+                "Symmetry-aware WCA after removing the unobservable real-space "
+                "translation from each object; lower is better."
             ),
             "complex_nrmse": (
                 "Full-volume complex NRMSE after per-object RMS normalization, "
@@ -617,10 +790,21 @@ def main() -> int:
                 "higher is better."
             ),
             "support": (
-                "Predicted support is unit-maximum amplitude >= support_threshold; "
-                "AutoPhaseNN target support uses stored target amplitude >= the same "
-                "threshold, while author NPZ uses its explicit stored support. "
+                "Comparison support metrics threshold both unit-maximum target and "
+                "predicted amplitudes at support_threshold for both dataset routes. "
                 "IoU/Dice are higher-is-better and volume ratio is best near one."
+            ),
+            "reciprocal_data_consistency": (
+                "The shared FT metrics compare the measured diffraction modulus with "
+                "the modulus obtained by Fourier-transforming the reconstruction. The "
+                "initial object reuses the measured modulus by construction, so its FT "
+                "scores are a consistency reference rather than an independent phase-"
+                "retrieval quality measurement."
+            ),
+            "comparison_alignment": (
+                "AutoPhaseNN-compatible amplitude, phase, support, NRMSE, and PSNR "
+                "metrics remove translation, global phase, scale, and direct/twin "
+                "ambiguities before comparison."
             ),
         },
     }

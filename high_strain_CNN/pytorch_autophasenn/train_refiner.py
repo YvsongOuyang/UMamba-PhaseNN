@@ -17,7 +17,10 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 from .author_data import AuthorNPZPhaseDataset, initialize_data_worker
-from .data import build_autophasenn_refinement_dataset
+from .data import (
+    build_autophasenn_refinement_dataset,
+    canonicalize_realspace_translation,
+)
 from .management import DEFAULT_DATA_CONFIG, load_data_config, runtime_manifest
 from .model import MODEL_VARIANTS, HighStrainPhaseUNet, infer_model_variant
 from .momamba_refiner import (
@@ -386,6 +389,7 @@ def build_datasets(
     return train, val, {
         "format": "autophasenn_memmap",
         "support_source": f"stored target amplitude >= {args.support_threshold:g}",
+        "target_translation": "amplitude-COM centered on the FFT grid",
         "splits": {"train": train_manifest, "val": val_manifest},
     }
 
@@ -467,6 +471,8 @@ def run_epoch(
             model_input = batch["input"].to(device, non_blocking=True).float()
             modulus = batch["diffraction"].to(device, non_blocking=True).float()
             target = batch["realspace"].to(device, non_blocking=True)
+            if args.data_format == "autophasenn":
+                target = canonicalize_realspace_translation(target)
             support = target_support(batch, target, args).to(
                 device,
                 non_blocking=True,
