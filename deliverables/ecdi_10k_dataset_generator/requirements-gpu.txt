@@ -1,0 +1,5 @@
+abtem==1.0.10
+cupy-cuda12x==14.2.0
+h5py==3.16.0
+matplotlib==3.11.2
+pytest==9.1.1

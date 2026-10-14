@@ -1,0 +1,11 @@
+.venv/
+.cupy-cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.egg-info/
+outputs/
+data/
+*.h5
+*.npy
+*.npz

@@ -1,0 +1,81 @@
+{
+  "run": {
+    "num_samples": 10000,
+    "seed": 20261016,
+    "device": "gpu",
+    "log_every": 10,
+    "cupy_cache_dir": ".cupy-cache"
+  },
+  "structure": {
+    "source_sampling": "balanced",
+    "sources": [
+      {"name": "silicon_reference", "path": null, "builtin_symbol": "Si", "crystal_structure": "diamond", "lattice_constant_a": 5.431, "cubic": true},
+      {"name": "lithium_metal_anode", "path": null, "builtin_symbol": "Li", "crystal_structure": "bcc", "lattice_constant_a": 3.51, "cubic": true, "vacancy_symbols": ["Li"], "vacancy_fraction": {"low": 0.0, "high": 0.01}},
+      {"name": "graphite_anode", "path": "structures/graphite_2h_cod9008569.cif", "vacancy_symbols": ["C"], "vacancy_fraction": {"low": 0.0, "high": 0.003}},
+      {"name": "lifepo4_cathode", "path": "structures/lifepo4_olivine_mp.cif", "vacancy_symbols": ["Li"], "vacancy_fraction": {"low": 0.0, "high": 0.08}},
+      {"name": "licoo2_cathode", "path": "structures/licoo2_cod1533825.cif", "vacancy_symbols": ["Li"], "vacancy_fraction": {"low": 0.0, "high": 0.08}},
+      {"name": "limn2o4_cathode", "path": "structures/limn2o4_spinel.cif", "vacancy_symbols": ["Li"], "vacancy_fraction": {"low": 0.0, "high": 0.08}}
+    ],
+    "minimum_lateral_size_a": 116.0,
+    "thickness_a": {"low": 12.0, "high": 42.0},
+    "in_plane_strain_percent": {"low": -0.8, "high": 0.8},
+    "shear_percent": {"low": -0.5, "high": 0.5},
+    "static_displacement_sigma_a": {"low": 0.005, "high": 0.06},
+    "vacancy_fraction": {"low": 0.0, "high": 0.0}
+  },
+  "physics": {
+    "imaging_mode": "single_shot_ecdi",
+    "energy_kev": {"low": 180.0, "high": 220.0},
+    "energy_spread_ev_std": 0.7,
+    "beam_tilt_std_mrad": 0.2,
+    "grid_size": 512,
+    "detector_size": 512,
+    "slice_thickness_a": 2.0,
+    "projection": "finite",
+    "parametrization": "lobato",
+    "frozen_phonon_configs": 1,
+    "thermal_sigma_a": 0.025
+  },
+  "ecdi": {
+    "sample_geometry": "extended_crystal",
+    "field_size_a": 112.0,
+    "illumination_fwhm_a": {"low": 28.0, "high": 44.0},
+    "aperture_edge_a": 0.0,
+    "in_plane_rotation_deg": {"low": 0.0, "high": 180.0},
+    "shape_anisotropy": {"low": 0.0, "high": 0.0},
+    "edge_roughness_fraction": {"low": 0.0, "high": 0.0},
+    "smooth_displacement_a": {"low": 0.0, "high": 0.35}
+  },
+  "pulse": {
+    "width_ps": {"low": 1.0, "high": 1.0},
+    "interval_ns": {"low": 1000.0, "high": 1000.0},
+    "relaxation_time_ns": {"low": 1000.0, "high": 1000.0},
+    "acquisition_time_ms": {"low": 10.0, "high": 10.0},
+    "dose_e_per_a2": {"low": 100.0, "high": 1500.0},
+    "damage_threshold_e_per_a2": 1000000000.0,
+    "maximum_damage_displacement_sigma_a": 0.0
+  },
+  "instrument": {
+    "dqe": {"low": 1.0, "high": 1.0},
+    "mtf_sigma_px": {"low": 0.0, "high": 0.0},
+    "background_fraction": {"low": 0.0, "high": 0.0},
+    "liquid_ring_radius_fraction": {"low": 0.22, "high": 0.3},
+    "liquid_ring_sigma_fraction": {"low": 0.07, "high": 0.13},
+    "center_shift_px": {"low": 0.0, "high": 0.0},
+    "ellipticity": {"low": 0.0, "high": 0.0},
+    "rotation_deg": {"low": 0.0, "high": 0.0},
+    "gain": {"low": 1.0, "high": 1.0},
+    "offset_counts": {"low": 0.0, "high": 0.0},
+    "read_noise_sigma_counts": {"low": 0.0, "high": 0.0},
+    "saturation_counts": {"low": 1000000000.0, "high": 1000000000.0},
+    "bad_pixel_fraction": {"low": 0.0, "high": 0.0},
+    "log_normalization_percentile": 99.9
+  },
+  "output": {
+    "path": "data/ecdi_10k.h5",
+    "save_exit_wave": true,
+    "compression": "gzip",
+    "compression_level": 1,
+    "overwrite": false
+  }
+}
