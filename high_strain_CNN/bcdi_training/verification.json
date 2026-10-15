@@ -30,6 +30,22 @@
     "visualization_rendered_and_inspected": true,
     "visualization_python": "C:/Users/30810/.conda/envs/spikingformer/python.exe"
   },
+  "managed_generation": {
+    "tests": "bcdi_training/tests/test_generation.py plus existing BCDI training contracts",
+    "passed": 13,
+    "checks": [
+      "Default layout is 8000 train / 1000 val / 1000 test",
+      "Serial and two-process generation produce identical final files and manifests",
+      "Resume regenerates an unfinished seed without changing dataset identity",
+      "Changed configurations, corrupted completed seeds and concurrent writers are rejected",
+      "Generated arrays pass the existing training reader and physical pairing validator"
+    ],
+    "provided_example_parity": {
+      "configuration": "3 seeds starting at 0, 2x2 samples per seed, author convention",
+      "samples": 12,
+      "all_six_npy_sha256_equal_to_prepared_provided_examples": true
+    }
+  },
   "limitations": [
     "The default local Python has an incompatible NumPy/Matplotlib binary combination; visualization succeeded in the existing compatible spikingformer environment.",
     "Official Mamba CUDA kernels and full two-stage GPU training were not executed locally.",

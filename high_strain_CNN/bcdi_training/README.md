@@ -7,6 +7,7 @@
 
 ```text
 bcdi_training/
+  generate_dataset.py   原生生成、版本记录、断点续生成，直接写训练NPY
   prepare_data.py       NPZ转换、seed分组、逐样本物理校验
   validate_data.py      数据哈希、集合隔离及抽样FFT检查
   model.py             已有2D模型的统一导入入口
@@ -15,9 +16,100 @@ bcdi_training/
   visualize.py         实空间幅值、相位、衍射空间、复数误差图
   run_pipeline.py      自动按顺序执行所有阶段
   configs/bcdi_2d.json  数据及训练参数模板
+  configs/generation_512.json  默认10,000样本的生成配置
+  scripts/generate_bcdi_2d.sh  Linux后台生成
   scripts/train_bcdi_2d.sh  Linux后台启动
   tests/               数据物理约定与端到端接口测试
 ```
+
+## 从零生成正式数据集
+
+服务器无需另外复制D盘模拟器目录：`vendor/simulator_source.py` 已固定保存该模拟器源码，
+生成入口直接复用其随机场、高斯畴、光束包络、取样和FFT公式。AST只加载计算定义，
+不会导入其绘图库或执行原CLI。生成依赖NumPy、CPU，不需要GPU、PyTorch或abTEM。
+
+默认 `configs/generation_512.json` 生成10,000个512×512样本：
+
+| 项目 | 默认设置 |
+|---|---|
+| 随机场seed | 从20261015开始的400个独立seed |
+| 每个随机场 | 每轴5个位置，共25个样本 |
+| 划分 | seed分组，320/40/40个seed，对应8000/1000/1000样本 |
+| 相位约定 | author，与已验证示例相同 |
+| 并行 | 4个CPU进程，单个主进程写数据 |
+| 数据大小 | 约29.3 GiB，加少量元数据；不生成中间NPZ副本 |
+
+背景启动：
+
+```bash
+cd /home/oyys/code/UMamba-AutoPhaseNN
+git pull origin main
+cd high_strain_CNN
+bash bcdi_training/scripts/generate_bcdi_2d.sh
+```
+
+默认数据和运行记录：
+
+```text
+/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n10000_v1/
+  generation_config.json          完整几何、seed、版本、源码哈希和NumPy版本
+  seed_records/seed_*.json        每个seed的完成标记、行范围、数据校验值
+  train_diff.npy, train_real.npy
+  val_diff.npy, val_real.npy
+  test_diff.npy, test_real.npy
+  dataset_manifest.json           完成后发布，包含划分和最终数组SHA256
+  training_config.json            完成后发布，训练直接使用
+  .generation.lock                系统级写锁，进程退出后自动解锁
+
+high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n10000_v1/
+  launcher.log, console.log, generate.pid
+  generation_config.json, generation_status.json
+```
+
+查看进度和ETA：
+
+```bash
+tail -f artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n10000_v1/launcher.log
+```
+
+生成完整后直接训练，不要再执行NPZ转换：
+
+```bash
+DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n10000_v1 \
+bash bcdi_training/scripts/train_bcdi_2d.sh
+```
+
+中断后继续生成（保持同一个配置和数据目录）：
+
+```bash
+bash bcdi_training/scripts/generate_bcdi_2d.sh --resume
+```
+
+恢复时先核对配置、源码和NumPy版本，并校验已完成seed的数据。未写完的seed会重新生成，
+已完成seed不会重复生成；单/多进程不改变样本内容或顺序。完整后再次resume也不会覆盖
+你已修改的训练学习率等配置。非resume任务拒绝覆盖已有数据，系统级写锁阻止两个生成器
+同时写一个目录。生成完成前不要开始训练。最终大数组的全文件哈希可能需要额外时间，
+日志会单独显示这一步。
+
+需要新的规模、物理配置、相位约定或seed范围时，修改生成配置并使用新的版本目录，
+保留旧数据和manifest，以便旧checkpoint可追踪。`WORKERS`可以调整CPU并行进程数：
+
+```bash
+DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/<新版本名称> WORKERS=4 \
+bash bcdi_training/scripts/generate_bcdi_2d.sh
+```
+
+先做12个样本的独立小测试，不占正式目录：
+
+```bash
+DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/smoke512_seed0_n12 \
+bash bcdi_training/scripts/generate_bcdi_2d.sh \
+  --num-seeds 3 --seed-start 0 --samples-per-axis 2
+```
+
+自定义参数的小测试续跑时，要保留相同覆盖参数，再加 `--resume`。
+5×5取样改变了原示例2×2的画布大小，因此同一个数字seed在不同几何/取样配置下
+不代表同一个样本。完整生成配置和源码哈希共同定义数据版本，不只依赖seed。
 
 ## 数据约定
 
@@ -61,7 +153,9 @@ D:/code/PYTHON/UMamba-PhaseNN/deliverables/bcdi_2d_simulator_512/examples/demo51
 FFT、归一化、居中在选定训练设备上处理，不将整个数据集放入内存或显存。
 转换目标必须是源目录以外的空目录，不会覆盖已有数据。
 
-## 准备数据
+## 转换已经存在的NPZ数据
+
+这一节用于此前已经生成的NPZ。如果使用上面的原生生成入口，无需此步骤。
 
 本机示例（PowerShell，在本项目 `high_strain_CNN` 中）：
 

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "dataset_version": "bcdi_gaussian_domains_512_v1",
+  "seed_start": 20261015,
+  "num_seeds": 400,
+  "split_seed": 42,
+  "val_fraction": 0.1,
+  "test_fraction": 0.1,
+  "simulation": {
+    "image_size": 512,
+    "samples_per_axis": 5,
+    "phase_convention": "author"
+  }
+}
