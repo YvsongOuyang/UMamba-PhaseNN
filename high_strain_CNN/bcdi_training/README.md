@@ -16,7 +16,7 @@ bcdi_training/
   visualize.py         实空间幅值、相位、衍射空间、复数误差图
   run_pipeline.py      自动按顺序执行所有阶段
   configs/bcdi_2d.json  数据及训练参数模板
-  configs/generation_512.json  默认10,000样本的生成配置
+  configs/generation_512.json  默认20,000样本的生成配置
   scripts/generate_bcdi_2d.sh  Linux后台生成
   scripts/train_bcdi_2d.sh  Linux后台启动
   tests/               数据物理约定与端到端接口测试
@@ -28,16 +28,16 @@ bcdi_training/
 生成入口直接复用其随机场、高斯畴、光束包络、取样和FFT公式。AST只加载计算定义，
 不会导入其绘图库或执行原CLI。生成依赖NumPy、CPU，不需要GPU、PyTorch或abTEM。
 
-默认 `configs/generation_512.json` 生成10,000个512×512样本：
+默认 `configs/generation_512.json` 生成20,000个512×512样本：
 
 | 项目 | 默认设置 |
 |---|---|
-| 随机场seed | 从20261015开始的400个独立seed |
+| 随机场seed | 从20261015开始的800个独立seed |
 | 每个随机场 | 每轴5个位置，共25个样本 |
-| 划分 | seed分组，320/40/40个seed，对应8000/1000/1000样本 |
+| 划分 | seed分组，640/80/80个seed，对应16000/2000/2000样本 |
 | 相位约定 | author，与已验证示例相同 |
 | 并行 | 4个CPU进程，单个主进程写数据 |
-| 数据大小 | 约29.3 GiB，加少量元数据；不生成中间NPZ副本 |
+| 数据大小 | 约58.6 GiB，加少量元数据；建议至少65 GiB剩余空间，不生成中间NPZ副本 |
 
 背景启动：
 
@@ -51,7 +51,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
 默认数据和运行记录：
 
 ```text
-/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n10000_v1/
+/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/
   generation_config.json          完整几何、seed、版本、源码哈希和NumPy版本
   seed_records/seed_*.json        每个seed的完成标记、行范围、数据校验值
   train_diff.npy, train_real.npy
@@ -61,7 +61,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
   training_config.json            完成后发布，训练直接使用
   .generation.lock                系统级写锁，进程退出后自动解锁
 
-high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n10000_v1/
+high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n20000_v1/
   launcher.log, console.log, generate.pid
   generation_config.json, generation_status.json
 ```
@@ -69,13 +69,13 @@ high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n10000_v1/
 查看进度和ETA：
 
 ```bash
-tail -f artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n10000_v1/launcher.log
+tail -f artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n20000_v1/launcher.log
 ```
 
 生成完整后直接训练，不要再执行NPZ转换：
 
 ```bash
-DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n10000_v1 \
+DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1 \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
@@ -148,7 +148,7 @@ D:/code/PYTHON/UMamba-PhaseNN/deliverables/bcdi_2d_simulator_512/examples/demo51
 ```
 
 数组是标准带头部NPY，形状 `[N,512,512]`。衍射为float32模长，物体为complex64，
-每样本约3 MiB，10,000样本约29.3 GiB，另加少量索引。原NPZ保留则另占约48.8 GiB。
+每样本约3 MiB，20,000样本约58.6 GiB，另加少量索引。原NPZ保留则另占约97.7 GiB。
 转换一次最多加载一个seed文件，训练采用只读memmap，由4个worker按需读取；
 FFT、归一化、居中在选定训练设备上处理，不将整个数据集放入内存或显存。
 转换目标必须是源目录以外的空目录，不会覆盖已有数据。

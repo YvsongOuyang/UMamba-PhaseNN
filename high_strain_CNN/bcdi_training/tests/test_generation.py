@@ -35,14 +35,14 @@ def generated(tmp_path, small_config):
     return output, report
 
 
-def test_default_layout_has_8000_1000_1000_without_allocating_data():
+def test_default_layout_has_16000_2000_2000_without_allocating_data():
     config = json.loads(DEFAULT_CONFIG.read_text(encoding="utf-8"))
     spec = specification(config)
     jobs = layout(spec)
     assert {
         split: sum(job["count"] for job in jobs.values() if job["split"] == split)
         for split in ("train", "val", "test")
-    } == {"train": 8000, "val": 1000, "test": 1000}
+    } == {"train": 16000, "val": 2000, "test": 2000}
 
 
 def test_generated_dataset_passes_existing_reader(generated):

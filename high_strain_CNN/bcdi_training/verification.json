@@ -34,7 +34,7 @@
     "tests": "bcdi_training/tests/test_generation.py plus existing BCDI training contracts",
     "passed": 13,
     "checks": [
-      "Default layout is 8000 train / 1000 val / 1000 test",
+      "Default layout is 16000 train / 2000 val / 2000 test",
       "Serial and two-process generation produce identical final files and manifests",
       "Resume regenerates an unfinished seed without changing dataset identity",
       "Changed configurations, corrupted completed seeds and concurrent writers are rejected",
