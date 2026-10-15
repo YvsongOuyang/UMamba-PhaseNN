@@ -4,7 +4,7 @@
   "storage": "npy",
   "spatial_dims": 2,
   "shape": [512, 512],
-  "root": "/data_ssd/oyys/bcdi_2d/dataset",
+  "root": "/data/wyz",
   "diffraction_kind": "modulus",
   "input_log_data": true,
   "center_targets": true,

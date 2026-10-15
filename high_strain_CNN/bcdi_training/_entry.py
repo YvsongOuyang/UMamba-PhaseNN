@@ -12,8 +12,8 @@ from .validate_data import verify_manifest
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-CHECKPOINT_ROOT = "/data_ssd/oyys/bcdi_2d/checkpoints"
-DATA_CONFIG = "/data_ssd/oyys/bcdi_2d/dataset/training_config.json"
+CHECKPOINT_ROOT = "/data/wyz/checkpoints"
+DATA_CONFIG = "/data/wyz/training_config.json"
 
 
 def has_option(arguments, key):
