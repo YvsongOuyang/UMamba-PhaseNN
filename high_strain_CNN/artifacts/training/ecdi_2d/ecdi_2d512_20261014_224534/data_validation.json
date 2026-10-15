@@ -1,0 +1,118 @@
+{
+  "passed": true,
+  "sampled_pair_check": true,
+  "splits": {
+    "train": {
+      "data": {
+        "storage": "ecdi_hdf5",
+        "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+        "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+        "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+        "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+        "sample_count": 10000,
+        "counts": {
+          "train": 8500,
+          "val": 500,
+          "test": 1000
+        },
+        "split_type": "train_val_test_stratified_by_material",
+        "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+        "geometry": "extended_crystal",
+        "input_field": "observed_counts",
+        "target_fields": [
+          "exit_wave_real",
+          "exit_wave_imag"
+        ],
+        "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+        "split": "train",
+        "available_samples": 8500,
+        "selected_samples": 8500,
+        "selected_indices_sha256": "87add2ed7faa5be56c2365bc1bac09eb8602b6f17e3cd46d1003df77457ce75b",
+        "shape": [
+          512,
+          512
+        ],
+        "diffraction_kind": "intensity"
+      },
+      "checked_samples": 12,
+      "max_clean_fourier_intensity_nrmse": 2.0925432938299437e-07,
+      "minimum_observed_sum": 83009.0,
+      "maximum_observed_sum": 1022607.0
+    },
+    "val": {
+      "data": {
+        "storage": "ecdi_hdf5",
+        "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+        "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+        "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+        "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+        "sample_count": 10000,
+        "counts": {
+          "train": 8500,
+          "val": 500,
+          "test": 1000
+        },
+        "split_type": "train_val_test_stratified_by_material",
+        "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+        "geometry": "extended_crystal",
+        "input_field": "observed_counts",
+        "target_fields": [
+          "exit_wave_real",
+          "exit_wave_imag"
+        ],
+        "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+        "split": "val",
+        "available_samples": 500,
+        "selected_samples": 500,
+        "selected_indices_sha256": "35ec8a6d0ce7bf531698ff0304a0c6a095bf28091d90cb7b001729ca68ef9d3d",
+        "shape": [
+          512,
+          512
+        ],
+        "diffraction_kind": "intensity"
+      },
+      "checked_samples": 12,
+      "max_clean_fourier_intensity_nrmse": 1.8491730348734695e-07,
+      "minimum_observed_sum": 104983.0,
+      "maximum_observed_sum": 1168056.0
+    },
+    "test": {
+      "data": {
+        "storage": "ecdi_hdf5",
+        "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+        "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+        "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+        "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+        "sample_count": 10000,
+        "counts": {
+          "train": 8500,
+          "val": 500,
+          "test": 1000
+        },
+        "split_type": "train_val_test_stratified_by_material",
+        "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+        "geometry": "extended_crystal",
+        "input_field": "observed_counts",
+        "target_fields": [
+          "exit_wave_real",
+          "exit_wave_imag"
+        ],
+        "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+        "split": "test",
+        "available_samples": 1000,
+        "selected_samples": 1000,
+        "selected_indices_sha256": "ea4ef4bc916f4560e69a4c9af8ee39c0754b90bd1c6abd49342ac448ad30073d",
+        "shape": [
+          512,
+          512
+        ],
+        "diffraction_kind": "intensity"
+      },
+      "checked_samples": 12,
+      "max_clean_fourier_intensity_nrmse": 2.2824181362595618e-07,
+      "minimum_observed_sum": 190822.0,
+      "maximum_observed_sum": 1220918.0
+    }
+  },
+  "notes": "All split indices, valid flags, shapes and generator report checked; FFT pairing sampled per split."
+}

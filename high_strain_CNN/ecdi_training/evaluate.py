@@ -188,7 +188,7 @@ def main():
     parser.add_argument("--data-dir", default="")
     parser.add_argument("--split", choices=("train", "val", "test"), default="test")
     parser.add_argument("--num-samples", type=int, default=0)
-    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=12)
     parser.add_argument("--num-workers", type=int, default=4)
     parser.add_argument("--support-threshold", type=float, default=0.3)
     parser.add_argument("--save-samples", type=int, default=4)

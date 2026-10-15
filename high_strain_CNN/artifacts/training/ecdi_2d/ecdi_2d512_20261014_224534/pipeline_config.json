@@ -1,0 +1,132 @@
+{
+  "args": {
+    "data_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json",
+    "data_dir": "/data_ssd/oyys/eCDI",
+    "run_name": "ecdi_2d512_20261014_224534",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d",
+    "checkpoint_root": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d",
+    "phase_batch_size": 12,
+    "refiner_batch_size": 12,
+    "num_workers": 4,
+    "phase_epochs": null,
+    "refiner_epochs": null,
+    "phase_resume": "",
+    "refiner_resume": "",
+    "start_stage": "phase",
+    "num_samples_train": 0,
+    "num_samples_val": 0,
+    "num_samples_test": 0,
+    "max_batches_per_epoch": 0,
+    "device": "cuda",
+    "dry_run": false
+  },
+  "commands": [
+    [
+      "validate",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "ecdi_training.validate_data",
+        "--data-config",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json",
+        "--data-dir",
+        "/data_ssd/oyys/eCDI",
+        "--output",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_224534/data_validation.json"
+      ]
+    ],
+    [
+      "phase",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "ecdi_training.train",
+        "--stage",
+        "phase",
+        "--run-name",
+        "ecdi_2d512_20261014_224534_phase",
+        "--batch-size",
+        "12",
+        "--data-config",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json",
+        "--data-dir",
+        "/data_ssd/oyys/eCDI",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--checkpoint-root",
+        "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d",
+        "--runs-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_224534/stages"
+      ]
+    ],
+    [
+      "refiner",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "ecdi_training.train",
+        "--stage",
+        "refiner",
+        "--run-name",
+        "ecdi_2d512_20261014_224534_refiner",
+        "--batch-size",
+        "12",
+        "--data-config",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json",
+        "--data-dir",
+        "/data_ssd/oyys/eCDI",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--checkpoint-root",
+        "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d",
+        "--runs-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_224534/stages",
+        "--phase-checkpoint",
+        "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_phase/checkpoint_best.pt"
+      ]
+    ],
+    [
+      "evaluate",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "ecdi_training.evaluate",
+        "--checkpoint",
+        "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt",
+        "--data-config",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json",
+        "--data-dir",
+        "/data_ssd/oyys/eCDI",
+        "--split",
+        "test",
+        "--batch-size",
+        "12",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--output-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_224534/evaluation"
+      ]
+    ],
+    [
+      "visualize",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "ecdi_training.visualize",
+        "--evaluation-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_224534/evaluation"
+      ]
+    ]
+  ]
+}
