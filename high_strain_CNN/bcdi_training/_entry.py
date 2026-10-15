@@ -13,7 +13,7 @@ from .validate_data import verify_manifest
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 CHECKPOINT_ROOT = "/data/wyz/checkpoints"
-DATA_CONFIG = "/data/wyz/training_config.json"
+DATA_CONFIG = "/data/wyz/BCDI-2D/training_config.json"
 
 
 def has_option(arguments, key):

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-DATA_DIR="${DATA_DIR:-/data/wyz}"
+DATA_DIR="${DATA_DIR:-/data/wyz/BCDI-2D}"
 DATASET_NAME="$(basename -- "${DATA_DIR}")"
 LOG_DIR="${PROJECT_DIR}/artifacts/generation/bcdi_2d/${DATASET_NAME}"
 PYTHON_BIN="${PYTHON_BIN:-python}"

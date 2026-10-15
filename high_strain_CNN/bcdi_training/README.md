@@ -6,7 +6,7 @@
 本目录不修改模拟器，也不改变另一套 e-CDI HDF5 数据流程。
 
 当前服务器项目目录：`/home/wyz/BCDI-2D/high_strain_only/high_strain_CNN`。
-默认数据目录为 `/data/wyz`，其中应直接包含 `training_config.json` 和六个NPY文件；
+默认数据目录为 `/data/wyz/BCDI-2D`，其中应直接包含 `training_config.json` 和六个NPY文件；
 checkpoint保存在 `/data/wyz/checkpoints`，日志相对于项目目录保存。
 项目内路径自动从源码位置推导，移动项目无需修改Python代码。
 
@@ -56,7 +56,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
 默认数据和运行记录：
 
 ```text
-/data/wyz/
+/data/wyz/BCDI-2D/
   generation_config.json          完整几何、seed、版本、源码哈希和NumPy版本
   seed_records/seed_*.json        每个seed的完成标记、行范围、数据校验值
   train_diff.npy, train_real.npy
@@ -66,7 +66,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
   training_config.json            完成后发布，训练直接使用
   .generation.lock                系统级写锁，进程退出后自动解锁
 
-high_strain_CNN/artifacts/generation/bcdi_2d/wyz/
+high_strain_CNN/artifacts/generation/bcdi_2d/BCDI-2D/
   launcher.log, console.log, generate.pid
   generation_config.json, generation_status.json
 ```
@@ -74,13 +74,13 @@ high_strain_CNN/artifacts/generation/bcdi_2d/wyz/
 查看进度和ETA：
 
 ```bash
-tail -f artifacts/generation/bcdi_2d/wyz/launcher.log
+tail -f artifacts/generation/bcdi_2d/BCDI-2D/launcher.log
 ```
 
 生成完整后直接训练，不要再执行NPZ转换：
 
 ```bash
-DATA_DIR=/data/wyz \
+DATA_DIR=/data/wyz/BCDI-2D \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
@@ -175,7 +175,7 @@ Linux服务器，将实际生成任务目录替换为服务器位置：
 ```bash
 python -m bcdi_training.prepare_data \
   --source-dir /data/bcdi_2d_simulation_run \
-  --output-dir /data/wyz
+  --output-dir /data/wyz/BCDI-2D
 ```
 
 运行前可编辑 `configs/bcdi_2d.json` 的训练参数；转换会将其写入实际数据目录中的
@@ -215,7 +215,7 @@ bash bcdi_training/scripts/train_bcdi_2d.sh
 已有数据目录由环境变量覆盖，batch也可分别设置：
 
 ```bash
-DATA_DIR=/data/wyz \
+DATA_DIR=/data/wyz/BCDI-2D \
 PHASE_BATCH_SIZE=16 REFINER_BATCH_SIZE=16 NUM_WORKERS=4 GPU_ID=0 \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```

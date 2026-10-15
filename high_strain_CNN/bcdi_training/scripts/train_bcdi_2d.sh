@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-DATA_DIR="${DATA_DIR:-/data/wyz}"
+DATA_DIR="${DATA_DIR:-/data/wyz/BCDI-2D}"
 RUN_NAME="${RUN_NAME:-bcdi_2d512_$(date +%Y%m%d_%H%M%S)}"
 RUN_DIR="${PROJECT_DIR}/artifacts/training/bcdi_2d/${RUN_NAME}"
 CHECKPOINT_ROOT="${CHECKPOINT_ROOT:-/data/wyz/checkpoints}"
