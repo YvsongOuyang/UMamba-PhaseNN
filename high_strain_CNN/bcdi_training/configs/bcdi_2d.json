@@ -16,7 +16,7 @@
   "training": {
     "model_variant": "reduced_bn_no_outer_skip",
     "phase": {"epochs": 100, "learning_rate": 0.001, "scheduler": "plateau"},
-    "refiner": {"epochs": 50, "learning_rate": 0.0002, "scheduler": "cosine"},
+    "refiner": {"epochs": 50, "learning_rate": 0.0004, "scheduler": "cosine"},
     "base_channels": 4,
     "num_experts": [3, 3, 3, 3],
     "top_k": 2,

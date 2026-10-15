@@ -182,12 +182,13 @@ python -m bcdi_training.prepare_data \
 1. U-Net从头训练：`minmax(log1p(modulus_detector**2))` 输入，居中复数物体的
    FFT2相位作标签，沿用WCA损失。默认Adam、LR=1e-3、plateau调度、100 epoch。
 2. 加载最佳验证U-Net并冻结权重和BN，以测量模长+预测相位经inverse FFT2构造
-   初始物体，仅训练复数MoMamba。默认Adam、LR=2e-4、cosine调度、50 epoch，
+   初始物体，仅训练复数MoMamba。默认Adam、LR=4e-4、cosine调度、50 epoch，
    沿用RMS归一化、全局相位/twin对齐后的实部MAE+虚部MAE。
 
 两阶段均使用float32/complex64，梯度裁剪1.0，默认不加物理loss、不做硬support投影。
 U-Net是已有的BN、无最外层skip、1024瓶颈变体（13.11M参数）。
-默认batch=1、worker=4；尚无本数据的CUDA显存基准，确认显存余量后再增大batch。
+两阶段训练与评估默认batch=16、worker=4；尚无本数据的CUDA显存基准，
+若显存不足，可分别降低PHASE_BATCH_SIZE和REFINER_BATCH_SIZE。
 100/50轮是初始预算，并不代表新数据已经收敛。
 
 正式阶段2必须使用官方Mamba，Linux CUDA环境按当前项目安装：
@@ -210,11 +211,13 @@ bash bcdi_training/scripts/train_bcdi_2d.sh
 
 ```bash
 DATA_DIR=/data_ssd/oyys/bcdi_2d/dataset \
-PHASE_BATCH_SIZE=4 REFINER_BATCH_SIZE=1 NUM_WORKERS=4 GPU_ID=0 \
+PHASE_BATCH_SIZE=16 REFINER_BATCH_SIZE=16 NUM_WORKERS=4 GPU_ID=0 \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
 控制器也支持 `--phase-epochs`、`--refiner-epochs`、`--phase-lr`、`--refiner-lr`。
+一键流程默认显式传入第二阶段LR=4e-4，覆盖已生成数据配置中的旧值；无需重新生成数据。
+单独调用训练入口时仍读取实际数据配置，旧数据可用 `--learning-rate 4e-4` 覆盖。
 只规划、不启动训练：
 
 ```bash
@@ -235,6 +238,7 @@ bash bcdi_training/scripts/train_bcdi_2d.sh \
 python -u -m bcdi_training.train --stage phase --run-name bcdi_phase
 
 python -u -m bcdi_training.train --stage refiner --run-name bcdi_refiner \
+  --learning-rate 4e-4 \
   --phase-checkpoint /data_ssd/oyys/bcdi_2d/checkpoints/bcdi_phase/checkpoint_best.pt
 
 python -u -m bcdi_training.train --stage refiner --run-name bcdi_refiner \
