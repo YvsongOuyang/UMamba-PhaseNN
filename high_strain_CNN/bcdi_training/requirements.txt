@@ -1,0 +1,4 @@
+# Install the CUDA build of PyTorch appropriate for your server separately.
+numpy>=1.26,<2
+matplotlib>=3.8,<4
+# Second stage: install ../ecdi_training/requirements/mamba.txt with --no-build-isolation.

@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-15",
+  "scope": "Local interface and physics checks, not a reconstruction-quality benchmark",
+  "unit_and_integration_tests": {
+    "command": "python -m pytest bcdi_training/tests/test_bcdi_training.py ecdi_training/tests/test_2d_pipeline.py -q",
+    "passed": 15,
+    "second_stage_mixer": "test-only differentiable mixer; production code requires official mamba-ssm"
+  },
+  "provided_simulator_examples": {
+    "source": "D:/code/PYTHON/UMamba-PhaseNN/deliverables/bcdi_2d_simulator_512/examples/demo512",
+    "samples": 12,
+    "shape": [512, 512],
+    "phase_convention": "author",
+    "source_file_hashes_verified": true,
+    "prepared_file_hashes_verified": true,
+    "maximum_fourier_modulus_relative_l2": 0.0,
+    "train": {"seeds": [0], "samples": 4},
+    "val": {"seeds": [2], "samples": 4},
+    "test": {"seeds": [1], "samples": 4},
+    "phase_training_smoke": {
+      "device": "cpu",
+      "epochs": 1,
+      "train_samples": 1,
+      "val_samples": 1,
+      "parameter_count": 13109217,
+      "checkpoint_saved": true,
+      "test_evaluation_samples": 1,
+      "initial_fourier_modulus_relative_l1": 3.6396002656147175e-7
+    },
+    "visualization_rendered_and_inspected": true,
+    "visualization_python": "C:/Users/30810/.conda/envs/spikingformer/python.exe"
+  },
+  "limitations": [
+    "The default local Python has an incompatible NumPy/Matplotlib binary combination; visualization succeeded in the existing compatible spikingformer environment.",
+    "Official Mamba CUDA kernels and full two-stage GPU training were not executed locally.",
+    "Twelve demonstration samples are insufficient for a formal performance experiment."
+  ]
+}
