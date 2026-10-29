@@ -17,7 +17,7 @@ from ._entry import (
 
 
 def main():
-    arguments = configured_arguments({"--data-config": DATA_CONFIG, "--batch-size": 1})
+    arguments = configured_arguments({"--data-config": DATA_CONFIG, "--batch-size": 16})
     if {"-h", "--help"}.intersection(sys.argv):
         return invoke(evaluate_core, arguments)
     _, manifest = check_arguments(arguments)

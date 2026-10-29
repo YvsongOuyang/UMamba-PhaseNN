@@ -19,7 +19,7 @@ def main():
             "--data-config": DATA_CONFIG,
             "--checkpoint-root": CHECKPOINT_ROOT,
             "--runs-dir": PROJECT_DIR / "artifacts" / "training" / "bcdi_2d" / "stages",
-            "--batch-size": 1,
+            "--batch-size": 16,
         }
     )
     if not {"-h", "--help"}.intersection(sys.argv):

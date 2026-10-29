@@ -79,7 +79,7 @@ def main():
     parser.add_argument("--phase-epochs", type=int)
     parser.add_argument("--refiner-epochs", type=int)
     parser.add_argument("--phase-lr", type=float)
-    parser.add_argument("--refiner-lr", type=float)
+    parser.add_argument("--refiner-lr", type=float, default=4e-4)
     parser.add_argument("--phase-resume", default="")
     parser.add_argument("--refiner-resume", default="")
     parser.add_argument(

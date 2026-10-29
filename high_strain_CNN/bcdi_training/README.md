@@ -5,6 +5,11 @@
 及 `pytorch_autophasenn` 的实现，避免复制两套网络和优化器；请保留整个父项目。
 本目录不修改模拟器，也不改变另一套 e-CDI HDF5 数据流程。
 
+当前服务器项目目录：`/home/wyz/BCDI-2D/high_strain_only/high_strain_CNN`。
+默认数据目录为 `/data/wyz/BCDI-2D`，其中应直接包含 `training_config.json` 和六个NPY文件；
+checkpoint保存在 `/data/wyz/checkpoints`，日志相对于项目目录保存。
+项目内路径自动从源码位置推导，移动项目无需修改Python代码。
+
 ```text
 bcdi_training/
   generate_dataset.py   原生生成、版本记录、断点续生成，直接写训练NPY
@@ -42,7 +47,7 @@ bcdi_training/
 背景启动：
 
 ```bash
-cd /home/oyys/code/UMamba-AutoPhaseNN
+cd /home/wyz/BCDI-2D/high_strain_only
 git pull origin main
 cd high_strain_CNN
 bash bcdi_training/scripts/generate_bcdi_2d.sh
@@ -51,7 +56,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
 默认数据和运行记录：
 
 ```text
-/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/
+/data/wyz/BCDI-2D/
   generation_config.json          完整几何、seed、版本、源码哈希和NumPy版本
   seed_records/seed_*.json        每个seed的完成标记、行范围、数据校验值
   train_diff.npy, train_real.npy
@@ -61,7 +66,7 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh
   training_config.json            完成后发布，训练直接使用
   .generation.lock                系统级写锁，进程退出后自动解锁
 
-high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n20000_v1/
+high_strain_CNN/artifacts/generation/bcdi_2d/BCDI-2D/
   launcher.log, console.log, generate.pid
   generation_config.json, generation_status.json
 ```
@@ -69,13 +74,13 @@ high_strain_CNN/artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n20000_v1/
 查看进度和ETA：
 
 ```bash
-tail -f artifacts/generation/bcdi_2d/bcdi512_author_s20261015_n20000_v1/launcher.log
+tail -f artifacts/generation/bcdi_2d/BCDI-2D/launcher.log
 ```
 
 生成完整后直接训练，不要再执行NPZ转换：
 
 ```bash
-DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1 \
+DATA_DIR=/data/wyz/BCDI-2D \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
@@ -95,14 +100,14 @@ bash bcdi_training/scripts/generate_bcdi_2d.sh --resume
 保留旧数据和manifest，以便旧checkpoint可追踪。`WORKERS`可以调整CPU并行进程数：
 
 ```bash
-DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/<新版本名称> WORKERS=4 \
+DATA_DIR=/data/bcdi_2d_datasets/<新版本名称> WORKERS=4 \
 bash bcdi_training/scripts/generate_bcdi_2d.sh
 ```
 
 先做12个样本的独立小测试，不占正式目录：
 
 ```bash
-DATA_DIR=/data_ssd/oyys/bcdi_2d/datasets/smoke512_seed0_n12 \
+DATA_DIR=/data/bcdi_2d_datasets/smoke512_seed0_n12 \
 bash bcdi_training/scripts/generate_bcdi_2d.sh \
   --num-seeds 3 --seed-start 0 --samples-per-axis 2
 ```
@@ -169,8 +174,8 @@ Linux服务器，将实际生成任务目录替换为服务器位置：
 
 ```bash
 python -m bcdi_training.prepare_data \
-  --source-dir /data_ssd/oyys/bcdi_2d/simulation_run \
-  --output-dir /data_ssd/oyys/bcdi_2d/dataset
+  --source-dir /data/bcdi_2d_simulation_run \
+  --output-dir /data/wyz/BCDI-2D
 ```
 
 运行前可编辑 `configs/bcdi_2d.json` 的训练参数；转换会将其写入实际数据目录中的
@@ -182,12 +187,13 @@ python -m bcdi_training.prepare_data \
 1. U-Net从头训练：`minmax(log1p(modulus_detector**2))` 输入，居中复数物体的
    FFT2相位作标签，沿用WCA损失。默认Adam、LR=1e-3、plateau调度、100 epoch。
 2. 加载最佳验证U-Net并冻结权重和BN，以测量模长+预测相位经inverse FFT2构造
-   初始物体，仅训练复数MoMamba。默认Adam、LR=2e-4、cosine调度、50 epoch，
+   初始物体，仅训练复数MoMamba。默认Adam、LR=4e-4、cosine调度、50 epoch，
    沿用RMS归一化、全局相位/twin对齐后的实部MAE+虚部MAE。
 
 两阶段均使用float32/complex64，梯度裁剪1.0，默认不加物理loss、不做硬support投影。
 U-Net是已有的BN、无最外层skip、1024瓶颈变体（13.11M参数）。
-默认batch=1、worker=4；尚无本数据的CUDA显存基准，确认显存余量后再增大batch。
+两阶段训练与评估默认batch=16、worker=4；尚无本数据的CUDA显存基准，
+若显存不足，可分别降低PHASE_BATCH_SIZE和REFINER_BATCH_SIZE。
 100/50轮是初始预算，并不代表新数据已经收敛。
 
 正式阶段2必须使用官方Mamba，Linux CUDA环境按当前项目安装：
@@ -200,7 +206,7 @@ python -m pip install --no-build-isolation -r ecdi_training/requirements/mamba.t
 ### 一键后台运行
 
 ```bash
-cd /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN
+cd /home/wyz/BCDI-2D/high_strain_only/high_strain_CNN
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
@@ -209,12 +215,14 @@ bash bcdi_training/scripts/train_bcdi_2d.sh
 已有数据目录由环境变量覆盖，batch也可分别设置：
 
 ```bash
-DATA_DIR=/data_ssd/oyys/bcdi_2d/dataset \
-PHASE_BATCH_SIZE=4 REFINER_BATCH_SIZE=1 NUM_WORKERS=4 GPU_ID=0 \
+DATA_DIR=/data/wyz/BCDI-2D \
+PHASE_BATCH_SIZE=16 REFINER_BATCH_SIZE=16 NUM_WORKERS=4 GPU_ID=0 \
 bash bcdi_training/scripts/train_bcdi_2d.sh
 ```
 
 控制器也支持 `--phase-epochs`、`--refiner-epochs`、`--phase-lr`、`--refiner-lr`。
+一键流程默认显式传入第二阶段LR=4e-4，覆盖已生成数据配置中的旧值；无需重新生成数据。
+单独调用训练入口时仍读取实际数据配置，旧数据可用 `--learning-rate 4e-4` 覆盖。
 只规划、不启动训练：
 
 ```bash
@@ -235,10 +243,11 @@ bash bcdi_training/scripts/train_bcdi_2d.sh \
 python -u -m bcdi_training.train --stage phase --run-name bcdi_phase
 
 python -u -m bcdi_training.train --stage refiner --run-name bcdi_refiner \
-  --phase-checkpoint /data_ssd/oyys/bcdi_2d/checkpoints/bcdi_phase/checkpoint_best.pt
+  --learning-rate 4e-4 \
+  --phase-checkpoint /data/wyz/checkpoints/bcdi_phase/checkpoint_best.pt
 
 python -u -m bcdi_training.train --stage refiner --run-name bcdi_refiner \
-  --resume /data_ssd/oyys/bcdi_2d/checkpoints/bcdi_refiner/checkpoint_last.pt --epochs 100
+  --resume /data/wyz/checkpoints/bcdi_refiner/checkpoint_last.pt --epochs 100
 ```
 
 `--epochs` 表示最终轮数，非追加轮数。所有入口都可用 `--data-config <training_config.json>`
@@ -256,7 +265,7 @@ high_strain_CNN/artifacts/training/bcdi_2d/<RUN>/
   stages/<RUN>_phase/, stages/<RUN>_refiner/
   evaluation/metrics.json, per_sample.csv, sample_*.npz, visualizations/
 
-/data_ssd/oyys/bcdi_2d/checkpoints/
+/data/wyz/checkpoints/
   <RUN>_phase/checkpoint_{best,last}.pt
   <RUN>_refiner/checkpoint_{best,last}.pt
 ```
@@ -267,14 +276,14 @@ high_strain_CNN/artifacts/training/bcdi_2d/<RUN>/
 
 ```bash
 python -m bcdi_training.run_pipeline --run-name <原RUN> --start-stage refiner \
-  --refiner-resume /data_ssd/oyys/bcdi_2d/checkpoints/<原RUN>_refiner/checkpoint_last.pt
+  --refiner-resume /data/wyz/checkpoints/<原RUN>_refiner/checkpoint_last.pt
 ```
 
 单独评估/绘图：
 
 ```bash
 python -m bcdi_training.evaluate \
-  --checkpoint /data_ssd/oyys/bcdi_2d/checkpoints/<RUN>_refiner/checkpoint_best.pt \
+  --checkpoint /data/wyz/checkpoints/<RUN>_refiner/checkpoint_best.pt \
   --output-dir artifacts/evaluations/bcdi_2d/test
 
 python -m bcdi_training.visualize --evaluation-dir artifacts/evaluations/bcdi_2d/test

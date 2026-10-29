@@ -4,7 +4,7 @@
   "storage": "npy",
   "spatial_dims": 2,
   "shape": [512, 512],
-  "root": "/data_ssd/oyys/bcdi_2d/dataset",
+  "root": "/data/wyz/BCDI-2D",
   "diffraction_kind": "modulus",
   "input_log_data": true,
   "center_targets": true,
@@ -16,7 +16,7 @@
   "training": {
     "model_variant": "reduced_bn_no_outer_skip",
     "phase": {"epochs": 100, "learning_rate": 0.001, "scheduler": "plateau"},
-    "refiner": {"epochs": 50, "learning_rate": 0.0002, "scheduler": "cosine"},
+    "refiner": {"epochs": 50, "learning_rate": 0.0004, "scheduler": "cosine"},
     "base_channels": 4,
     "num_experts": [3, 3, 3, 3],
     "top_k": 2,
