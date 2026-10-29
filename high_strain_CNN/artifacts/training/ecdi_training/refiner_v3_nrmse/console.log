@@ -1,0 +1,97 @@
+2026-10-16 10:51:51,920 | INFO    | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-16 10:51:51,920 | INFO    | NumExpr defaulting to 16 threads.
+2026-10-16 10:51:52,382 | INFO    | Stage=refiner | shape=512x512 | batch=12 | parameters=14,336,704 | trainable=1,227,487 | dtype=float32/complex64
+2026-10-16 10:51:52,382 | INFO    | Experiment version=refiner_nrmse_v3_controlled
+2026-10-16 10:51:52,382 | INFO    | Initialized refiner weights from /data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_v2_reconstruction/checkpoint_best.pt (epoch=50); optimizer starts fresh
+2026-10-16 10:51:52,382 | INFO    | Refiner NRMSE loss weight=0.5 | checkpoint metric=complex_nrmse
+2026-10-16 10:51:52,382 | INFO    | Run=/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training/refiner_v3_nrmse | checkpoints=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_v3_nrmse
+2026-10-16 10:51:52,382 | INFO    | Starting epoch=001/005 | lr=1e-05
+2026-10-16 10:52:34,546 | INFO    | TRAIN | batch=50/709 | loss=0.153412 | elapsed=42.2s | eta=555.7s
+2026-10-16 10:53:16,678 | INFO    | TRAIN | batch=100/709 | loss=0.189317 | elapsed=84.3s | eta=513.4s
+2026-10-16 10:53:58,914 | INFO    | TRAIN | batch=150/709 | loss=0.205946 | elapsed=126.5s | eta=471.5s
+2026-10-16 10:54:42,034 | INFO    | TRAIN | batch=200/709 | loss=0.157535 | elapsed=169.7s | eta=431.8s
+2026-10-16 10:55:24,574 | INFO    | TRAIN | batch=250/709 | loss=0.208464 | elapsed=212.2s | eta=389.6s
+2026-10-16 10:56:07,527 | INFO    | TRAIN | batch=300/709 | loss=0.180537 | elapsed=255.1s | eta=347.8s
+2026-10-16 10:56:50,266 | INFO    | TRAIN | batch=350/709 | loss=0.181543 | elapsed=297.9s | eta=305.5s
+2026-10-16 10:57:33,057 | INFO    | TRAIN | batch=400/709 | loss=0.198004 | elapsed=340.7s | eta=263.2s
+2026-10-16 10:58:16,069 | INFO    | TRAIN | batch=450/709 | loss=0.161974 | elapsed=383.7s | eta=220.8s
+2026-10-16 10:58:59,057 | INFO    | TRAIN | batch=500/709 | loss=0.132945 | elapsed=426.7s | eta=178.4s
+2026-10-16 10:59:42,022 | INFO    | TRAIN | batch=550/709 | loss=0.140229 | elapsed=469.6s | eta=135.8s
+2026-10-16 11:00:24,981 | INFO    | TRAIN | batch=600/709 | loss=0.178635 | elapsed=512.6s | eta=93.1s
+2026-10-16 11:01:08,020 | INFO    | TRAIN | batch=650/709 | loss=0.182565 | elapsed=555.6s | eta=50.4s
+2026-10-16 11:01:51,091 | INFO    | TRAIN | batch=700/709 | loss=0.172876 | elapsed=598.7s | eta=7.7s
+2026-10-16 11:01:58,301 | INFO    | TRAIN | batch=709/709 | loss=0.100207 | elapsed=605.9s | eta=0.0s
+2026-10-16 11:02:12,816 | INFO    | VAL | batch=42/42 | loss=0.160823 | elapsed=14.5s | eta=0.0s
+2026-10-16 11:02:12,971 | INFO    | Epoch=1/5 | train_loss=0.167638 | val_loss=0.167559 | val_complex_nrmse=0.181371 | best_complex_nrmse=0.181371 | lr=9.14e-06
+2026-10-16 11:02:12,971 | INFO    | Starting epoch=002/005 | lr=9.14e-06
+2026-10-16 11:02:56,481 | INFO    | TRAIN | batch=50/709 | loss=0.191515 | elapsed=43.5s | eta=573.4s
+2026-10-16 11:03:39,909 | INFO    | TRAIN | batch=100/709 | loss=0.170514 | elapsed=86.9s | eta=529.4s
+2026-10-16 11:04:23,391 | INFO    | TRAIN | batch=150/709 | loss=0.141467 | elapsed=130.4s | eta=486.0s
+2026-10-16 11:05:06,740 | INFO    | TRAIN | batch=200/709 | loss=0.180387 | elapsed=173.8s | eta=442.2s
+2026-10-16 11:05:50,288 | INFO    | TRAIN | batch=250/709 | loss=0.132875 | elapsed=217.3s | eta=399.0s
+2026-10-16 11:06:33,760 | INFO    | TRAIN | batch=300/709 | loss=0.131735 | elapsed=260.8s | eta=355.5s
+2026-10-16 11:07:17,426 | INFO    | TRAIN | batch=350/709 | loss=0.140382 | elapsed=304.5s | eta=312.3s
+2026-10-16 11:08:01,320 | INFO    | TRAIN | batch=400/709 | loss=0.169808 | elapsed=348.3s | eta=269.1s
+2026-10-16 11:08:45,027 | INFO    | TRAIN | batch=450/709 | loss=0.172024 | elapsed=392.1s | eta=225.6s
+2026-10-16 11:09:28,620 | INFO    | TRAIN | batch=500/709 | loss=0.180422 | elapsed=435.6s | eta=182.1s
+2026-10-16 11:10:12,440 | INFO    | TRAIN | batch=550/709 | loss=0.1638 | elapsed=479.5s | eta=138.6s
+2026-10-16 11:10:56,023 | INFO    | TRAIN | batch=600/709 | loss=0.164176 | elapsed=523.1s | eta=95.0s
+2026-10-16 11:11:39,723 | INFO    | TRAIN | batch=650/709 | loss=0.138796 | elapsed=566.8s | eta=51.4s
+2026-10-16 11:12:23,578 | INFO    | TRAIN | batch=700/709 | loss=0.186879 | elapsed=610.6s | eta=7.9s
+2026-10-16 11:12:30,826 | INFO    | TRAIN | batch=709/709 | loss=0.0805339 | elapsed=617.9s | eta=0.0s
+2026-10-16 11:12:45,369 | INFO    | VAL | batch=42/42 | loss=0.160787 | elapsed=14.5s | eta=0.0s
+2026-10-16 11:12:45,585 | INFO    | Epoch=2/5 | train_loss=0.167506 | val_loss=0.167413 | val_complex_nrmse=0.181024 | best_complex_nrmse=0.181024 | lr=6.89e-06
+2026-10-16 11:12:45,585 | INFO    | Starting epoch=003/005 | lr=6.89e-06
+2026-10-16 11:13:29,587 | INFO    | TRAIN | batch=50/709 | loss=0.172156 | elapsed=44.0s | eta=579.9s
+2026-10-16 11:14:13,311 | INFO    | TRAIN | batch=100/709 | loss=0.158507 | elapsed=87.7s | eta=534.2s
+2026-10-16 11:14:56,929 | INFO    | TRAIN | batch=150/709 | loss=0.216157 | elapsed=131.3s | eta=489.5s
+2026-10-16 11:15:40,578 | INFO    | TRAIN | batch=200/709 | loss=0.131703 | elapsed=175.0s | eta=445.4s
+2026-10-16 11:16:24,159 | INFO    | TRAIN | batch=250/709 | loss=0.172265 | elapsed=218.6s | eta=401.3s
+2026-10-16 11:17:07,849 | INFO    | TRAIN | batch=300/709 | loss=0.132361 | elapsed=262.3s | eta=357.6s
+2026-10-16 11:17:51,639 | INFO    | TRAIN | batch=350/709 | loss=0.189205 | elapsed=306.1s | eta=313.9s
+2026-10-16 11:18:35,264 | INFO    | TRAIN | batch=400/709 | loss=0.185189 | elapsed=349.7s | eta=270.1s
+2026-10-16 11:19:19,013 | INFO    | TRAIN | batch=450/709 | loss=0.152958 | elapsed=393.4s | eta=226.4s
+2026-10-16 11:20:02,808 | INFO    | TRAIN | batch=500/709 | loss=0.167078 | elapsed=437.2s | eta=182.8s
+2026-10-16 11:20:46,464 | INFO    | TRAIN | batch=550/709 | loss=0.126842 | elapsed=480.9s | eta=139.0s
+2026-10-16 11:21:30,118 | INFO    | TRAIN | batch=600/709 | loss=0.152614 | elapsed=524.5s | eta=95.3s
+2026-10-16 11:22:13,840 | INFO    | TRAIN | batch=650/709 | loss=0.18201 | elapsed=568.3s | eta=51.6s
+2026-10-16 11:22:57,553 | INFO    | TRAIN | batch=700/709 | loss=0.146283 | elapsed=612.0s | eta=7.9s
+2026-10-16 11:23:04,816 | INFO    | TRAIN | batch=709/709 | loss=0.200049 | elapsed=619.2s | eta=0.0s
+2026-10-16 11:23:19,314 | INFO    | VAL | batch=42/42 | loss=0.160906 | elapsed=14.5s | eta=0.0s
+2026-10-16 11:23:19,532 | INFO    | Epoch=3/5 | train_loss=0.167425 | val_loss=0.16736 | val_complex_nrmse=0.180989 | best_complex_nrmse=0.180989 | lr=4.11e-06
+2026-10-16 11:23:19,532 | INFO    | Starting epoch=004/005 | lr=4.11e-06
+2026-10-16 11:24:03,287 | INFO    | TRAIN | batch=50/709 | loss=0.157433 | elapsed=43.8s | eta=576.7s
+2026-10-16 11:24:46,888 | INFO    | TRAIN | batch=100/709 | loss=0.195693 | elapsed=87.4s | eta=532.0s
+2026-10-16 11:25:30,597 | INFO    | TRAIN | batch=150/709 | loss=0.190351 | elapsed=131.1s | eta=488.4s
+2026-10-16 11:26:14,260 | INFO    | TRAIN | batch=200/709 | loss=0.191054 | elapsed=174.7s | eta=444.7s
+2026-10-16 11:26:57,914 | INFO    | TRAIN | batch=250/709 | loss=0.134322 | elapsed=218.4s | eta=400.9s
+2026-10-16 11:27:41,476 | INFO    | TRAIN | batch=300/709 | loss=0.173322 | elapsed=261.9s | eta=357.1s
+2026-10-16 11:28:25,079 | INFO    | TRAIN | batch=350/709 | loss=0.146206 | elapsed=305.5s | eta=313.4s
+2026-10-16 11:29:08,692 | INFO    | TRAIN | batch=400/709 | loss=0.152226 | elapsed=349.2s | eta=269.7s
+2026-10-16 11:29:52,249 | INFO    | TRAIN | batch=450/709 | loss=0.198041 | elapsed=392.7s | eta=226.0s
+2026-10-16 11:30:35,844 | INFO    | TRAIN | batch=500/709 | loss=0.148818 | elapsed=436.3s | eta=182.4s
+2026-10-16 11:31:19,539 | INFO    | TRAIN | batch=550/709 | loss=0.246946 | elapsed=480.0s | eta=138.8s
+2026-10-16 11:32:03,276 | INFO    | TRAIN | batch=600/709 | loss=0.150537 | elapsed=523.7s | eta=95.1s
+2026-10-16 11:32:46,856 | INFO    | TRAIN | batch=650/709 | loss=0.127937 | elapsed=567.3s | eta=51.5s
+2026-10-16 11:33:30,454 | INFO    | TRAIN | batch=700/709 | loss=0.18661 | elapsed=610.9s | eta=7.9s
+2026-10-16 11:33:37,621 | INFO    | TRAIN | batch=709/709 | loss=0.204783 | elapsed=618.1s | eta=0.0s
+2026-10-16 11:33:52,147 | INFO    | VAL | batch=42/42 | loss=0.16076 | elapsed=14.5s | eta=0.0s
+2026-10-16 11:33:52,275 | INFO    | Epoch=4/5 | train_loss=0.167385 | val_loss=0.167325 | val_complex_nrmse=0.181109 | best_complex_nrmse=0.180989 | lr=1.86e-06
+2026-10-16 11:33:52,275 | INFO    | Starting epoch=005/005 | lr=1.86e-06
+2026-10-16 11:34:36,074 | INFO    | TRAIN | batch=50/709 | loss=0.1579 | elapsed=43.8s | eta=577.2s
+2026-10-16 11:35:19,623 | INFO    | TRAIN | batch=100/709 | loss=0.143077 | elapsed=87.3s | eta=531.9s
+2026-10-16 11:36:03,235 | INFO    | TRAIN | batch=150/709 | loss=0.16197 | elapsed=131.0s | eta=488.0s
+2026-10-16 11:36:46,877 | INFO    | TRAIN | batch=200/709 | loss=0.156967 | elapsed=174.6s | eta=444.4s
+2026-10-16 11:37:30,499 | INFO    | TRAIN | batch=250/709 | loss=0.175838 | elapsed=218.2s | eta=400.7s
+2026-10-16 11:38:14,175 | INFO    | TRAIN | batch=300/709 | loss=0.191632 | elapsed=261.9s | eta=357.1s
+2026-10-16 11:38:57,947 | INFO    | TRAIN | batch=350/709 | loss=0.153605 | elapsed=305.7s | eta=313.5s
+2026-10-16 11:39:41,566 | INFO    | TRAIN | batch=400/709 | loss=0.154935 | elapsed=349.3s | eta=269.8s
+2026-10-16 11:40:25,054 | INFO    | TRAIN | batch=450/709 | loss=0.178157 | elapsed=392.8s | eta=226.1s
+2026-10-16 11:41:08,784 | INFO    | TRAIN | batch=500/709 | loss=0.150789 | elapsed=436.5s | eta=182.5s
+2026-10-16 11:41:52,316 | INFO    | TRAIN | batch=550/709 | loss=0.178247 | elapsed=480.0s | eta=138.8s
+2026-10-16 11:42:35,865 | INFO    | TRAIN | batch=600/709 | loss=0.143802 | elapsed=523.6s | eta=95.1s
+2026-10-16 11:43:19,513 | INFO    | TRAIN | batch=650/709 | loss=0.181449 | elapsed=567.2s | eta=51.5s
+2026-10-16 11:44:03,103 | INFO    | TRAIN | batch=700/709 | loss=0.159666 | elapsed=610.8s | eta=7.9s
+2026-10-16 11:44:10,322 | INFO    | TRAIN | batch=709/709 | loss=0.237419 | elapsed=618.0s | eta=0.0s
+2026-10-16 11:44:24,833 | INFO    | VAL | batch=42/42 | loss=0.160713 | elapsed=14.5s | eta=0.0s
+2026-10-16 11:44:24,958 | INFO    | Epoch=5/5 | train_loss=0.16729 | val_loss=0.167279 | val_complex_nrmse=0.181322 | best_complex_nrmse=0.180989 | lr=1e-06

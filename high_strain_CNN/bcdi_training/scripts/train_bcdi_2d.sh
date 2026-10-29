@@ -21,8 +21,8 @@ nohup env CUDA_VISIBLE_DEVICES="${GPU_ID}" "${PYTHON_BIN}" -u \
   --data-config "${DATA_DIR}/training_config.json" \
   --run-name "${RUN_NAME}" \
   --checkpoint-root "${CHECKPOINT_ROOT}" \
-  --phase-batch-size "${PHASE_BATCH_SIZE:-1}" \
-  --refiner-batch-size "${REFINER_BATCH_SIZE:-1}" \
+  --phase-batch-size "${PHASE_BATCH_SIZE:-16}" \
+  --refiner-batch-size "${REFINER_BATCH_SIZE:-16}" \
   --num-workers "${NUM_WORKERS:-4}" \
   "$@" > "${RUN_DIR}/launcher.log" 2>&1 < /dev/null &
 

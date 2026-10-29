@@ -1,0 +1,27 @@
+{
+  "protocol": {
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8/checkpoint_best.pt",
+    "data_dir": "/data_ssd/oyys/eCDI",
+    "run_name": "joint_cascade_v10_pilot",
+    "checkpoint_root": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training",
+    "batch_size": 4,
+    "accumulation_steps": 3,
+    "num_workers": 4,
+    "device": "cuda",
+    "max_steps": 240,
+    "check_every": 120,
+    "learning_rate": 1e-05,
+    "objective": "rigid_complex_nrmse_v7",
+    "search_radius": 4.0,
+    "dropout": "off",
+    "bn_running_stats": "frozen",
+    "accept_min_relative_val_gain": 0.02,
+    "accept_max_material_relative_regression": 0.02
+  },
+  "lineage": {
+    "source_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8/checkpoint_best.pt",
+    "source_sha256": "d0f38bcfc1c6460144c69fc46294638fe67cacfa9baceaadc98eeac83cc20cef",
+    "source_epoch": 3
+  }
+}

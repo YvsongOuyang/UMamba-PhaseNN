@@ -1,0 +1,24 @@
+{
+  "original": {
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt",
+    "sample_count": 100,
+    "mean_complex_psnr_db": 35.80059886122009,
+    "mean_complex_mae": 0.006715928426191198,
+    "passed_count": 100,
+    "passed_percent": 100.0
+  },
+  "finetuned": {
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_from_original_1029/checkpoint_best.pt",
+    "sample_count": 100,
+    "mean_complex_psnr_db": 26.996013498783228,
+    "mean_complex_mae": 0.02163849571683366,
+    "passed_count": 99,
+    "passed_percent": 99.0
+  },
+  "paired_comparison": {
+    "mean_psnr_change_db": -8.80458536243686,
+    "mean_mae_change": 0.014922567290642461,
+    "higher_psnr_count": 0,
+    "lower_mae_count": 0
+  }
+}

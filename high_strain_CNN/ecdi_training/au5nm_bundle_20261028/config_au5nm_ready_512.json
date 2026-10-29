@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "dataset_name": "au5nm_ready_paired_512",
+  "spatial_dims": 2,
+  "shape": [
+    512,
+    512
+  ],
+  "root": "/data_ssd/oyys/eCDI/external_test/au5nm_ready_512",
+  "diffraction_kind": "intensity",
+  "input_log_data": true,
+  "center_targets": true,
+  "splits": {
+    "train": {
+      "diffraction": "diffraction.npy",
+      "realspace": "realspace.npy"
+    },
+    "val": {
+      "diffraction": "diffraction.npy",
+      "realspace": "realspace.npy"
+    },
+    "test": {
+      "diffraction": "diffraction.npy",
+      "realspace": "realspace.npy"
+    }
+  },
+  "training": {
+    "model_variant": "reduced_bn_no_outer_skip",
+    "phase": {
+      "epochs": 100,
+      "learning_rate": 0.001,
+      "scheduler": "plateau"
+    },
+    "refiner": {
+      "epochs": 50,
+      "learning_rate": 0.0002,
+      "scheduler": "cosine"
+    },
+    "base_channels": 4,
+    "num_experts": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "top_k": 2,
+    "router_heads": 2,
+    "router_dropout": 0.2,
+    "position_dropout": 0.1,
+    "codec_dropout": 0.1,
+    "d_state": 16,
+    "d_conv": 4,
+    "expand": 2,
+    "support_threshold": 0.3,
+    "physics_loss_weight": 0.0,
+    "gradient_clip": 1.0
+  }
+}

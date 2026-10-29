@@ -1,0 +1,139 @@
+{
+  "calibration": {
+    "phase_gain_grid": [
+      [
+        1,
+        5.07270158323081e-07
+      ],
+      [
+        2,
+        0.14877566695213318
+      ],
+      [
+        3,
+        0.25644516944885254
+      ],
+      [
+        4,
+        0.35529038310050964
+      ],
+      [
+        5,
+        0.44516193866729736
+      ],
+      [
+        6,
+        0.5260949730873108
+      ],
+      [
+        7,
+        0.5981780290603638
+      ],
+      [
+        8,
+        0.6621560454368591
+      ],
+      [
+        9,
+        0.718803882598877
+      ],
+      [
+        10,
+        0.7680231332778931
+      ],
+      [
+        11,
+        0.8104394674301147
+      ],
+      [
+        12,
+        0.8466161489486694
+      ],
+      [
+        13,
+        0.8763432502746582
+      ],
+      [
+        14,
+        0.9005718231201172
+      ],
+      [
+        15,
+        0.9202464818954468
+      ],
+      [
+        16,
+        0.9353374242782593
+      ],
+      [
+        17,
+        0.9471861124038696
+      ],
+      [
+        18,
+        0.9553462862968445
+      ],
+      [
+        19,
+        0.9602146148681641
+      ],
+      [
+        20,
+        0.962297797203064
+      ],
+      [
+        21,
+        0.9630200862884521
+      ],
+      [
+        22,
+        0.9632620215415955
+      ],
+      [
+        23,
+        0.9636659622192383
+      ],
+      [
+        24,
+        0.9638832211494446
+      ]
+    ],
+    "selected_phase_gain": 1,
+    "fourier_blend": 0.5,
+    "original_target_fourier_rel_l2": 5.465136041493679e-07,
+    "phase_adjusted_fourier_rel_l2": 5.07270158323081e-07,
+    "corrected_target_fourier_rel_l2": 6.105814236434526e-07,
+    "corrected_target_amplitude_mae_relative_to_original": 4.16192108332325e-07
+  },
+  "original_reference": {
+    "corrected_target_fit_loss": 0.37324008345603943,
+    "diffraction_rel_l2": 0.37919872999191284,
+    "diffraction_cosine": 0.925315260887146,
+    "diffraction_training_loss": 0.074684739112854,
+    "original_amplitude_relative_mae": 0.9988835453987122,
+    "weighted_score": 0.3747347891330719
+  },
+  "warm_start_baseline": {
+    "corrected_target_fit_loss": 0.2233802229166031,
+    "diffraction_rel_l2": 0.3124910295009613,
+    "diffraction_cosine": 0.9499207139015198,
+    "diffraction_training_loss": 0.050079286098480225,
+    "original_amplitude_relative_mae": 0.2523401379585266,
+    "weighted_score": 0.22438205778598785
+  },
+  "selected": {
+    "corrected_target_fit_loss": 0.21591350436210632,
+    "diffraction_rel_l2": 0.2904755473136902,
+    "diffraction_cosine": 0.9568824172019958,
+    "diffraction_training_loss": 0.04311758279800415,
+    "original_amplitude_relative_mae": 0.4292498528957367,
+    "weighted_score": 0.2167762815952301
+  },
+  "best_step": 1800,
+  "fourier_weight": 0.02,
+  "amplitude_weight": 1e-06,
+  "improved_both_amplitude_and_diffraction": true,
+  "same_sample_for_training_and_selection": true,
+  "phase_gain_fitted_to_same_rendered_diffraction": true,
+  "physically_calibrated": false
+}

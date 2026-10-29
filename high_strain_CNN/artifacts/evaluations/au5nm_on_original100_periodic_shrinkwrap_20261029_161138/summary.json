@@ -1,0 +1,46 @@
+{
+  "original": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 37.074094585989876,
+    "mean_complex_mae": 0.006036663757785015,
+    "passed_count": 100,
+    "passed_percent": 100.0,
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt"
+  },
+  "finetuned": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 28.71813353315265,
+    "mean_complex_mae": 0.018849518253639504,
+    "passed_count": 100,
+    "passed_percent": 100.0,
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_from_original_1029/checkpoint_best.pt"
+  },
+  "hio": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 27.27783664438587,
+    "mean_complex_mae": 0.02386038485547232,
+    "passed_count": 100,
+    "passed_percent": 100.0
+  },
+  "metric_protocol": "periodic_integer_translation_twin_global_phase_rms_reference_peak",
+  "hio_parameters": {
+    "beta": 0.9,
+    "hio_iterations": 1500,
+    "er_iterations": 100,
+    "restarts": 4,
+    "initial_autocorrelation_threshold": 0.04,
+    "shrinkwrap_every": 20,
+    "shrinkwrap_until": 1200,
+    "shrinkwrap_threshold": 0.2,
+    "sigma_start_px": 3.0,
+    "sigma_min_px": 1.5,
+    "sigma_decay": 0.99
+  },
+  "hio_method": "shrinkwrap",
+  "paired_comparison": {
+    "mean_psnr_change_db": -8.355961052837227,
+    "mean_mae_change": 0.01281285449585449,
+    "higher_psnr_count": 0,
+    "lower_mae_count": 0
+  }
+}

@@ -27,3 +27,31 @@ echo "评估已启动"
 echo "PID      : ${PID}"
 echo "评估目录 : ${EVAL_DIR}"
 echo "运行日志 : ${EVAL_DIR}/console.log"
+
+cd /home/oyys/code/UMamba-AutoPhaseNN
+cd high_strain_CNN
+
+RUN_NAME="autophasenn_momamba_stage2_eq1_bs24_lr2e-4_20260916_000016"
+CHECKPOINT="/data_ssd/oyys/autophasenn/autophasenn_pipeline_output/high_strain_cnn_refiner/${RUN_NAME}/checkpoint_best.pt"
+VISION_DIR="$PWD/artifacts/visualizations/pytorch_realspace_momamba/${RUN_NAME}_autophasenn_val"
+
+mkdir -p "${VISION_DIR}"
+
+nohup env CUDA_VISIBLE_DEVICES=0 python -u \
+  -m pytorch_autophasenn.visualize_refiner \
+  --checkpoint "${CHECKPOINT}" \
+  --data-config configs/autophasenn_data.json \
+  --data-dir /data_ssd/oyys/autophasenn \
+  --split val \
+  --sample-indices 0 1000 2000 \
+  --support-threshold 0.1 \
+  --output-dir "${VISION_DIR}" \
+  > "${VISION_DIR}/nohup.log" 2>&1 < /dev/null &
+
+PID=$!
+echo "${PID}" > "${VISION_DIR}/visualize.pid"
+
+echo "可视化任务已启动"
+echo "PID      : ${PID}"
+echo "日志     : ${VISION_DIR}/nohup.log"
+echo "输出目录 : ${VISION_DIR}"

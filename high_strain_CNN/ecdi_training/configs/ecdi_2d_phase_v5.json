@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "experiment_version": "phase_aligned_nrmse_v5",
+  "dataset_name": "ecdi_10k_exitwave",
+  "storage": "ecdi_hdf5",
+  "spatial_dims": 2,
+  "shape": [512, 512],
+  "root": "/data_ssd/oyys/eCDI",
+  "manifest": "manifests/splits_training_with_val.json",
+  "quality_report": "quality/validation_report.json",
+  "diffraction_kind": "intensity",
+  "input_log_data": true,
+  "center_targets": true,
+  "training": {
+    "model_variant": "reduced_bn_no_outer_skip",
+    "phase_architecture": "baseline",
+    "phase": {
+      "epochs": 5,
+      "learning_rate": 0.00005,
+      "scheduler": "cosine",
+      "reconstruction_loss_weight": 0.1,
+      "nrmse_loss_weight": 0.5
+    },
+    "refiner": {"epochs": 50, "learning_rate": 0.0002, "scheduler": "cosine"},
+    "support_threshold": 0.3,
+    "physics_loss_weight": 0.0,
+    "gradient_clip": 1.0
+  }
+}

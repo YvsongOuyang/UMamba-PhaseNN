@@ -1,0 +1,27 @@
+{
+  "sample_count": 100,
+  "metric_figure": "per_sample_metrics.png",
+  "sample_figure": "representative_samples.png",
+  "complex_metric_definition": "Values are the existing per_sample.csv full-field complex PSNR and MAE; figures do not recompute or change scores.",
+  "representative_sample_rule": "Worst, median, and best sample by neural-model PSNR among the 100 rows; deterministic ID tie break.",
+  "representative_samples": [
+    {
+      "category": "worst",
+      "sample_id": "0099",
+      "system_PSNR_dB": 25.05310263300649,
+      "system_MAE": 0.01963598826912498
+    },
+    {
+      "category": "median",
+      "sample_id": "0009",
+      "system_PSNR_dB": 35.21760370523319,
+      "system_MAE": 0.005736899682098616
+    },
+    {
+      "category": "best",
+      "sample_id": "0091",
+      "system_PSNR_dB": 45.690790359947314,
+      "system_MAE": 0.001650046075608223
+    }
+  ]
+}

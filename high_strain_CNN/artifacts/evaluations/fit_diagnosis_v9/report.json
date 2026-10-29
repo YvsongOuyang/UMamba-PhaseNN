@@ -1,0 +1,204 @@
+{
+  "diagnostic_only": true,
+  "production_checkpoint_saved": false,
+  "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8/checkpoint_best.pt",
+  "source_epoch": 3,
+  "arguments": {
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8/checkpoint_best.pt",
+    "data_dir": "/data_ssd/oyys/eCDI",
+    "output_dir": "artifacts/evaluations/fit_diagnosis_v9",
+    "steps": 120,
+    "max_seconds": 180.0,
+    "batch_size": 4,
+    "num_workers": 4,
+    "device": "cuda"
+  },
+  "selected_train_ids": [
+    4040,
+    404,
+    9640,
+    3316,
+    7179,
+    9945,
+    365,
+    5969,
+    3301,
+    3121,
+    8094,
+    7884
+  ],
+  "candidate_train_ids": [
+    8600,
+    1382,
+    404,
+    4040,
+    3316,
+    3070,
+    1894,
+    9640,
+    1467,
+    9135,
+    9945,
+    7179,
+    1217,
+    7949,
+    5969,
+    365,
+    373,
+    1399,
+    3121,
+    3301,
+    6744,
+    8094,
+    588,
+    7884
+  ],
+  "stop_reason": "step_limit",
+  "train_before": {
+    "n": 12,
+    "nrmse": 0.13379258196800947,
+    "by_material": {
+      "graphite_anode": 0.12553175911307335,
+      "licoo2_cathode": 0.19472583383321762,
+      "lifepo4_cathode": 0.15735509991645813,
+      "limn2o4_cathode": 0.22312108427286148,
+      "lithium_metal_anode": 0.03253765590488911,
+      "silicon_reference": 0.06948405876755714
+    }
+  },
+  "train_after": {
+    "n": 12,
+    "nrmse": 0.11693500665326913,
+    "by_material": {
+      "graphite_anode": 0.09978410974144936,
+      "licoo2_cathode": 0.1728767603635788,
+      "lifepo4_cathode": 0.1403777301311493,
+      "limn2o4_cathode": 0.19684556871652603,
+      "lithium_metal_anode": 0.027839375659823418,
+      "silicon_reference": 0.0638864953070879
+    }
+  },
+  "val48_before": {
+    "n": 48,
+    "nrmse": 0.10142382110158603,
+    "by_material": {
+      "graphite_anode": 0.10181146363417308,
+      "licoo2_cathode": 0.12602778896689415,
+      "lifepo4_cathode": 0.13238862808793783,
+      "limn2o4_cathode": 0.16285201800721033,
+      "lithium_metal_anode": 0.033533129220207535,
+      "silicon_reference": 0.060246050357818604
+    }
+  },
+  "val48_after": {
+    "n": 48,
+    "nrmse": 0.10399572787961613,
+    "by_material": {
+      "graphite_anode": 0.10258345243831475,
+      "licoo2_cathode": 0.12975051999092102,
+      "lifepo4_cathode": 0.13251579087227583,
+      "limn2o4_cathode": 0.16859272654567445,
+      "lithium_metal_anode": 0.034505597315728664,
+      "silicon_reference": 0.06343587891509135
+    }
+  },
+  "history": [
+    {
+      "step": 20,
+      "train": {
+        "n": 12,
+        "nrmse": 0.12975207592050234,
+        "by_material": {
+          "graphite_anode": 0.11686259135603905,
+          "licoo2_cathode": 0.1901460960507393,
+          "lifepo4_cathode": 0.15404477715492249,
+          "limn2o4_cathode": 0.2179214060306549,
+          "lithium_metal_anode": 0.030970485880970955,
+          "silicon_reference": 0.06856709904968739
+        }
+      },
+      "relative_reduction": 0.03019977631101578
+    },
+    {
+      "step": 40,
+      "train": {
+        "n": 12,
+        "nrmse": 0.12649505430211624,
+        "by_material": {
+          "graphite_anode": 0.11181838437914848,
+          "licoo2_cathode": 0.18644002079963684,
+          "lifepo4_cathode": 0.15090933442115784,
+          "limn2o4_cathode": 0.21308157593011856,
+          "lithium_metal_anode": 0.029845260083675385,
+          "silicon_reference": 0.0668757501989603
+        }
+      },
+      "relative_reduction": 0.05454358947671778
+    },
+    {
+      "step": 60,
+      "train": {
+        "n": 12,
+        "nrmse": 0.12368718317399423,
+        "by_material": {
+          "graphite_anode": 0.10797889903187752,
+          "licoo2_cathode": 0.18302900716662407,
+          "lifepo4_cathode": 0.1478850282728672,
+          "limn2o4_cathode": 0.20847243070602417,
+          "lithium_metal_anode": 0.029182422906160355,
+          "silicon_reference": 0.06557531096041203
+        }
+      },
+      "relative_reduction": 0.075530336924296
+    },
+    {
+      "step": 80,
+      "train": {
+        "n": 12,
+        "nrmse": 0.12119404754290979,
+        "by_material": {
+          "graphite_anode": 0.10466677322983742,
+          "licoo2_cathode": 0.179570060223341,
+          "lifepo4_cathode": 0.14506899565458298,
+          "limn2o4_cathode": 0.2043929621577263,
+          "lithium_metal_anode": 0.028721127659082413,
+          "silicon_reference": 0.0647443663328886
+        }
+      },
+      "relative_reduction": 0.09416467071479395
+    },
+    {
+      "step": 100,
+      "train": {
+        "n": 12,
+        "nrmse": 0.11919437038401763,
+        "by_material": {
+          "graphite_anode": 0.10283968783915043,
+          "licoo2_cathode": 0.17620601505041122,
+          "lifepo4_cathode": 0.14273354411125183,
+          "limn2o4_cathode": 0.20049091428518295,
+          "lithium_metal_anode": 0.02836693450808525,
+          "silicon_reference": 0.06452912651002407
+        }
+      },
+      "relative_reduction": 0.10911076959021804
+    },
+    {
+      "step": 120,
+      "train": {
+        "n": 12,
+        "nrmse": 0.11693505120153229,
+        "by_material": {
+          "graphite_anode": 0.09978490695357323,
+          "licoo2_cathode": 0.17287610843777657,
+          "lifepo4_cathode": 0.14037763699889183,
+          "limn2o4_cathode": 0.19684429466724396,
+          "lithium_metal_anode": 0.02784058917313814,
+          "silicon_reference": 0.06388677097856998
+        }
+      },
+      "relative_reduction": 0.1259974994017823
+    }
+  ],
+  "warning": "Finite-budget subset fitting diagnoses trainability, not test improvement or an architecture limit."
+}

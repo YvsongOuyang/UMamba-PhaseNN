@@ -1,0 +1,134 @@
+{
+  "config": {
+    "schema_version": 1,
+    "dataset_name": "bcdi_simulator_512",
+    "storage": "npy",
+    "spatial_dims": 2,
+    "shape": [
+      512,
+      512
+    ],
+    "root": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1",
+    "diffraction_kind": "modulus",
+    "input_log_data": true,
+    "center_targets": true,
+    "splits": {
+      "train": {
+        "diffraction": "train_diff.npy",
+        "realspace": "train_real.npy"
+      },
+      "val": {
+        "diffraction": "val_diff.npy",
+        "realspace": "val_real.npy"
+      },
+      "test": {
+        "diffraction": "test_diff.npy",
+        "realspace": "test_real.npy"
+      }
+    },
+    "training": {
+      "model_variant": "reduced_bn_no_outer_skip",
+      "phase": {
+        "epochs": 100,
+        "learning_rate": 0.001,
+        "scheduler": "plateau"
+      },
+      "refiner": {
+        "epochs": 50,
+        "learning_rate": 0.0002,
+        "scheduler": "cosine"
+      },
+      "base_channels": 4,
+      "num_experts": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "top_k": 2,
+      "router_heads": 2,
+      "router_dropout": 0.2,
+      "position_dropout": 0.1,
+      "codec_dropout": 0.1,
+      "d_state": 16,
+      "d_conv": 4,
+      "expand": 2,
+      "support_threshold": 0.3,
+      "physics_loss_weight": 0.0,
+      "gradient_clip": 1.0
+    },
+    "provenance": {
+      "manifest": "dataset_manifest.json",
+      "manifest_sha256": "0cbb6102aa64a573ed9056183c6293606a5407fd177d8bc24f3edc8d4ebd7e80",
+      "source_phase_convention": "author",
+      "target": "physical complex object used by the simulator FFT"
+    },
+    "config_path": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json"
+  },
+  "args": {
+    "stage": "phase",
+    "data_config": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+    "data_dir": "",
+    "phase_checkpoint": "",
+    "resume": "",
+    "epochs": null,
+    "learning_rate": null,
+    "batch_size": 16,
+    "num_workers": 4,
+    "num_samples_train": 0,
+    "num_samples_val": 0,
+    "max_batches_per_epoch": 0,
+    "print_freq": 50,
+    "seed": 42,
+    "device": "cuda",
+    "run_name": "bcdi_2d20k_20261016_133938_phase",
+    "checkpoint_root": "/data_ssd/oyys/bcdi_2d/checkpoints",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/stages"
+  },
+  "runtime": {
+    "project_version": "1.9.0",
+    "git_commit": "dd1081fde928ce320538711b7ef822686da4604b",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "train": {
+    "split": "train",
+    "shape": [
+      512,
+      512
+    ],
+    "selected_samples": 16000,
+    "available_samples": 16000,
+    "paths": {
+      "diffraction": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/train_diff.npy",
+      "realspace": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/train_real.npy"
+    },
+    "diffraction_kind": "modulus",
+    "storage": "headered_npy"
+  },
+  "val": {
+    "split": "val",
+    "shape": [
+      512,
+      512
+    ],
+    "selected_samples": 2000,
+    "available_samples": 2000,
+    "paths": {
+      "diffraction": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/val_diff.npy",
+      "realspace": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/val_real.npy"
+    },
+    "diffraction_kind": "modulus",
+    "storage": "headered_npy"
+  },
+  "parameters": 13109217,
+  "trainable_parameters": 13109217
+}

@@ -1,0 +1,706 @@
+{
+  "version": "original_training_complex_demo100_v2",
+  "num_samples": 100,
+  "source_split": "train",
+  "is_independent_test_set": false,
+  "formal_acceptance_conclusion": null,
+  "purpose": "Performance-selected training-set demonstration; not an unbiased generalization assessment.",
+  "selection_seed": 20261019,
+  "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt",
+  "checkpoint_sha256": "496677be43f23b8ec18202db36ffb9b832a2f2018e164f36056207f483ea1671",
+  "scan_info_sha256": "a0f57909ebe13ccad1abf6b887878bd891c4557bf9cce42aaa58e91388750330",
+  "source_dataset_identity": {
+    "storage": "ecdi_hdf5",
+    "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+    "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+    "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+    "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+    "sample_count": 10000,
+    "counts": {
+      "train": 8500,
+      "val": 500,
+      "test": 1000
+    },
+    "split_type": "train_val_test_stratified_by_material",
+    "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+    "geometry": "extended_crystal",
+    "input_field": "observed_counts",
+    "target_fields": [
+      "exit_wave_real",
+      "exit_wave_imag"
+    ],
+    "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+    "split": "train",
+    "available_samples": 8500,
+    "selected_samples": 8500,
+    "selected_indices_sha256": "87add2ed7faa5be56c2365bc1bac09eb8602b6f17e3cd46d1003df77457ce75b",
+    "shape": [
+      512,
+      512
+    ],
+    "diffraction_kind": "intensity"
+  },
+  "metric_protocol": "Original evaluate.aligned_objects_2d: amplitude COM centering, MAE-selected direct/twin, support-fitted global phase, per-object full-field RMS normalization; then BOTH complex fields divided by the SAME aligned-truth amplitude maximum. Complex MSE=mean(abs(pred-truth)**2), complex MAE=mean(abs(pred-truth)), PSNR=-10*log10(MSE), peak modulus=1. No real/imaginary-channel averaging, no clipping, no predicted-peak normalization; all 512x512 pixels are scored.",
+  "metric_scope": "Final refined COMPLEX field, all 512x512 pixels, no cropping or masking in PSNR/MAE; original amplitude/phase metrics are diagnostics only.",
+  "ranking": "Within each material: equal-weight rank of descending COMPLEX PSNR and ascending COMPLEX MAE; then ascending combined rank.",
+  "quality_bands": {
+    "preferred": {
+      "percentile_interval": [
+        0.0,
+        0.2
+      ],
+      "selected": 70
+    },
+    "good": {
+      "percentile_interval": [
+        0.2,
+        0.4
+      ],
+      "selected": 20
+    },
+    "middle": {
+      "percentile_interval": [
+        0.4,
+        0.6
+      ],
+      "selected": 8
+    },
+    "challenging": {
+      "percentile_interval": [
+        0.7,
+        0.85
+      ],
+      "selected": 2
+    }
+  },
+  "diversity": "Prefer underrepresented dose/thickness tertile cells within each material; deterministic seeded draws.",
+  "material_counts": {
+    "graphite_anode": 17,
+    "licoo2_cathode": 17,
+    "lifepo4_cathode": 17,
+    "limn2o4_cathode": 17,
+    "lithium_metal_anode": 16,
+    "silicon_reference": 16
+  },
+  "mean_complex_psnr_db": 35.800509899300415,
+  "mean_complex_mae": 0.006715978677871028,
+  "confirmed_precision_thresholds": {
+    "complex_psnr_db_strict_gt": 20.0,
+    "complex_mae_strict_lt": 0.1
+  },
+  "pass_count_complex_psnr20_mae010": 100,
+  "timing_assessed": false,
+  "traditional_HIO_assessed": false,
+  "confirmed_document_resolutions": [
+    "User confirmed strict PSNR > 20dB AND MAE < 0.1.",
+    "User confirmed 100 samples from TRAIN and the original model.",
+    "User confirmed full-field complex evaluation, including amplitude and phase.",
+    "This set is performance-selected; no independent-test claim."
+  ],
+  "samples": [
+    {
+      "display_id": "0001",
+      "source_index": 4058,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0002",
+      "source_index": 5798,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0003",
+      "source_index": 4011,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0004",
+      "source_index": 8280,
+      "material": "silicon_reference",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0005",
+      "source_index": 2339,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0006",
+      "source_index": 9959,
+      "material": "limn2o4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0007",
+      "source_index": 6609,
+      "material": "lifepo4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0008",
+      "source_index": 4415,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0009",
+      "source_index": 7673,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0010",
+      "source_index": 6594,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0011",
+      "source_index": 6507,
+      "material": "lifepo4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0012",
+      "source_index": 9049,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0013",
+      "source_index": 1248,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0014",
+      "source_index": 6172,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0015",
+      "source_index": 5244,
+      "material": "silicon_reference",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0016",
+      "source_index": 4777,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0017",
+      "source_index": 5282,
+      "material": "graphite_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0018",
+      "source_index": 290,
+      "material": "graphite_anode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0019",
+      "source_index": 1073,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0020",
+      "source_index": 715,
+      "material": "lithium_metal_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0021",
+      "source_index": 8171,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0022",
+      "source_index": 9213,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0023",
+      "source_index": 805,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0024",
+      "source_index": 1012,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0025",
+      "source_index": 8813,
+      "material": "limn2o4_cathode",
+      "selection_band": "challenging"
+    },
+    {
+      "display_id": "0026",
+      "source_index": 3305,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0027",
+      "source_index": 6757,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0028",
+      "source_index": 1245,
+      "material": "lifepo4_cathode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0029",
+      "source_index": 5902,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0030",
+      "source_index": 9612,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0031",
+      "source_index": 702,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0032",
+      "source_index": 4890,
+      "material": "silicon_reference",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0033",
+      "source_index": 2767,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0034",
+      "source_index": 4563,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0035",
+      "source_index": 2769,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0036",
+      "source_index": 3795,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0037",
+      "source_index": 2684,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0038",
+      "source_index": 8690,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0039",
+      "source_index": 9274,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0040",
+      "source_index": 3369,
+      "material": "lifepo4_cathode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0041",
+      "source_index": 4094,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0042",
+      "source_index": 3538,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0043",
+      "source_index": 4780,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0044",
+      "source_index": 5676,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0045",
+      "source_index": 4697,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0046",
+      "source_index": 3073,
+      "material": "lithium_metal_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0047",
+      "source_index": 1182,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0048",
+      "source_index": 6030,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0049",
+      "source_index": 4006,
+      "material": "licoo2_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0050",
+      "source_index": 1916,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0051",
+      "source_index": 5435,
+      "material": "limn2o4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0052",
+      "source_index": 6550,
+      "material": "licoo2_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0053",
+      "source_index": 9260,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0054",
+      "source_index": 3110,
+      "material": "graphite_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0055",
+      "source_index": 6739,
+      "material": "lithium_metal_anode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0056",
+      "source_index": 4689,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0057",
+      "source_index": 4189,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0058",
+      "source_index": 4042,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0059",
+      "source_index": 4589,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0060",
+      "source_index": 3474,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0061",
+      "source_index": 4373,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0062",
+      "source_index": 7076,
+      "material": "graphite_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0063",
+      "source_index": 8629,
+      "material": "lithium_metal_anode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0064",
+      "source_index": 7033,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0065",
+      "source_index": 7804,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0066",
+      "source_index": 1320,
+      "material": "silicon_reference",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0067",
+      "source_index": 7437,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0068",
+      "source_index": 1563,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0069",
+      "source_index": 4976,
+      "material": "graphite_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0070",
+      "source_index": 4752,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0071",
+      "source_index": 8101,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0072",
+      "source_index": 8972,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0073",
+      "source_index": 7142,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0074",
+      "source_index": 2848,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0075",
+      "source_index": 2265,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0076",
+      "source_index": 4972,
+      "material": "licoo2_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0077",
+      "source_index": 2640,
+      "material": "silicon_reference",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0078",
+      "source_index": 4609,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0079",
+      "source_index": 7684,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0080",
+      "source_index": 1523,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0081",
+      "source_index": 4527,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0082",
+      "source_index": 1763,
+      "material": "limn2o4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0083",
+      "source_index": 4673,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0084",
+      "source_index": 8834,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0085",
+      "source_index": 5135,
+      "material": "limn2o4_cathode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0086",
+      "source_index": 1066,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0087",
+      "source_index": 5759,
+      "material": "limn2o4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0088",
+      "source_index": 7632,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0089",
+      "source_index": 1719,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0090",
+      "source_index": 8947,
+      "material": "lithium_metal_anode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0091",
+      "source_index": 9109,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0092",
+      "source_index": 9284,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0093",
+      "source_index": 4641,
+      "material": "lifepo4_cathode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0094",
+      "source_index": 2012,
+      "material": "graphite_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0095",
+      "source_index": 9334,
+      "material": "licoo2_cathode",
+      "selection_band": "middle"
+    },
+    {
+      "display_id": "0096",
+      "source_index": 5847,
+      "material": "lifepo4_cathode",
+      "selection_band": "good"
+    },
+    {
+      "display_id": "0097",
+      "source_index": 4993,
+      "material": "lithium_metal_anode",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0098",
+      "source_index": 1722,
+      "material": "silicon_reference",
+      "selection_band": "preferred"
+    },
+    {
+      "display_id": "0099",
+      "source_index": 3076,
+      "material": "licoo2_cathode",
+      "selection_band": "challenging"
+    },
+    {
+      "display_id": "0100",
+      "source_index": 3916,
+      "material": "licoo2_cathode",
+      "selection_band": "preferred"
+    }
+  ],
+  "files_sha256": {
+    "selected_samples.h5": "d711ec27c40e0d1adc950844ae3989a59fb52ae4ac5336131724cfa206d31a69",
+    "selected_samples.csv": "cd47ad5303fb559f49250fc3231c57db3f98221216665571682be2aaa7389370"
+  }
+}

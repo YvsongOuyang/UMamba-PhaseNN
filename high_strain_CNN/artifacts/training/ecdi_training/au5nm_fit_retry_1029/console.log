@@ -1,0 +1,55 @@
+2026-10-29 12:58:48,993 | INFO | Calibrated phase gain=1 | target Fourier error=0.000001 -> 0.000001 -> 0.000001
+2026-10-29 12:58:50,096 | INFO | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-29 12:58:50,096 | INFO | NumExpr defaulting to 16 threads.
+2026-10-29 12:58:51,414 | INFO | Original reference | {'corrected_target_fit_loss': 0.373240202665329, 'diffraction_rel_l2': 0.37919825315475464, 'diffraction_cosine': 0.9253154397010803, 'diffraction_training_loss': 0.07468456029891968, 'original_amplitude_relative_mae': 0.9988835453987122, 'weighted_score': 0.5879538059234619}
+2026-10-29 12:58:51,414 | INFO | Warm-start baseline | {'corrected_target_fit_loss': 0.22711995244026184, 'diffraction_rel_l2': 0.3208756446838379, 'diffraction_cosine': 0.9471213221549988, 'diffraction_training_loss': 0.05287867784500122, 'original_amplitude_relative_mae': 0.2666110396385193, 'weighted_score': 0.29101788997650146}
+2026-10-29 12:58:51,414 | INFO | Same-image exploratory fit; BN fixed, phase and refiner trainable; prior checkpoints preserved
+2026-10-29 12:58:51,732 | INFO | Step=1/1200 | target_fit=0.238227 | Fourier=0.330155 | amplitude_mae=0.276117 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 12:58:54,820 | INFO | Step=25/1200 | target_fit=0.227146 | Fourier=0.320996 | amplitude_mae=0.258534 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 12:58:59,566 | INFO | Step=50/1200 | target_fit=0.226914 | Fourier=0.320810 | amplitude_mae=0.257899 | Fourier_weight=0.000 | eligible=True | best_step=47
+2026-10-29 12:59:03,221 | INFO | Step=75/1200 | target_fit=0.226823 | Fourier=0.320514 | amplitude_mae=0.257717 | Fourier_weight=0.000 | eligible=True | best_step=73
+2026-10-29 12:59:06,694 | INFO | Step=100/1200 | target_fit=0.226794 | Fourier=0.320490 | amplitude_mae=0.257618 | Fourier_weight=0.000 | eligible=True | best_step=91
+2026-10-29 12:59:11,677 | INFO | Step=125/1200 | target_fit=0.226608 | Fourier=0.320041 | amplitude_mae=0.257264 | Fourier_weight=0.005 | eligible=True | best_step=121
+2026-10-29 12:59:15,893 | INFO | Step=150/1200 | target_fit=0.226541 | Fourier=0.319835 | amplitude_mae=0.257141 | Fourier_weight=0.009 | eligible=True | best_step=150
+2026-10-29 12:59:19,813 | INFO | Step=175/1200 | target_fit=0.226550 | Fourier=0.319587 | amplitude_mae=0.257252 | Fourier_weight=0.014 | eligible=True | best_step=173
+2026-10-29 12:59:23,553 | INFO | Step=200/1200 | target_fit=0.226382 | Fourier=0.319620 | amplitude_mae=0.256813 | Fourier_weight=0.018 | eligible=True | best_step=199
+2026-10-29 12:59:27,565 | INFO | Step=225/1200 | target_fit=0.226230 | Fourier=0.319259 | amplitude_mae=0.256604 | Fourier_weight=0.023 | eligible=True | best_step=225
+2026-10-29 12:59:31,218 | INFO | Step=250/1200 | target_fit=0.226239 | Fourier=0.319241 | amplitude_mae=0.256517 | Fourier_weight=0.027 | eligible=True | best_step=248
+2026-10-29 12:59:34,914 | INFO | Step=275/1200 | target_fit=0.226059 | Fourier=0.318892 | amplitude_mae=0.256322 | Fourier_weight=0.032 | eligible=True | best_step=275
+2026-10-29 12:59:38,818 | INFO | Step=300/1200 | target_fit=0.225954 | Fourier=0.318644 | amplitude_mae=0.256209 | Fourier_weight=0.036 | eligible=True | best_step=300
+2026-10-29 12:59:42,609 | INFO | Step=325/1200 | target_fit=0.225998 | Fourier=0.318772 | amplitude_mae=0.256077 | Fourier_weight=0.041 | eligible=True | best_step=324
+2026-10-29 12:59:46,043 | INFO | Step=350/1200 | target_fit=0.225829 | Fourier=0.318498 | amplitude_mae=0.255982 | Fourier_weight=0.045 | eligible=True | best_step=347
+2026-10-29 12:59:49,506 | INFO | Step=375/1200 | target_fit=0.225818 | Fourier=0.318242 | amplitude_mae=0.256049 | Fourier_weight=0.050 | eligible=True | best_step=372
+2026-10-29 12:59:53,276 | INFO | Step=400/1200 | target_fit=0.225650 | Fourier=0.318018 | amplitude_mae=0.255641 | Fourier_weight=0.055 | eligible=True | best_step=396
+2026-10-29 12:59:56,185 | INFO | Step=425/1200 | target_fit=0.225648 | Fourier=0.317942 | amplitude_mae=0.255513 | Fourier_weight=0.059 | eligible=True | best_step=422
+2026-10-29 13:00:00,014 | INFO | Step=450/1200 | target_fit=0.225480 | Fourier=0.317511 | amplitude_mae=0.255552 | Fourier_weight=0.064 | eligible=True | best_step=447
+2026-10-29 13:00:03,556 | INFO | Step=475/1200 | target_fit=0.225428 | Fourier=0.317540 | amplitude_mae=0.255367 | Fourier_weight=0.068 | eligible=True | best_step=475
+2026-10-29 13:00:06,818 | INFO | Step=500/1200 | target_fit=0.225366 | Fourier=0.317165 | amplitude_mae=0.255351 | Fourier_weight=0.073 | eligible=True | best_step=498
+2026-10-29 13:00:11,688 | INFO | Step=525/1200 | target_fit=0.225336 | Fourier=0.317329 | amplitude_mae=0.255112 | Fourier_weight=0.077 | eligible=True | best_step=505
+2026-10-29 13:00:15,294 | INFO | Step=550/1200 | target_fit=0.225176 | Fourier=0.316793 | amplitude_mae=0.255008 | Fourier_weight=0.082 | eligible=True | best_step=544
+2026-10-29 13:00:19,030 | INFO | Step=575/1200 | target_fit=0.225073 | Fourier=0.316829 | amplitude_mae=0.254788 | Fourier_weight=0.086 | eligible=True | best_step=574
+2026-10-29 13:00:22,963 | INFO | Step=600/1200 | target_fit=0.224958 | Fourier=0.316280 | amplitude_mae=0.254706 | Fourier_weight=0.091 | eligible=True | best_step=596
+2026-10-29 13:00:26,467 | INFO | Step=625/1200 | target_fit=0.224834 | Fourier=0.316168 | amplitude_mae=0.254465 | Fourier_weight=0.095 | eligible=True | best_step=624
+2026-10-29 13:00:30,143 | INFO | Step=650/1200 | target_fit=0.224917 | Fourier=0.316278 | amplitude_mae=0.254538 | Fourier_weight=0.100 | eligible=True | best_step=646
+2026-10-29 13:00:33,378 | INFO | Step=675/1200 | target_fit=0.224785 | Fourier=0.315917 | amplitude_mae=0.254205 | Fourier_weight=0.105 | eligible=True | best_step=674
+2026-10-29 13:00:36,774 | INFO | Step=700/1200 | target_fit=0.224714 | Fourier=0.315532 | amplitude_mae=0.254356 | Fourier_weight=0.109 | eligible=True | best_step=696
+2026-10-29 13:00:40,325 | INFO | Step=725/1200 | target_fit=0.224578 | Fourier=0.315462 | amplitude_mae=0.253911 | Fourier_weight=0.114 | eligible=True | best_step=720
+2026-10-29 13:00:43,787 | INFO | Step=750/1200 | target_fit=0.224444 | Fourier=0.315142 | amplitude_mae=0.253931 | Fourier_weight=0.118 | eligible=True | best_step=750
+2026-10-29 13:00:47,286 | INFO | Step=775/1200 | target_fit=0.224641 | Fourier=0.314996 | amplitude_mae=0.254222 | Fourier_weight=0.123 | eligible=True | best_step=755
+2026-10-29 13:00:50,992 | INFO | Step=800/1200 | target_fit=0.224337 | Fourier=0.314816 | amplitude_mae=0.253653 | Fourier_weight=0.127 | eligible=True | best_step=800
+2026-10-29 13:00:54,815 | INFO | Step=825/1200 | target_fit=0.224436 | Fourier=0.314879 | amplitude_mae=0.253852 | Fourier_weight=0.132 | eligible=True | best_step=806
+2026-10-29 13:00:58,674 | INFO | Step=850/1200 | target_fit=0.224169 | Fourier=0.314429 | amplitude_mae=0.253506 | Fourier_weight=0.136 | eligible=True | best_step=848
+2026-10-29 13:01:02,847 | INFO | Step=875/1200 | target_fit=0.224149 | Fourier=0.314360 | amplitude_mae=0.253351 | Fourier_weight=0.141 | eligible=True | best_step=869
+2026-10-29 13:01:06,931 | INFO | Step=900/1200 | target_fit=0.224067 | Fourier=0.314081 | amplitude_mae=0.253261 | Fourier_weight=0.145 | eligible=True | best_step=895
+2026-10-29 13:01:09,782 | INFO | Step=925/1200 | target_fit=0.223897 | Fourier=0.313720 | amplitude_mae=0.253103 | Fourier_weight=0.150 | eligible=True | best_step=920
+2026-10-29 13:01:13,307 | INFO | Step=950/1200 | target_fit=0.223804 | Fourier=0.313498 | amplitude_mae=0.252920 | Fourier_weight=0.155 | eligible=True | best_step=949
+2026-10-29 13:01:17,205 | INFO | Step=975/1200 | target_fit=0.223773 | Fourier=0.313392 | amplitude_mae=0.252818 | Fourier_weight=0.159 | eligible=True | best_step=972
+2026-10-29 13:01:21,604 | INFO | Step=1000/1200 | target_fit=0.223756 | Fourier=0.313303 | amplitude_mae=0.252756 | Fourier_weight=0.164 | eligible=True | best_step=989
+2026-10-29 13:01:25,746 | INFO | Step=1025/1200 | target_fit=0.223516 | Fourier=0.312817 | amplitude_mae=0.252546 | Fourier_weight=0.168 | eligible=True | best_step=1024
+2026-10-29 13:01:29,368 | INFO | Step=1050/1200 | target_fit=0.223558 | Fourier=0.312638 | amplitude_mae=0.252588 | Fourier_weight=0.173 | eligible=True | best_step=1048
+2026-10-29 13:01:32,767 | INFO | Step=1075/1200 | target_fit=0.223622 | Fourier=0.312427 | amplitude_mae=0.252876 | Fourier_weight=0.177 | eligible=True | best_step=1058
+2026-10-29 13:01:35,966 | INFO | Step=1100/1200 | target_fit=0.223597 | Fourier=0.312361 | amplitude_mae=0.252628 | Fourier_weight=0.182 | eligible=True | best_step=1058
+2026-10-29 13:01:39,438 | INFO | Step=1125/1200 | target_fit=0.223832 | Fourier=0.312340 | amplitude_mae=0.253158 | Fourier_weight=0.186 | eligible=True | best_step=1058
+2026-10-29 13:01:43,184 | INFO | Step=1150/1200 | target_fit=0.223717 | Fourier=0.312534 | amplitude_mae=0.252931 | Fourier_weight=0.191 | eligible=True | best_step=1058
+2026-10-29 13:01:44,422 | INFO | Stopping after 100 steps without score improvement
+2026-10-29 13:01:45,585 | INFO | DONE | best_step=1058 | eligible=True | target_fit=0.227120 -> 0.223381 | Fourier=0.320876 -> 0.312492 | amplitude_mae=0.266611 -> 0.252340 | checkpoint=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_fit_retry_1029/checkpoint_best.pt

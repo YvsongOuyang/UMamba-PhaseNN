@@ -1,0 +1,140 @@
+{
+  "config": {
+    "schema_version": 1,
+    "experiment_version": "phase_through_fixed_refiner_v8",
+    "dataset_name": "ecdi_10k_exitwave",
+    "storage": "ecdi_hdf5",
+    "spatial_dims": 2,
+    "shape": [
+      512,
+      512
+    ],
+    "root": "/data_ssd/oyys/eCDI",
+    "manifest": "manifests/splits_training_with_val.json",
+    "quality_report": "quality/validation_report.json",
+    "diffraction_kind": "intensity",
+    "input_log_data": true,
+    "center_targets": true,
+    "training": {
+      "model_variant": "reduced_bn_no_outer_skip",
+      "phase": {
+        "objective": "rigid_complex_nrmse_v7",
+        "optimization_target": "final_refined_object",
+        "epochs": 3,
+        "learning_rate": 1e-05,
+        "scheduler": "cosine",
+        "batchnorm_running_stats": "frozen"
+      },
+      "refiner": {
+        "objective": "rigid_complex_nrmse_v7",
+        "learning_rate": 1e-05,
+        "epochs": 3,
+        "scheduler": "cosine"
+      },
+      "base_channels": 4,
+      "num_experts": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "top_k": 2,
+      "router_heads": 2,
+      "router_dropout": 0.2,
+      "position_dropout": 0.1,
+      "codec_dropout": 0.1,
+      "d_state": 16,
+      "d_conv": 4,
+      "expand": 2,
+      "support_threshold": 0.3,
+      "physics_loss_weight": 0.0,
+      "gradient_clip": 1.0
+    },
+    "config_path": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d_v3.json"
+  },
+  "protocol": {
+    "epochs": 3,
+    "learning_rate": 1e-05,
+    "search_radius": 4.0,
+    "batch_size": 4,
+    "accumulation_steps": 3,
+    "eval_batch_size": 12,
+    "num_workers": 4,
+    "seed": 42,
+    "device": "cuda",
+    "objective": "rigid_complex_nrmse_v7",
+    "optimized_parameters": "phase_only",
+    "refiner_mode": "frozen_eval_with_input_gradients",
+    "phase_bn_running_stats": "frozen"
+  },
+  "lineage": {
+    "source_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_aligned_v7/checkpoint_best.pt",
+    "source_sha256": "2fe9765763e8e5ebaff0ff5f03902dcc81f10f27725f84dfa1833042ce0d58c8",
+    "source_epoch": 2,
+    "source_best_val_metric": 0.10443184480816126
+  },
+  "data_manifests": {
+    "train": {
+      "storage": "ecdi_hdf5",
+      "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+      "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+      "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+      "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+      "sample_count": 10000,
+      "counts": {
+        "train": 8500,
+        "val": 500,
+        "test": 1000
+      },
+      "split_type": "train_val_test_stratified_by_material",
+      "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+      "geometry": "extended_crystal",
+      "input_field": "observed_counts",
+      "target_fields": [
+        "exit_wave_real",
+        "exit_wave_imag"
+      ],
+      "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+      "split": "train",
+      "available_samples": 8500,
+      "selected_samples": 8500,
+      "selected_indices_sha256": "87add2ed7faa5be56c2365bc1bac09eb8602b6f17e3cd46d1003df77457ce75b",
+      "shape": [
+        512,
+        512
+      ],
+      "diffraction_kind": "intensity"
+    },
+    "val": {
+      "storage": "ecdi_hdf5",
+      "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+      "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+      "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+      "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+      "sample_count": 10000,
+      "counts": {
+        "train": 8500,
+        "val": 500,
+        "test": 1000
+      },
+      "split_type": "train_val_test_stratified_by_material",
+      "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+      "geometry": "extended_crystal",
+      "input_field": "observed_counts",
+      "target_fields": [
+        "exit_wave_real",
+        "exit_wave_imag"
+      ],
+      "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+      "split": "val",
+      "available_samples": 500,
+      "selected_samples": 500,
+      "selected_indices_sha256": "35ec8a6d0ce7bf531698ff0304a0c6a095bf28091d90cb7b001729ca68ef9d3d",
+      "shape": [
+        512,
+        512
+      ],
+      "diffraction_kind": "intensity"
+    }
+  }
+}

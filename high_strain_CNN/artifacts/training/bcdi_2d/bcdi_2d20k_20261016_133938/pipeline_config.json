@@ -1,0 +1,127 @@
+{
+  "args": {
+    "source_dir": "",
+    "data_config": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+    "data_dir": "",
+    "run_name": "bcdi_2d20k_20261016_133938",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d",
+    "checkpoint_root": "/data_ssd/oyys/bcdi_2d/checkpoints",
+    "phase_batch_size": 16,
+    "refiner_batch_size": 16,
+    "num_workers": 4,
+    "phase_epochs": null,
+    "refiner_epochs": null,
+    "phase_lr": null,
+    "refiner_lr": null,
+    "phase_resume": "",
+    "refiner_resume": "",
+    "start_stage": "phase",
+    "num_samples_train": 0,
+    "num_samples_val": 0,
+    "num_samples_test": 0,
+    "max_batches_per_epoch": 0,
+    "device": "cuda",
+    "dry_run": false
+  },
+  "commands": [
+    [
+      "validate",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "bcdi_training.validate_data",
+        "--data-config",
+        "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+        "--output",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/data_validation.json"
+      ]
+    ],
+    [
+      "phase",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "bcdi_training.train",
+        "--stage",
+        "phase",
+        "--run-name",
+        "bcdi_2d20k_20261016_133938_phase",
+        "--batch-size",
+        "16",
+        "--data-config",
+        "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--checkpoint-root",
+        "/data_ssd/oyys/bcdi_2d/checkpoints",
+        "--runs-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/stages"
+      ]
+    ],
+    [
+      "refiner",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "bcdi_training.train",
+        "--stage",
+        "refiner",
+        "--run-name",
+        "bcdi_2d20k_20261016_133938_refiner",
+        "--batch-size",
+        "16",
+        "--data-config",
+        "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--checkpoint-root",
+        "/data_ssd/oyys/bcdi_2d/checkpoints",
+        "--runs-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/stages",
+        "--phase-checkpoint",
+        "/data_ssd/oyys/bcdi_2d/checkpoints/bcdi_2d20k_20261016_133938_phase/checkpoint_best.pt"
+      ]
+    ],
+    [
+      "evaluate",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "bcdi_training.evaluate",
+        "--checkpoint",
+        "/data_ssd/oyys/bcdi_2d/checkpoints/bcdi_2d20k_20261016_133938_refiner/checkpoint_best.pt",
+        "--data-config",
+        "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json",
+        "--split",
+        "test",
+        "--batch-size",
+        "16",
+        "--num-workers",
+        "4",
+        "--device",
+        "cuda",
+        "--output-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/evaluation"
+      ]
+    ],
+    [
+      "visualize",
+      [
+        "/home/oyys/anaconda3/envs/mamba/bin/python",
+        "-u",
+        "-m",
+        "bcdi_training.visualize",
+        "--evaluation-dir",
+        "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/bcdi_2d/bcdi_2d20k_20261016_133938/evaluation"
+      ]
+    ]
+  ]
+}

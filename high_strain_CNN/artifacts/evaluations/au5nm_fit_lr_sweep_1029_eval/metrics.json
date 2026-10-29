@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "spatial_dims": 2,
+  "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_fit_lr_sweep_1029/checkpoint_best.pt",
+  "checkpoint_epoch": 1800,
+  "num_samples": 1,
+  "data": {
+    "split": "test",
+    "shape": [
+      512,
+      512
+    ],
+    "selected_samples": 1,
+    "available_samples": 1,
+    "paths": {
+      "diffraction": "/data_ssd/oyys/eCDI/external_test/au5nm_ready_512/diffraction.npy",
+      "realspace": "/data_ssd/oyys/eCDI/external_test/au5nm_ready_512/realspace.npy"
+    },
+    "diffraction_kind": "intensity",
+    "storage": "headered_npy"
+  },
+  "support_threshold": 0.3,
+  "metrics": {
+    "initial": {
+      "complex_nrmse": 0.6712298393249512,
+      "object_mae": 0.5898003578186035,
+      "phase_wca": 0.8500786423683167,
+      "paper_modulus_mae": 5.481985976274473e-10,
+      "relative_l1_modulus": 6.63350647300831e-07,
+      "voxel_mse": 2.5969033410178722e-18,
+      "voxel_rmse": 1.6114910517117664e-09,
+      "real_amp_l1": 0.027520641684532166,
+      "real_amp_mse": 0.0017991387285292149,
+      "real_amp_rmse": 0.04241625592112541,
+      "real_amp_rel_l1": 0.6290194988250732,
+      "amplitude_psnr_db": 27.449356079101562,
+      "real_amp_ssim": 0.43226534128189087,
+      "real_phase_mae_true_support": 0.47332704067230225,
+      "real_phase_rmse_true_support": 0.7146456241607666,
+      "real_phase_amplitude_weighted_mae": 0.33463937044143677,
+      "real_support_iou": 0.01921537145972252,
+      "real_support_dice": 0.03770620748400688,
+      "real_support_volume_ratio": 0.18971963226795197
+    },
+    "refined": {
+      "complex_nrmse": 0.3427845239639282,
+      "object_mae": 0.22231516242027283,
+      "phase_wca": 0.321752667427063,
+      "paper_modulus_mae": 0.0005908310413360596,
+      "relative_l1_modulus": 0.714938223361969,
+      "voxel_mse": 1.0841883977263933e-06,
+      "voxel_rmse": 0.0010412436677142978,
+      "real_amp_l1": 0.03865637630224228,
+      "real_amp_mse": 0.0049909139052033424,
+      "real_amp_rmse": 0.07064639776945114,
+      "real_amp_rel_l1": 0.8835409879684448,
+      "amplitude_psnr_db": 23.018198013305664,
+      "real_amp_ssim": 0.7992151379585266,
+      "real_phase_mae_true_support": 0.07169237732887268,
+      "real_phase_rmse_true_support": 0.09383192658424377,
+      "real_phase_amplitude_weighted_mae": 0.14206694066524506,
+      "real_support_iou": 0.07037381827831268,
+      "real_support_dice": 0.13149391114711761,
+      "real_support_volume_ratio": 14.039252281188965
+    }
+  },
+  "paired_comparison": {
+    "complex_nrmse": {
+      "initial": 0.6712298393249512,
+      "refined": 0.3427845239639282,
+      "refined_minus_initial": -0.32844531536102295,
+      "median_improvement": 0.32844531536102295,
+      "fraction_improved": 1.0
+    },
+    "object_mae": {
+      "initial": 0.5898003578186035,
+      "refined": 0.22231516242027283,
+      "refined_minus_initial": -0.3674851953983307,
+      "median_improvement": 0.3674851953983307,
+      "fraction_improved": 1.0
+    },
+    "phase_wca": {
+      "initial": 0.8500786423683167,
+      "refined": 0.321752667427063,
+      "refined_minus_initial": -0.5283259749412537,
+      "median_improvement": 0.5283259749412537,
+      "fraction_improved": 1.0
+    },
+    "paper_modulus_mae": {
+      "initial": 5.481985976274473e-10,
+      "refined": 0.0005908310413360596,
+      "refined_minus_initial": 0.0005908304931374619,
+      "median_improvement": -0.0005908304931374619,
+      "fraction_improved": 0.0
+    },
+    "relative_l1_modulus": {
+      "initial": 6.63350647300831e-07,
+      "refined": 0.714938223361969,
+      "refined_minus_initial": 0.7149375600113217,
+      "median_improvement": -0.7149375600113217,
+      "fraction_improved": 0.0
+    },
+    "voxel_mse": {
+      "initial": 2.5969033410178722e-18,
+      "refined": 1.0841883977263933e-06,
+      "refined_minus_initial": 1.0841883977237963e-06,
+      "median_improvement": -1.0841883977237963e-06,
+      "fraction_improved": 0.0
+    },
+    "voxel_rmse": {
+      "initial": 1.6114910517117664e-09,
+      "refined": 0.0010412436677142978,
+      "refined_minus_initial": 0.001041242056223246,
+      "median_improvement": -0.001041242056223246,
+      "fraction_improved": 0.0
+    },
+    "real_amp_l1": {
+      "initial": 0.027520641684532166,
+      "refined": 0.03865637630224228,
+      "refined_minus_initial": 0.011135734617710114,
+      "median_improvement": -0.011135734617710114,
+      "fraction_improved": 0.0
+    },
+    "real_amp_mse": {
+      "initial": 0.0017991387285292149,
+      "refined": 0.0049909139052033424,
+      "refined_minus_initial": 0.0031917751766741276,
+      "median_improvement": -0.0031917751766741276,
+      "fraction_improved": 0.0
+    },
+    "real_amp_rmse": {
+      "initial": 0.04241625592112541,
+      "refined": 0.07064639776945114,
+      "refined_minus_initial": 0.02823014184832573,
+      "median_improvement": -0.02823014184832573,
+      "fraction_improved": 0.0
+    },
+    "real_amp_rel_l1": {
+      "initial": 0.6290194988250732,
+      "refined": 0.8835409879684448,
+      "refined_minus_initial": 0.2545214891433716,
+      "median_improvement": -0.2545214891433716,
+      "fraction_improved": 0.0
+    },
+    "amplitude_psnr_db": {
+      "initial": 27.449356079101562,
+      "refined": 23.018198013305664,
+      "refined_minus_initial": -4.431158065795898,
+      "median_improvement": -4.431158065795898,
+      "fraction_improved": 0.0
+    },
+    "real_amp_ssim": {
+      "initial": 0.43226534128189087,
+      "refined": 0.7992151379585266,
+      "refined_minus_initial": 0.36694979667663574,
+      "median_improvement": 0.36694979667663574,
+      "fraction_improved": 1.0
+    },
+    "real_phase_mae_true_support": {
+      "initial": 0.47332704067230225,
+      "refined": 0.07169237732887268,
+      "refined_minus_initial": -0.40163466334342957,
+      "median_improvement": 0.40163466334342957,
+      "fraction_improved": 1.0
+    },
+    "real_phase_rmse_true_support": {
+      "initial": 0.7146456241607666,
+      "refined": 0.09383192658424377,
+      "refined_minus_initial": -0.6208136975765228,
+      "median_improvement": 0.6208136975765228,
+      "fraction_improved": 1.0
+    },
+    "real_phase_amplitude_weighted_mae": {
+      "initial": 0.33463937044143677,
+      "refined": 0.14206694066524506,
+      "refined_minus_initial": -0.1925724297761917,
+      "median_improvement": 0.1925724297761917,
+      "fraction_improved": 1.0
+    },
+    "real_support_iou": {
+      "initial": 0.01921537145972252,
+      "refined": 0.07037381827831268,
+      "refined_minus_initial": 0.051158446818590164,
+      "median_improvement": 0.051158446818590164,
+      "fraction_improved": 1.0
+    },
+    "real_support_dice": {
+      "initial": 0.03770620748400688,
+      "refined": 0.13149391114711761,
+      "refined_minus_initial": 0.09378770366311073,
+      "median_improvement": 0.09378770366311073,
+      "fraction_improved": 1.0
+    },
+    "real_support_volume_ratio": {
+      "initial": 0.18971963226795197,
+      "refined": 14.039252281188965,
+      "refined_minus_initial": 13.849532648921013,
+      "median_improvement": -12.228971913456917,
+      "fraction_improved": 0.0
+    }
+  },
+  "metrics_by_material": {
+    "unspecified": {
+      "initial": {
+        "complex_nrmse": 0.6712298393249512,
+        "object_mae": 0.5898003578186035,
+        "phase_wca": 0.8500786423683167,
+        "paper_modulus_mae": 5.481985976274473e-10,
+        "relative_l1_modulus": 6.63350647300831e-07,
+        "voxel_mse": 2.5969033410178722e-18,
+        "voxel_rmse": 1.6114910517117664e-09,
+        "real_amp_l1": 0.027520641684532166,
+        "real_amp_mse": 0.0017991387285292149,
+        "real_amp_rmse": 0.04241625592112541,
+        "real_amp_rel_l1": 0.6290194988250732,
+        "amplitude_psnr_db": 27.449356079101562,
+        "real_amp_ssim": 0.43226534128189087,
+        "real_phase_mae_true_support": 0.47332704067230225,
+        "real_phase_rmse_true_support": 0.7146456241607666,
+        "real_phase_amplitude_weighted_mae": 0.33463937044143677,
+        "real_support_iou": 0.01921537145972252,
+        "real_support_dice": 0.03770620748400688,
+        "real_support_volume_ratio": 0.18971963226795197
+      },
+      "refined": {
+        "complex_nrmse": 0.3427845239639282,
+        "object_mae": 0.22231516242027283,
+        "phase_wca": 0.321752667427063,
+        "paper_modulus_mae": 0.0005908310413360596,
+        "relative_l1_modulus": 0.714938223361969,
+        "voxel_mse": 1.0841883977263933e-06,
+        "voxel_rmse": 0.0010412436677142978,
+        "real_amp_l1": 0.03865637630224228,
+        "real_amp_mse": 0.0049909139052033424,
+        "real_amp_rmse": 0.07064639776945114,
+        "real_amp_rel_l1": 0.8835409879684448,
+        "amplitude_psnr_db": 23.018198013305664,
+        "real_amp_ssim": 0.7992151379585266,
+        "real_phase_mae_true_support": 0.07169237732887268,
+        "real_phase_rmse_true_support": 0.09383192658424377,
+        "real_phase_amplitude_weighted_mae": 0.14206694066524506,
+        "real_support_iou": 0.07037381827831268,
+        "real_support_dice": 0.13149391114711761,
+        "real_support_volume_ratio": 14.039252281188965
+      }
+    }
+  },
+  "notes": [
+    "Real-space metrics align translation, scale, global phase and direct/twin ambiguity.",
+    "FT metrics use the complete predicted object, without ground-truth support masking.",
+    "The initial object's modulus equals the measured modulus by construction.",
+    "For e-CDI, thresholded support means an effective illuminated region, not a crystal boundary; the HDF5 full-field support is ignored.",
+    "clean_* Fourier metrics compare against ideal_intensity; it is never a model input or training target replacement."
+  ]
+}

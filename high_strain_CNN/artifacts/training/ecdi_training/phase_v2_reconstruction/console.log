@@ -1,0 +1,157 @@
+2026-10-15 21:31:04,805 | INFO    | Stage=phase | shape=512x512 | batch=12 | parameters=13,109,217 | trainable=13,109,217 | dtype=float32/complex64
+2026-10-15 21:31:04,805 | INFO    | Experiment version=phase_recon_v2_controlled
+2026-10-15 21:31:04,805 | INFO    | Initialized phase weights from /data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_phase/checkpoint_best.pt (epoch=9); optimizer starts fresh
+2026-10-15 21:31:04,806 | INFO    | Phase reconstruction weight=0.1 | checkpoint metric=complex_nrmse
+2026-10-15 21:31:04,806 | INFO    | Run=/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training/phase_v2_reconstruction | checkpoints=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_v2_reconstruction
+2026-10-15 21:31:04,806 | INFO    | Starting epoch=001/008 | lr=0.0001
+2026-10-15 21:31:05,431 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.014859305694699287, 'probe_reconstruction_phase_grad_norm': 0.0823337733745575, 'probe_phase_grad_cosine': 0.042119476944208145, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.5540889666461883}
+2026-10-15 21:31:15,273 | INFO    | TRAIN | batch=50/709 | loss=0.523719 | elapsed=10.5s | eta=138.0s
+2026-10-15 21:31:25,157 | INFO    | TRAIN | batch=100/709 | loss=0.640794 | elapsed=20.4s | eta=123.9s
+2026-10-15 21:31:35,051 | INFO    | TRAIN | batch=150/709 | loss=0.516922 | elapsed=30.2s | eta=112.7s
+2026-10-15 21:31:44,946 | INFO    | TRAIN | batch=200/709 | loss=0.607853 | elapsed=40.1s | eta=102.2s
+2026-10-15 21:31:54,849 | INFO    | TRAIN | batch=250/709 | loss=0.534889 | elapsed=50.0s | eta=91.9s
+2026-10-15 21:32:04,755 | INFO    | TRAIN | batch=300/709 | loss=0.482951 | elapsed=59.9s | eta=81.7s
+2026-10-15 21:32:14,659 | INFO    | TRAIN | batch=350/709 | loss=0.529417 | elapsed=69.9s | eta=71.6s
+2026-10-15 21:32:24,566 | INFO    | TRAIN | batch=400/709 | loss=0.574614 | elapsed=79.8s | eta=61.6s
+2026-10-15 21:32:34,469 | INFO    | TRAIN | batch=450/709 | loss=0.577201 | elapsed=89.7s | eta=51.6s
+2026-10-15 21:32:44,370 | INFO    | TRAIN | batch=500/709 | loss=0.529023 | elapsed=99.6s | eta=41.6s
+2026-10-15 21:32:54,272 | INFO    | TRAIN | batch=550/709 | loss=0.563652 | elapsed=109.5s | eta=31.6s
+2026-10-15 21:33:04,175 | INFO    | TRAIN | batch=600/709 | loss=0.48009 | elapsed=119.4s | eta=21.7s
+2026-10-15 21:33:14,081 | INFO    | TRAIN | batch=650/709 | loss=0.559463 | elapsed=129.3s | eta=11.7s
+2026-10-15 21:33:23,993 | INFO    | TRAIN | batch=700/709 | loss=0.595642 | elapsed=139.2s | eta=1.8s
+2026-10-15 21:33:25,668 | INFO    | TRAIN | batch=709/709 | loss=0.53225 | elapsed=140.9s | eta=0.0s
+2026-10-15 21:33:29,079 | INFO    | VAL | batch=42/42 | loss=0.510768 | elapsed=3.4s | eta=0.0s
+2026-10-15 21:33:29,234 | INFO    | Epoch=1/8 | train_loss=0.526777 | val_loss=0.526092 | val_complex_nrmse=0.215195 | best_complex_nrmse=0.215195 | lr=9.62e-05
+2026-10-15 21:33:29,234 | INFO    | Starting epoch=002/008 | lr=9.62e-05
+2026-10-15 21:33:29,479 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.01379422191530466, 'probe_reconstruction_phase_grad_norm': 0.03350267559289932, 'probe_phase_grad_cosine': 0.1695483773946762, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.24287470361578115}
+2026-10-15 21:33:39,318 | INFO    | TRAIN | batch=50/709 | loss=0.490461 | elapsed=10.1s | eta=132.9s
+2026-10-15 21:33:49,224 | INFO    | TRAIN | batch=100/709 | loss=0.497601 | elapsed=20.0s | eta=121.7s
+2026-10-15 21:33:59,132 | INFO    | TRAIN | batch=150/709 | loss=0.48884 | elapsed=29.9s | eta=111.4s
+2026-10-15 21:34:09,039 | INFO    | TRAIN | batch=200/709 | loss=0.408057 | elapsed=39.8s | eta=101.3s
+2026-10-15 21:34:18,946 | INFO    | TRAIN | batch=250/709 | loss=0.567372 | elapsed=49.7s | eta=91.3s
+2026-10-15 21:34:28,854 | INFO    | TRAIN | batch=300/709 | loss=0.538118 | elapsed=59.6s | eta=81.3s
+2026-10-15 21:34:38,762 | INFO    | TRAIN | batch=350/709 | loss=0.534623 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:34:48,669 | INFO    | TRAIN | batch=400/709 | loss=0.459372 | elapsed=79.4s | eta=61.4s
+2026-10-15 21:34:58,576 | INFO    | TRAIN | batch=450/709 | loss=0.600079 | elapsed=89.3s | eta=51.4s
+2026-10-15 21:35:08,486 | INFO    | TRAIN | batch=500/709 | loss=0.476355 | elapsed=99.3s | eta=41.5s
+2026-10-15 21:35:18,401 | INFO    | TRAIN | batch=550/709 | loss=0.632426 | elapsed=109.2s | eta=31.6s
+2026-10-15 21:35:28,313 | INFO    | TRAIN | batch=600/709 | loss=0.486537 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:35:38,228 | INFO    | TRAIN | batch=650/709 | loss=0.539463 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:35:48,142 | INFO    | TRAIN | batch=700/709 | loss=0.512453 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:35:49,790 | INFO    | TRAIN | batch=709/709 | loss=0.456462 | elapsed=140.6s | eta=0.0s
+2026-10-15 21:35:53,117 | INFO    | VAL | batch=42/42 | loss=0.507545 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:35:53,261 | INFO    | Epoch=2/8 | train_loss=0.524347 | val_loss=0.525446 | val_complex_nrmse=0.215911 | best_complex_nrmse=0.215195 | lr=8.55e-05
+2026-10-15 21:35:53,261 | INFO    | Starting epoch=003/008 | lr=8.55e-05
+2026-10-15 21:35:53,480 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.007844710722565651, 'probe_reconstruction_phase_grad_norm': 0.041901521384716034, 'probe_phase_grad_cosine': 0.10347747057676315, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.534137240576437}
+2026-10-15 21:36:03,322 | INFO    | TRAIN | batch=50/709 | loss=0.479255 | elapsed=10.1s | eta=132.6s
+2026-10-15 21:36:13,231 | INFO    | TRAIN | batch=100/709 | loss=0.542432 | elapsed=20.0s | eta=121.6s
+2026-10-15 21:36:23,143 | INFO    | TRAIN | batch=150/709 | loss=0.538024 | elapsed=29.9s | eta=111.4s
+2026-10-15 21:36:33,058 | INFO    | TRAIN | batch=200/709 | loss=0.527283 | elapsed=39.8s | eta=101.3s
+2026-10-15 21:36:42,968 | INFO    | TRAIN | batch=250/709 | loss=0.531684 | elapsed=49.7s | eta=91.3s
+2026-10-15 21:36:52,874 | INFO    | TRAIN | batch=300/709 | loss=0.502207 | elapsed=59.6s | eta=81.3s
+2026-10-15 21:37:02,782 | INFO    | TRAIN | batch=350/709 | loss=0.49478 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:37:12,688 | INFO    | TRAIN | batch=400/709 | loss=0.562871 | elapsed=79.4s | eta=61.4s
+2026-10-15 21:37:22,594 | INFO    | TRAIN | batch=450/709 | loss=0.563203 | elapsed=89.3s | eta=51.4s
+2026-10-15 21:37:32,500 | INFO    | TRAIN | batch=500/709 | loss=0.511145 | elapsed=99.2s | eta=41.5s
+2026-10-15 21:37:42,408 | INFO    | TRAIN | batch=550/709 | loss=0.543433 | elapsed=109.1s | eta=31.6s
+2026-10-15 21:37:52,316 | INFO    | TRAIN | batch=600/709 | loss=0.542318 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:38:02,226 | INFO    | TRAIN | batch=650/709 | loss=0.449434 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:38:12,134 | INFO    | TRAIN | batch=700/709 | loss=0.492016 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:38:13,781 | INFO    | TRAIN | batch=709/709 | loss=0.490718 | elapsed=140.5s | eta=0.0s
+2026-10-15 21:38:17,098 | INFO    | VAL | batch=42/42 | loss=0.51257 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:38:17,352 | INFO    | Epoch=3/8 | train_loss=0.522921 | val_loss=0.526698 | val_complex_nrmse=0.214445 | best_complex_nrmse=0.214445 | lr=6.94e-05
+2026-10-15 21:38:17,352 | INFO    | Starting epoch=004/008 | lr=6.94e-05
+2026-10-15 21:38:17,566 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.014679784886538982, 'probe_reconstruction_phase_grad_norm': 0.05273604765534401, 'probe_phase_grad_cosine': 0.05098447576165199, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.3592426460124884}
+2026-10-15 21:38:27,402 | INFO    | TRAIN | batch=50/709 | loss=0.411069 | elapsed=10.0s | eta=132.5s
+2026-10-15 21:38:37,308 | INFO    | TRAIN | batch=100/709 | loss=0.457152 | elapsed=20.0s | eta=121.5s
+2026-10-15 21:38:47,215 | INFO    | TRAIN | batch=150/709 | loss=0.487628 | elapsed=29.9s | eta=111.3s
+2026-10-15 21:38:57,121 | INFO    | TRAIN | batch=200/709 | loss=0.53039 | elapsed=39.8s | eta=101.2s
+2026-10-15 21:39:07,030 | INFO    | TRAIN | batch=250/709 | loss=0.584243 | elapsed=49.7s | eta=91.2s
+2026-10-15 21:39:16,944 | INFO    | TRAIN | batch=300/709 | loss=0.547356 | elapsed=59.6s | eta=81.2s
+2026-10-15 21:39:26,857 | INFO    | TRAIN | batch=350/709 | loss=0.489506 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:39:36,766 | INFO    | TRAIN | batch=400/709 | loss=0.49442 | elapsed=79.4s | eta=61.3s
+2026-10-15 21:39:46,681 | INFO    | TRAIN | batch=450/709 | loss=0.536203 | elapsed=89.3s | eta=51.4s
+2026-10-15 21:39:56,591 | INFO    | TRAIN | batch=500/709 | loss=0.47787 | elapsed=99.2s | eta=41.5s
+2026-10-15 21:40:06,499 | INFO    | TRAIN | batch=550/709 | loss=0.532166 | elapsed=109.1s | eta=31.6s
+2026-10-15 21:40:16,407 | INFO    | TRAIN | batch=600/709 | loss=0.446428 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:40:26,321 | INFO    | TRAIN | batch=650/709 | loss=0.476647 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:40:36,230 | INFO    | TRAIN | batch=700/709 | loss=0.440606 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:40:37,876 | INFO    | TRAIN | batch=709/709 | loss=0.573303 | elapsed=140.5s | eta=0.0s
+2026-10-15 21:40:41,192 | INFO    | VAL | batch=42/42 | loss=0.510841 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:40:41,340 | INFO    | Epoch=4/8 | train_loss=0.521431 | val_loss=0.524702 | val_complex_nrmse=0.217398 | best_complex_nrmse=0.214445 | lr=5.05e-05
+2026-10-15 21:40:41,340 | INFO    | Starting epoch=005/008 | lr=5.05e-05
+2026-10-15 21:40:41,593 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.0077070025727152824, 'probe_reconstruction_phase_grad_norm': 0.03354090079665184, 'probe_phase_grad_cosine': 0.09061365574598312, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.4352003321679822}
+2026-10-15 21:40:51,440 | INFO    | TRAIN | batch=50/709 | loss=0.560274 | elapsed=10.1s | eta=133.1s
+2026-10-15 21:41:01,363 | INFO    | TRAIN | batch=100/709 | loss=0.494262 | elapsed=20.0s | eta=121.9s
+2026-10-15 21:41:11,285 | INFO    | TRAIN | batch=150/709 | loss=0.627101 | elapsed=29.9s | eta=111.6s
+2026-10-15 21:41:21,207 | INFO    | TRAIN | batch=200/709 | loss=0.505551 | elapsed=39.9s | eta=101.5s
+2026-10-15 21:41:31,130 | INFO    | TRAIN | batch=250/709 | loss=0.482782 | elapsed=49.8s | eta=91.4s
+2026-10-15 21:41:41,055 | INFO    | TRAIN | batch=300/709 | loss=0.477614 | elapsed=59.7s | eta=81.4s
+2026-10-15 21:41:50,984 | INFO    | TRAIN | batch=350/709 | loss=0.559523 | elapsed=69.6s | eta=71.4s
+2026-10-15 21:42:00,907 | INFO    | TRAIN | batch=400/709 | loss=0.593163 | elapsed=79.6s | eta=61.5s
+2026-10-15 21:42:10,830 | INFO    | TRAIN | batch=450/709 | loss=0.381314 | elapsed=89.5s | eta=51.5s
+2026-10-15 21:42:20,754 | INFO    | TRAIN | batch=500/709 | loss=0.59455 | elapsed=99.4s | eta=41.6s
+2026-10-15 21:42:30,675 | INFO    | TRAIN | batch=550/709 | loss=0.619745 | elapsed=109.3s | eta=31.6s
+2026-10-15 21:42:40,600 | INFO    | TRAIN | batch=600/709 | loss=0.54858 | elapsed=119.3s | eta=21.7s
+2026-10-15 21:42:50,520 | INFO    | TRAIN | batch=650/709 | loss=0.544155 | elapsed=129.2s | eta=11.7s
+2026-10-15 21:43:00,442 | INFO    | TRAIN | batch=700/709 | loss=0.542362 | elapsed=139.1s | eta=1.8s
+2026-10-15 21:43:02,089 | INFO    | TRAIN | batch=709/709 | loss=0.647722 | elapsed=140.7s | eta=0.0s
+2026-10-15 21:43:05,432 | INFO    | VAL | batch=42/42 | loss=0.516715 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:43:05,582 | INFO    | Epoch=5/8 | train_loss=0.520279 | val_loss=0.524994 | val_complex_nrmse=0.216516 | best_complex_nrmse=0.214445 | lr=3.16e-05
+2026-10-15 21:43:05,582 | INFO    | Starting epoch=006/008 | lr=3.16e-05
+2026-10-15 21:43:05,795 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.009713905863463879, 'probe_reconstruction_phase_grad_norm': 0.019429849460721016, 'probe_phase_grad_cosine': 0.11851807683706284, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.2000209774916692}
+2026-10-15 21:43:15,627 | INFO    | TRAIN | batch=50/709 | loss=0.495208 | elapsed=10.0s | eta=132.4s
+2026-10-15 21:43:25,533 | INFO    | TRAIN | batch=100/709 | loss=0.686187 | elapsed=20.0s | eta=121.5s
+2026-10-15 21:43:35,439 | INFO    | TRAIN | batch=150/709 | loss=0.550252 | elapsed=29.9s | eta=111.3s
+2026-10-15 21:43:45,347 | INFO    | TRAIN | batch=200/709 | loss=0.608615 | elapsed=39.8s | eta=101.2s
+2026-10-15 21:43:55,260 | INFO    | TRAIN | batch=250/709 | loss=0.510139 | elapsed=49.7s | eta=91.2s
+2026-10-15 21:44:05,167 | INFO    | TRAIN | batch=300/709 | loss=0.584791 | elapsed=59.6s | eta=81.2s
+2026-10-15 21:44:15,088 | INFO    | TRAIN | batch=350/709 | loss=0.592707 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:44:25,000 | INFO    | TRAIN | batch=400/709 | loss=0.439958 | elapsed=79.4s | eta=61.4s
+2026-10-15 21:44:34,914 | INFO    | TRAIN | batch=450/709 | loss=0.528912 | elapsed=89.3s | eta=51.4s
+2026-10-15 21:44:44,827 | INFO    | TRAIN | batch=500/709 | loss=0.541752 | elapsed=99.2s | eta=41.5s
+2026-10-15 21:44:54,740 | INFO    | TRAIN | batch=550/709 | loss=0.499656 | elapsed=109.2s | eta=31.6s
+2026-10-15 21:45:04,663 | INFO    | TRAIN | batch=600/709 | loss=0.442761 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:45:14,584 | INFO    | TRAIN | batch=650/709 | loss=0.545436 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:45:24,498 | INFO    | TRAIN | batch=700/709 | loss=0.492671 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:45:26,145 | INFO    | TRAIN | batch=709/709 | loss=0.684696 | elapsed=140.6s | eta=0.0s
+2026-10-15 21:45:29,479 | INFO    | VAL | batch=42/42 | loss=0.51297 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:45:29,588 | INFO    | Epoch=6/8 | train_loss=0.519151 | val_loss=0.524604 | val_complex_nrmse=0.216436 | best_complex_nrmse=0.214445 | lr=1.55e-05
+2026-10-15 21:45:29,588 | INFO    | Starting epoch=007/008 | lr=1.55e-05
+2026-10-15 21:45:29,821 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.012935908511281013, 'probe_reconstruction_phase_grad_norm': 0.02649088203907013, 'probe_phase_grad_cosine': 0.20451046526432037, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.20478563230381722}
+2026-10-15 21:45:39,668 | INFO    | TRAIN | batch=50/709 | loss=0.563822 | elapsed=10.1s | eta=132.9s
+2026-10-15 21:45:49,585 | INFO    | TRAIN | batch=100/709 | loss=0.506252 | elapsed=20.0s | eta=121.8s
+2026-10-15 21:45:59,498 | INFO    | TRAIN | batch=150/709 | loss=0.541481 | elapsed=29.9s | eta=111.5s
+2026-10-15 21:46:09,409 | INFO    | TRAIN | batch=200/709 | loss=0.560699 | elapsed=39.8s | eta=101.3s
+2026-10-15 21:46:19,317 | INFO    | TRAIN | batch=250/709 | loss=0.542794 | elapsed=49.7s | eta=91.3s
+2026-10-15 21:46:29,226 | INFO    | TRAIN | batch=300/709 | loss=0.534449 | elapsed=59.6s | eta=81.3s
+2026-10-15 21:46:39,135 | INFO    | TRAIN | batch=350/709 | loss=0.558764 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:46:49,045 | INFO    | TRAIN | batch=400/709 | loss=0.461662 | elapsed=79.5s | eta=61.4s
+2026-10-15 21:46:58,965 | INFO    | TRAIN | batch=450/709 | loss=0.599093 | elapsed=89.4s | eta=51.4s
+2026-10-15 21:47:08,884 | INFO    | TRAIN | batch=500/709 | loss=0.546129 | elapsed=99.3s | eta=41.5s
+2026-10-15 21:47:18,796 | INFO    | TRAIN | batch=550/709 | loss=0.638777 | elapsed=109.2s | eta=31.6s
+2026-10-15 21:47:28,701 | INFO    | TRAIN | batch=600/709 | loss=0.557443 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:47:38,607 | INFO    | TRAIN | batch=650/709 | loss=0.554432 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:47:48,520 | INFO    | TRAIN | batch=700/709 | loss=0.504905 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:47:50,166 | INFO    | TRAIN | batch=709/709 | loss=0.46609 | elapsed=140.6s | eta=0.0s
+2026-10-15 21:47:53,516 | INFO    | VAL | batch=42/42 | loss=0.519322 | elapsed=3.4s | eta=0.0s
+2026-10-15 21:47:53,652 | INFO    | Epoch=7/8 | train_loss=0.518509 | val_loss=0.524303 | val_complex_nrmse=0.216201 | best_complex_nrmse=0.214445 | lr=4.77e-06
+2026-10-15 21:47:53,652 | INFO    | Starting epoch=008/008 | lr=4.77e-06
+2026-10-15 21:47:53,897 | INFO    | Gradient probe | {'probe_wca_phase_grad_norm': 0.012644445523619652, 'probe_reconstruction_phase_grad_norm': 0.04365477338433266, 'probe_phase_grad_cosine': 0.11545835435390472, 'probe_twin_branch_disagreement': 0.0, 'probe_samples': 2, 'probe_weighted_grad_ratio': 0.3452486176858142}
+2026-10-15 21:48:03,736 | INFO    | TRAIN | batch=50/709 | loss=0.558176 | elapsed=10.1s | eta=132.9s
+2026-10-15 21:48:13,649 | INFO    | TRAIN | batch=100/709 | loss=0.496738 | elapsed=20.0s | eta=121.8s
+2026-10-15 21:48:23,556 | INFO    | TRAIN | batch=150/709 | loss=0.443426 | elapsed=29.9s | eta=111.4s
+2026-10-15 21:48:33,466 | INFO    | TRAIN | batch=200/709 | loss=0.567198 | elapsed=39.8s | eta=101.3s
+2026-10-15 21:48:43,373 | INFO    | TRAIN | batch=250/709 | loss=0.43982 | elapsed=49.7s | eta=91.3s
+2026-10-15 21:48:53,280 | INFO    | TRAIN | batch=300/709 | loss=0.588839 | elapsed=59.6s | eta=81.3s
+2026-10-15 21:49:03,187 | INFO    | TRAIN | batch=350/709 | loss=0.514808 | elapsed=69.5s | eta=71.3s
+2026-10-15 21:49:13,091 | INFO    | TRAIN | batch=400/709 | loss=0.455814 | elapsed=79.4s | eta=61.4s
+2026-10-15 21:49:22,998 | INFO    | TRAIN | batch=450/709 | loss=0.515076 | elapsed=89.3s | eta=51.4s
+2026-10-15 21:49:32,905 | INFO    | TRAIN | batch=500/709 | loss=0.486102 | elapsed=99.3s | eta=41.5s
+2026-10-15 21:49:42,811 | INFO    | TRAIN | batch=550/709 | loss=0.528782 | elapsed=109.2s | eta=31.6s
+2026-10-15 21:49:52,716 | INFO    | TRAIN | batch=600/709 | loss=0.525654 | elapsed=119.1s | eta=21.6s
+2026-10-15 21:50:02,623 | INFO    | TRAIN | batch=650/709 | loss=0.593897 | elapsed=129.0s | eta=11.7s
+2026-10-15 21:50:12,528 | INFO    | TRAIN | batch=700/709 | loss=0.457589 | elapsed=138.9s | eta=1.8s
+2026-10-15 21:50:14,174 | INFO    | TRAIN | batch=709/709 | loss=0.466692 | elapsed=140.5s | eta=0.0s
+2026-10-15 21:50:17,500 | INFO    | VAL | batch=42/42 | loss=0.518082 | elapsed=3.3s | eta=0.0s
+2026-10-15 21:50:17,641 | INFO    | Epoch=8/8 | train_loss=0.517983 | val_loss=0.52431 | val_complex_nrmse=0.216076 | best_complex_nrmse=0.214445 | lr=1e-06

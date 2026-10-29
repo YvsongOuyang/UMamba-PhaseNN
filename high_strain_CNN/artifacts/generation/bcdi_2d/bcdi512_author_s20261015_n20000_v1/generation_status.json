@@ -1,0 +1,7 @@
+{
+  "status": "complete",
+  "completed_seeds": 800,
+  "total_seeds": 800,
+  "elapsed_seconds": 353.9773465800099,
+  "training_config": "/data_ssd/oyys/bcdi_2d/datasets/bcdi512_author_s20261015_n20000_v1/training_config.json"
+}

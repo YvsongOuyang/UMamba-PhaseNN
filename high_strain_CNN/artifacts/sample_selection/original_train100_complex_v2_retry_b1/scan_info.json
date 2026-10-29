@@ -1,0 +1,99 @@
+{
+  "version": "original_training_complex_demo100_v2",
+  "split": "train",
+  "num_scored": 8500,
+  "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt",
+  "checkpoint_epoch": 48,
+  "checkpoint_sha256": "496677be43f23b8ec18202db36ffb9b832a2f2018e164f36056207f483ea1671",
+  "source_data": {
+    "storage": "ecdi_hdf5",
+    "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+    "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+    "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+    "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+    "sample_count": 10000,
+    "counts": {
+      "train": 8500,
+      "val": 500,
+      "test": 1000
+    },
+    "split_type": "train_val_test_stratified_by_material",
+    "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+    "geometry": "extended_crystal",
+    "input_field": "observed_counts",
+    "target_fields": [
+      "exit_wave_real",
+      "exit_wave_imag"
+    ],
+    "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+    "split": "train",
+    "available_samples": 8500,
+    "selected_samples": 8500,
+    "selected_indices_sha256": "87add2ed7faa5be56c2365bc1bac09eb8602b6f17e3cd46d1003df77457ce75b",
+    "shape": [
+      512,
+      512
+    ],
+    "diffraction_kind": "intensity"
+  },
+  "data_config": {
+    "schema_version": 1,
+    "dataset_name": "ecdi_10k_exitwave",
+    "storage": "ecdi_hdf5",
+    "spatial_dims": 2,
+    "shape": [
+      512,
+      512
+    ],
+    "root": "/data_ssd/oyys/eCDI",
+    "manifest": "manifests/splits_training_with_val.json",
+    "quality_report": "quality/validation_report.json",
+    "diffraction_kind": "intensity",
+    "input_log_data": true,
+    "center_targets": true,
+    "training": {
+      "model_variant": "reduced_bn_no_outer_skip",
+      "phase": {
+        "epochs": 100,
+        "learning_rate": 0.001,
+        "scheduler": "plateau"
+      },
+      "refiner": {
+        "epochs": 50,
+        "learning_rate": 0.0002,
+        "scheduler": "cosine"
+      },
+      "base_channels": 4,
+      "num_experts": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "top_k": 2,
+      "router_heads": 2,
+      "router_dropout": 0.2,
+      "position_dropout": 0.1,
+      "codec_dropout": 0.1,
+      "d_state": 16,
+      "d_conv": 4,
+      "expand": 2,
+      "support_threshold": 0.3,
+      "physics_loss_weight": 0.0,
+      "gradient_clip": 1.0
+    },
+    "config_path": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json"
+  },
+  "seed": 20261019,
+  "source_code_sha256": {
+    "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/select_original_train100_complex.py": "1852c664be2aee90fb64dda285c655277bd2b0cf3ae3354dee78b7a38a8ff952",
+    "/home/oyys/anaconda3/envs/mamba/lib/python3.10/site-packages/torch/utils/_contextlib.py": "7e96d18a2ba0cff0edfb440ef90699358cb0633cf58f06013a7be3cf0087539e",
+    "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/train.py": "05b50e8fa3d6178e793887e59e960e4caf59d1b6cfbdbfa8e2ccdc3b56473882"
+  },
+  "python": "3.10.18 (main, Jun  5 2025, 13:14:17) [GCC 11.2.0]",
+  "torch": "2.2.2",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "metric_scope": "Final refined COMPLEX field, all 512x512 pixels, no cropping or masking in PSNR/MAE; original amplitude/phase metrics are diagnostics only.",
+  "metric_protocol": "Original evaluate.aligned_objects_2d: amplitude COM centering, MAE-selected direct/twin, support-fitted global phase, per-object full-field RMS normalization; then BOTH complex fields divided by the SAME aligned-truth amplitude maximum. Complex MSE=mean(abs(pred-truth)**2), complex MAE=mean(abs(pred-truth)), PSNR=-10*log10(MSE), peak modulus=1. No real/imaginary-channel averaging, no clipping, no predicted-peak normalization; all 512x512 pixels are scored.",
+  "score_csv_sha256": "a17b1c4c47a9919e46bcfa8808cd2f44b84adb98c64d50f8d37f54f738012f80"
+}

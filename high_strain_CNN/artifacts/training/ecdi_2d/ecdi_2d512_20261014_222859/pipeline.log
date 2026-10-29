@@ -1,7 +1,0 @@
-2026-10-14 22:29:00,416 | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
-2026-10-14 22:29:00,416 | NumExpr defaulting to 16 threads.
-2026-10-14 22:29:00,489 | Stage=validate | /home/oyys/anaconda3/envs/mamba/bin/python -u -m ecdi_training.validate_data --data-config /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json --data-dir /data_ssd/oyys/eCDI --output /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_222859/data_validation.json
-2026-10-14 22:29:00,489 | Starting validate
-2026-10-14 22:29:02,021 | Stage=phase | /home/oyys/anaconda3/envs/mamba/bin/python -u -m ecdi_training.train --stage phase --run-name ecdi_2d512_20261014_222859_phase --batch-size 1 --data-config /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d.json --data-dir /data_ssd/oyys/eCDI --num-workers 4 --device cuda --checkpoint-root /data_ssd/oyys/high_strain_cnn/pipeline_output_2d --runs-dir /home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_2d/ecdi_2d512_20261014_222859/stages
-2026-10-14 22:29:02,021 | Starting phase
-2026-10-14 22:37:14,603 | phase failed with exit code -15; later stages were not started.

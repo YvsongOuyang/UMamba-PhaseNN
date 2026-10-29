@@ -1,0 +1,72 @@
+2026-10-16 17:53:15,380 | INFO | Experiment=phase_through_fixed_refiner_v8 | trainable=phase only | fixed=refiner and phase BN statistics
+2026-10-16 17:53:15,381 | INFO | Objective=rigid_complex_nrmse_v7 on FINAL output | microbatch=4 | accumulation=3 | effective_batch=12 | val_batch=12
+2026-10-16 17:53:15,381 | INFO | Source epoch=2 | run=/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training/phase_cascade_v8 | checkpoints=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8
+2026-10-16 17:53:21,812 | INFO | VAL | batch=20/42
+2026-10-16 17:53:28,023 | INFO | VAL | batch=40/42
+2026-10-16 17:53:28,525 | INFO | VAL | batch=42/42
+2026-10-16 17:53:28,715 | INFO | Epoch=0/3 | final_registered_nrmse=0.104432 | best=0.104432 | reference=0.104432 | initial_nrmse=0.128231 | amplitude_rms_error=0.070209 | thick_nrmse=0.122530 | offaxis_nrmse=0.460390 | boundary_fraction=0.030 | lr=1e-05
+2026-10-16 17:53:29,732 | INFO | Gradient path verified | phase_grad_norm=0.237585 | refiner_parameter_grads=none
+2026-10-16 17:54:04,758 | INFO | TRAIN | microbatch=150/2125 | steps=50 | samples=600/8500 | final_loss=0.111328 | elapsed=36.0s | eta=474.5s
+2026-10-16 17:54:40,818 | INFO | TRAIN | microbatch=300/2125 | steps=100 | samples=1200/8500 | final_loss=0.134887 | elapsed=72.1s | eta=438.6s
+2026-10-16 17:55:17,041 | INFO | TRAIN | microbatch=450/2125 | steps=150 | samples=1800/8500 | final_loss=0.125949 | elapsed=108.3s | eta=403.2s
+2026-10-16 17:55:53,324 | INFO | TRAIN | microbatch=600/2125 | steps=200 | samples=2400/8500 | final_loss=0.081699 | elapsed=144.6s | eta=367.5s
+2026-10-16 17:56:29,854 | INFO | TRAIN | microbatch=750/2125 | steps=250 | samples=3000/8500 | final_loss=0.069887 | elapsed=181.1s | eta=332.1s
+2026-10-16 17:57:06,402 | INFO | TRAIN | microbatch=900/2125 | steps=300 | samples=3600/8500 | final_loss=0.143975 | elapsed=217.7s | eta=296.3s
+2026-10-16 17:57:43,022 | INFO | TRAIN | microbatch=1050/2125 | steps=350 | samples=4200/8500 | final_loss=0.063149 | elapsed=254.3s | eta=260.4s
+2026-10-16 17:58:19,758 | INFO | TRAIN | microbatch=1200/2125 | steps=400 | samples=4800/8500 | final_loss=0.131972 | elapsed=291.0s | eta=224.3s
+2026-10-16 17:58:56,591 | INFO | TRAIN | microbatch=1350/2125 | steps=450 | samples=5400/8500 | final_loss=0.137820 | elapsed=327.9s | eta=188.2s
+2026-10-16 17:59:33,634 | INFO | TRAIN | microbatch=1500/2125 | steps=500 | samples=6000/8500 | final_loss=0.128345 | elapsed=364.9s | eta=152.0s
+2026-10-16 18:00:10,695 | INFO | TRAIN | microbatch=1650/2125 | steps=550 | samples=6600/8500 | final_loss=0.063171 | elapsed=402.0s | eta=115.7s
+2026-10-16 18:00:47,783 | INFO | TRAIN | microbatch=1800/2125 | steps=600 | samples=7200/8500 | final_loss=0.101326 | elapsed=439.1s | eta=79.3s
+2026-10-16 18:01:24,822 | INFO | TRAIN | microbatch=1950/2125 | steps=650 | samples=7800/8500 | final_loss=0.085957 | elapsed=476.1s | eta=42.7s
+2026-10-16 18:02:01,915 | INFO | TRAIN | microbatch=2100/2125 | steps=700 | samples=8400/8500 | final_loss=0.061039 | elapsed=513.2s | eta=6.1s
+2026-10-16 18:02:08,106 | INFO | TRAIN | microbatch=2125/2125 | steps=709 | samples=8500/8500 | final_loss=0.107382 | elapsed=519.4s | eta=0.0s
+2026-10-16 18:02:15,156 | INFO | VAL | batch=20/42
+2026-10-16 18:02:21,723 | INFO | VAL | batch=40/42
+2026-10-16 18:02:22,237 | INFO | VAL | batch=42/42
+2026-10-16 18:02:22,599 | INFO | Epoch=1/3 | final_registered_nrmse=0.103381 | best=0.103381 | reference=0.104432 | initial_nrmse=0.128073 | amplitude_rms_error=0.069666 | thick_nrmse=0.121456 | offaxis_nrmse=0.455113 | boundary_fraction=0.024 | lr=7.75e-06
+2026-10-16 18:02:22,600 | INFO | Pilot stopped | best=0.103381 | reference=0.104432 | source checkpoint preserved=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_aligned_v7/checkpoint_best.pt
+2026-10-16 18:16:18,124 | INFO | Experiment=phase_through_fixed_refiner_v8 | trainable=phase only | fixed=refiner and phase BN statistics
+2026-10-16 18:16:18,124 | INFO | Objective=rigid_complex_nrmse_v7 on FINAL output | microbatch=4 | accumulation=3 | effective_batch=12 | val_batch=12
+2026-10-16 18:16:18,124 | INFO | Source epoch=2 | run=/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training/phase_cascade_v8 | checkpoints=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8
+2026-10-16 18:16:19,288 | INFO | Gradient path verified | phase_grad_norm=0.185712 | refiner_parameter_grads=none
+2026-10-16 18:16:55,418 | INFO | TRAIN | microbatch=150/2125 | steps=50 | samples=600/8500 | final_loss=0.091052 | elapsed=37.3s | eta=491.0s
+2026-10-16 18:17:32,788 | INFO | TRAIN | microbatch=300/2125 | steps=100 | samples=1200/8500 | final_loss=0.091050 | elapsed=74.7s | eta=454.2s
+2026-10-16 18:18:10,345 | INFO | TRAIN | microbatch=450/2125 | steps=150 | samples=1800/8500 | final_loss=0.109753 | elapsed=112.2s | eta=417.7s
+2026-10-16 18:18:48,324 | INFO | TRAIN | microbatch=600/2125 | steps=200 | samples=2400/8500 | final_loss=0.153019 | elapsed=150.2s | eta=381.8s
+2026-10-16 18:19:26,455 | INFO | TRAIN | microbatch=750/2125 | steps=250 | samples=3000/8500 | final_loss=0.109593 | elapsed=188.3s | eta=345.3s
+2026-10-16 18:20:04,706 | INFO | TRAIN | microbatch=900/2125 | steps=300 | samples=3600/8500 | final_loss=0.082786 | elapsed=226.6s | eta=308.4s
+2026-10-16 18:20:42,995 | INFO | TRAIN | microbatch=1050/2125 | steps=350 | samples=4200/8500 | final_loss=0.082461 | elapsed=264.9s | eta=271.2s
+2026-10-16 18:21:21,353 | INFO | TRAIN | microbatch=1200/2125 | steps=400 | samples=4800/8500 | final_loss=0.076935 | elapsed=303.2s | eta=233.7s
+2026-10-16 18:22:00,220 | INFO | TRAIN | microbatch=1350/2125 | steps=450 | samples=5400/8500 | final_loss=0.081418 | elapsed=342.1s | eta=196.4s
+2026-10-16 18:22:38,852 | INFO | TRAIN | microbatch=1500/2125 | steps=500 | samples=6000/8500 | final_loss=0.135736 | elapsed=380.7s | eta=158.6s
+2026-10-16 18:23:17,194 | INFO | TRAIN | microbatch=1650/2125 | steps=550 | samples=6600/8500 | final_loss=0.154339 | elapsed=419.1s | eta=120.6s
+2026-10-16 18:23:55,462 | INFO | TRAIN | microbatch=1800/2125 | steps=600 | samples=7200/8500 | final_loss=0.059176 | elapsed=457.3s | eta=82.6s
+2026-10-16 18:24:33,699 | INFO | TRAIN | microbatch=1950/2125 | steps=650 | samples=7800/8500 | final_loss=0.100955 | elapsed=495.6s | eta=44.5s
+2026-10-16 18:25:12,079 | INFO | TRAIN | microbatch=2100/2125 | steps=700 | samples=8400/8500 | final_loss=0.093550 | elapsed=534.0s | eta=6.4s
+2026-10-16 18:25:18,436 | INFO | TRAIN | microbatch=2125/2125 | steps=709 | samples=8500/8500 | final_loss=0.049288 | elapsed=540.3s | eta=0.0s
+2026-10-16 18:25:25,876 | INFO | VAL | batch=20/42
+2026-10-16 18:25:32,700 | INFO | VAL | batch=40/42
+2026-10-16 18:25:33,251 | INFO | VAL | batch=42/42
+2026-10-16 18:25:33,601 | INFO | Epoch=2/3 | final_registered_nrmse=0.103289 | best=0.103289 | reference=0.104432 | initial_nrmse=0.128050 | amplitude_rms_error=0.069593 | thick_nrmse=0.121192 | offaxis_nrmse=0.454919 | boundary_fraction=0.026 | lr=3.25e-06
+2026-10-16 18:25:34,545 | INFO | Gradient path verified | phase_grad_norm=0.253421 | refiner_parameter_grads=none
+2026-10-16 18:26:12,896 | INFO | TRAIN | microbatch=150/2125 | steps=50 | samples=600/8500 | final_loss=0.117379 | elapsed=39.3s | eta=517.3s
+2026-10-16 18:26:51,997 | INFO | TRAIN | microbatch=300/2125 | steps=100 | samples=1200/8500 | final_loss=0.069412 | elapsed=78.4s | eta=476.9s
+2026-10-16 18:27:31,077 | INFO | TRAIN | microbatch=450/2125 | steps=150 | samples=1800/8500 | final_loss=0.119268 | elapsed=117.5s | eta=437.3s
+2026-10-16 18:28:10,107 | INFO | TRAIN | microbatch=600/2125 | steps=200 | samples=2400/8500 | final_loss=0.096727 | elapsed=156.5s | eta=397.8s
+2026-10-16 18:28:48,960 | INFO | TRAIN | microbatch=750/2125 | steps=250 | samples=3000/8500 | final_loss=0.089319 | elapsed=195.4s | eta=358.2s
+2026-10-16 18:29:27,913 | INFO | TRAIN | microbatch=900/2125 | steps=300 | samples=3600/8500 | final_loss=0.173974 | elapsed=234.3s | eta=318.9s
+2026-10-16 18:30:07,006 | INFO | TRAIN | microbatch=1050/2125 | steps=350 | samples=4200/8500 | final_loss=0.051903 | elapsed=273.4s | eta=279.9s
+2026-10-16 18:30:45,991 | INFO | TRAIN | microbatch=1200/2125 | steps=400 | samples=4800/8500 | final_loss=0.138084 | elapsed=312.4s | eta=240.8s
+2026-10-16 18:31:25,123 | INFO | TRAIN | microbatch=1350/2125 | steps=450 | samples=5400/8500 | final_loss=0.147269 | elapsed=351.5s | eta=201.8s
+2026-10-16 18:32:04,436 | INFO | TRAIN | microbatch=1500/2125 | steps=500 | samples=6000/8500 | final_loss=0.152236 | elapsed=390.8s | eta=162.8s
+2026-10-16 18:32:43,573 | INFO | TRAIN | microbatch=1650/2125 | steps=550 | samples=6600/8500 | final_loss=0.083649 | elapsed=430.0s | eta=123.8s
+2026-10-16 18:33:22,583 | INFO | TRAIN | microbatch=1800/2125 | steps=600 | samples=7200/8500 | final_loss=0.143063 | elapsed=469.0s | eta=84.7s
+2026-10-16 18:34:01,665 | INFO | TRAIN | microbatch=1950/2125 | steps=650 | samples=7800/8500 | final_loss=0.083477 | elapsed=508.1s | eta=45.6s
+2026-10-16 18:34:40,900 | INFO | TRAIN | microbatch=2100/2125 | steps=700 | samples=8400/8500 | final_loss=0.093177 | elapsed=547.3s | eta=6.5s
+2026-10-16 18:34:47,449 | INFO | TRAIN | microbatch=2125/2125 | steps=709 | samples=8500/8500 | final_loss=0.075304 | elapsed=553.8s | eta=0.0s
+2026-10-16 18:34:54,908 | INFO | VAL | batch=20/42
+2026-10-16 18:35:01,855 | INFO | VAL | batch=40/42
+2026-10-16 18:35:02,406 | INFO | VAL | batch=42/42
+2026-10-16 18:35:02,772 | INFO | Epoch=3/3 | final_registered_nrmse=0.103285 | best=0.103285 | reference=0.104432 | initial_nrmse=0.128647 | amplitude_rms_error=0.069575 | thick_nrmse=0.121332 | offaxis_nrmse=0.455173 | boundary_fraction=0.028 | lr=1e-06
+2026-10-16 18:35:02,772 | INFO | Pilot stopped | best=0.103285 | reference=0.104432 | source checkpoint preserved=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_aligned_v7/checkpoint_best.pt

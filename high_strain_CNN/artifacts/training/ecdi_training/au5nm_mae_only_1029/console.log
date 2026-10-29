@@ -1,0 +1,14 @@
+2026-10-29 13:03:51,032 | INFO | Calibrated phase gain=1 | target Fourier error=0.000001 -> 0.000001 -> 0.000001
+2026-10-29 13:03:52,023 | INFO | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-29 13:03:52,024 | INFO | NumExpr defaulting to 16 threads.
+2026-10-29 13:03:53,803 | INFO | Original reference | {'corrected_target_fit_loss': 0.37323975563049316, 'diffraction_rel_l2': 0.3791985809803009, 'diffraction_cosine': 0.9253153204917908, 'diffraction_training_loss': 0.07468467950820923, 'original_amplitude_relative_mae': 0.9988835453987122, 'weighted_score': 0.3732408583164215}
+2026-10-29 13:03:53,803 | INFO | Warm-start baseline | {'corrected_target_fit_loss': 0.22337967157363892, 'diffraction_rel_l2': 0.31248417496681213, 'diffraction_cosine': 0.9499229788780212, 'diffraction_training_loss': 0.05007702112197876, 'original_amplitude_relative_mae': 0.252336710691452, 'weighted_score': 0.2233799695968628}
+2026-10-29 13:03:53,803 | INFO | Same-image exploratory fit; BN fixed, phase and refiner trainable; prior checkpoints preserved
+2026-10-29 13:03:54,234 | INFO | Step=1/3000 | target_fit=0.334605 | Fourier=0.417839 | amplitude_mae=0.437519 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:03:57,650 | INFO | Step=25/3000 | target_fit=0.227153 | Fourier=0.318156 | amplitude_mae=0.268312 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:01,547 | INFO | Step=50/3000 | target_fit=0.225356 | Fourier=0.315574 | amplitude_mae=0.258109 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:05,832 | INFO | Step=75/3000 | target_fit=0.225422 | Fourier=0.314701 | amplitude_mae=0.257587 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:09,267 | INFO | Step=100/3000 | target_fit=0.227259 | Fourier=0.317284 | amplitude_mae=0.259351 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:13,148 | INFO | Step=125/3000 | target_fit=0.225745 | Fourier=0.314734 | amplitude_mae=0.257467 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:17,396 | INFO | Step=150/3000 | target_fit=0.224308 | Fourier=0.314561 | amplitude_mae=0.255304 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:04:21,791 | INFO | Step=175/3000 | target_fit=0.224886 | Fourier=0.314686 | amplitude_mae=0.256986 | Fourier_weight=0.000 | eligible=False | best_step=0

@@ -1,0 +1,226 @@
+{
+  "initial": {
+    "all": {
+      "num_samples": 500,
+      "registered_complex_nrmse": 0.128646783195436,
+      "amplitude_relative_l2_rms": 0.09196780454739928,
+      "amplitude_relative_l1_rms": 0.1274624246992171,
+      "phase_mae_true_support": 0.062474856346845624,
+      "offaxis_nrmse_9x9": 0.5632249230146408,
+      "shift_y_px": 0.010880002675577998,
+      "shift_x_px": -0.015360001182183624,
+      "selected_twin": 0.304,
+      "search_boundary_hit": 0.032
+    },
+    "thin_le20": {
+      "num_samples": 136,
+      "registered_complex_nrmse": 0.09232155324014671,
+      "amplitude_relative_l2_rms": 0.06510091918137144,
+      "amplitude_relative_l1_rms": 0.09584760233102475,
+      "phase_mae_true_support": 0.04488154164488044,
+      "offaxis_nrmse_9x9": 0.6079686228185892,
+      "shift_y_px": 0.11959559080081389,
+      "shift_x_px": -0.011911768534713808,
+      "selected_twin": 0.29411764705882354,
+      "search_boundary_hit": 0.029411764705882353
+    },
+    "thick_ge34": {
+      "num_samples": 130,
+      "registered_complex_nrmse": 0.15096852977115374,
+      "amplitude_relative_l2_rms": 0.110954921047848,
+      "amplitude_relative_l1_rms": 0.14980091019891775,
+      "phase_mae_true_support": 0.07073343556660872,
+      "offaxis_nrmse_9x9": 0.5117325655542887,
+      "shift_y_px": -0.10696153748207367,
+      "shift_x_px": 0.006499998794438747,
+      "selected_twin": 0.3384615384615385,
+      "search_boundary_hit": 0.05384615384615385
+    },
+    "by_material": {
+      "graphite_anode": {
+        "num_samples": 84,
+        "registered_complex_nrmse": 0.10455706600277197,
+        "amplitude_relative_l2_rms": 0.07892525371252782,
+        "amplitude_relative_l1_rms": 0.11023361559602476,
+        "phase_mae_true_support": 0.04811009925435342,
+        "offaxis_nrmse_9x9": 0.6029295085796288,
+        "shift_y_px": 0.0013690540300948279,
+        "shift_x_px": -0.22833333388414412,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.15476190476190477
+      },
+      "licoo2_cathode": {
+        "num_samples": 84,
+        "registered_complex_nrmse": 0.1749556375933545,
+        "amplitude_relative_l2_rms": 0.12837956686105048,
+        "amplitude_relative_l1_rms": 0.1809072723346097,
+        "phase_mae_true_support": 0.08471390791237354,
+        "offaxis_nrmse_9x9": 0.5331592123423304,
+        "shift_y_px": 0.053928571609070615,
+        "shift_x_px": -0.520595240406692,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.023809523809523808
+      },
+      "lifepo4_cathode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.15430126832910332,
+        "amplitude_relative_l2_rms": 0.10401149152452688,
+        "amplitude_relative_l1_rms": 0.14724193903875638,
+        "phase_mae_true_support": 0.08475920315607484,
+        "offaxis_nrmse_9x9": 0.6538758496922182,
+        "shift_y_px": 0.088795187019081,
+        "shift_x_px": 0.4107831295534789,
+        "selected_twin": 1.0,
+        "search_boundary_hit": 0.0
+      },
+      "limn2o4_cathode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.1866911863347134,
+        "amplitude_relative_l2_rms": 0.1322045260254877,
+        "amplitude_relative_l1_rms": 0.165663248444178,
+        "phase_mae_true_support": 0.08577454233744058,
+        "offaxis_nrmse_9x9": 0.49223540418119316,
+        "shift_y_px": -0.2161445760403771,
+        "shift_x_px": 0.06066265204046146,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.0
+      },
+      "lithium_metal_anode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.05215774234159883,
+        "amplitude_relative_l2_rms": 0.036913360300731946,
+        "amplitude_relative_l1_rms": 0.055632896205208386,
+        "phase_mae_true_support": 0.025177409255271215,
+        "offaxis_nrmse_9x9": 0.6257401790963598,
+        "shift_y_px": 0.09331325196986456,
+        "shift_x_px": 0.17114457899861665,
+        "selected_twin": 0.8313253012048193,
+        "search_boundary_hit": 0.012048192771084338
+      },
+      "silicon_reference": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.09895009812281792,
+        "amplitude_relative_l2_rms": 0.07109107209526631,
+        "amplitude_relative_l1_rms": 0.10465923876288426,
+        "phase_mae_true_support": 0.04621910514781274,
+        "offaxis_nrmse_9x9": 0.47129325317331106,
+        "shift_y_px": 0.04361445975142071,
+        "shift_x_px": 0.022831321929592686,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.0
+      }
+    }
+  },
+  "refined": {
+    "all": {
+      "num_samples": 500,
+      "registered_complex_nrmse": 0.10328454620391131,
+      "amplitude_relative_l2_rms": 0.06957594035938382,
+      "amplitude_relative_l1_rms": 0.05691875755041838,
+      "phase_mae_true_support": 0.05629713144339621,
+      "offaxis_nrmse_9x9": 0.45516792353987695,
+      "shift_y_px": 0.06549000175110996,
+      "shift_x_px": 0.051559999730438,
+      "selected_twin": 0.304,
+      "search_boundary_hit": 0.028
+    },
+    "thin_le20": {
+      "num_samples": 136,
+      "registered_complex_nrmse": 0.07345629220499712,
+      "amplitude_relative_l2_rms": 0.04647318071083111,
+      "amplitude_relative_l1_rms": 0.03866015560240211,
+      "phase_mae_true_support": 0.04197264174410306,
+      "offaxis_nrmse_9x9": 0.4818814128418179,
+      "shift_y_px": 0.1366911792086766,
+      "shift_x_px": 0.016985295169219813,
+      "selected_twin": 0.29411764705882354,
+      "search_boundary_hit": 0.022058823529411766
+    },
+    "thick_ge34": {
+      "num_samples": 130,
+      "registered_complex_nrmse": 0.12133334383655053,
+      "amplitude_relative_l2_rms": 0.08610406295897868,
+      "amplitude_relative_l1_rms": 0.07085248600118435,
+      "phase_mae_true_support": 0.06262166085294806,
+      "offaxis_nrmse_9x9": 0.42021215638289083,
+      "shift_y_px": -0.00949999735189172,
+      "shift_x_px": 0.09984615362750796,
+      "selected_twin": 0.3384615384615385,
+      "search_boundary_hit": 0.05384615384615385
+    },
+    "by_material": {
+      "graphite_anode": {
+        "num_samples": 84,
+        "registered_complex_nrmse": 0.0867471227067567,
+        "amplitude_relative_l2_rms": 0.06524310593626328,
+        "amplitude_relative_l1_rms": 0.058589952443504616,
+        "phase_mae_true_support": 0.04314612402092843,
+        "offaxis_nrmse_9x9": 0.4917214472024214,
+        "shift_y_px": 0.08279761339404754,
+        "shift_x_px": -0.010416664360534577,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.14285714285714285
+      },
+      "licoo2_cathode": {
+        "num_samples": 84,
+        "registered_complex_nrmse": 0.13719005456992558,
+        "amplitude_relative_l2_rms": 0.09424267891084864,
+        "amplitude_relative_l1_rms": 0.07824791444554216,
+        "phase_mae_true_support": 0.07627275484126239,
+        "offaxis_nrmse_9x9": 0.41729607787870227,
+        "shift_y_px": 0.05005952263517039,
+        "shift_x_px": -0.25488095852502046,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.011904761904761904
+      },
+      "lifepo4_cathode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.1333515706909708,
+        "amplitude_relative_l2_rms": 0.08603257807083876,
+        "amplitude_relative_l1_rms": 0.07093079199632966,
+        "phase_mae_true_support": 0.07907803186092031,
+        "offaxis_nrmse_9x9": 0.562970475978162,
+        "shift_y_px": 0.05981928212231541,
+        "shift_x_px": 0.2298192813970059,
+        "selected_twin": 1.0,
+        "search_boundary_hit": 0.0
+      },
+      "limn2o4_cathode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.14173925097986875,
+        "amplitude_relative_l2_rms": 0.09314909649182515,
+        "amplitude_relative_l1_rms": 0.06926050463534263,
+        "phase_mae_true_support": 0.07228581032839167,
+        "offaxis_nrmse_9x9": 0.3782582645674786,
+        "shift_y_px": 0.04433735291731645,
+        "shift_x_px": 0.11475902681339936,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.0
+      },
+      "lithium_metal_anode": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.04253200257578528,
+        "amplitude_relative_l2_rms": 0.027714701257197254,
+        "amplitude_relative_l1_rms": 0.023159506764397562,
+        "phase_mae_true_support": 0.024086241430816162,
+        "offaxis_nrmse_9x9": 0.509498621325895,
+        "shift_y_px": 0.15957831776510162,
+        "shift_x_px": 0.1439759054569056,
+        "selected_twin": 0.8313253012048193,
+        "search_boundary_hit": 0.012048192771084338
+      },
+      "silicon_reference": {
+        "num_samples": 83,
+        "registered_complex_nrmse": 0.0779380216655961,
+        "amplitude_relative_l2_rms": 0.05082849469260279,
+        "amplitude_relative_l1_rms": 0.04104676234524652,
+        "phase_mae_true_support": 0.04283160188919809,
+        "offaxis_nrmse_9x9": 0.37127853768417635,
+        "shift_y_px": -0.0036746943818337947,
+        "shift_x_px": 0.09054217413516648,
+        "selected_twin": 0.0,
+        "search_boundary_hit": 0.0
+      }
+    }
+  }
+}

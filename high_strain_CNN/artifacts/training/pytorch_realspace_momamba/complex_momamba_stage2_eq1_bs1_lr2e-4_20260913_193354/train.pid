@@ -31,7 +31,6 @@ python -u -m pytorch_autophasenn.evaluate_refiner \
 
 
 cd /home/oyys/code/UMamba-AutoPhaseNN
-git pull origin main
 
 cd high_strain_CNN
 

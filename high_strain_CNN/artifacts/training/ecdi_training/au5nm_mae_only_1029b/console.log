@@ -1,0 +1,24 @@
+2026-10-29 13:09:12,408 | INFO | Calibrated phase gain=1 | target Fourier error=0.000001 -> 0.000001 -> 0.000001
+2026-10-29 13:09:13,330 | INFO | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-29 13:09:13,330 | INFO | NumExpr defaulting to 16 threads.
+2026-10-29 13:09:14,825 | INFO | Original reference | {'corrected_target_fit_loss': 0.3732396364212036, 'diffraction_rel_l2': 0.3791978657245636, 'diffraction_cosine': 0.9253156185150146, 'diffraction_training_loss': 0.07468438148498535, 'original_amplitude_relative_mae': 0.9988835453987122, 'weighted_score': 0.37324073910713196}
+2026-10-29 13:09:14,826 | INFO | Warm-start baseline | {'corrected_target_fit_loss': 0.22337880730628967, 'diffraction_rel_l2': 0.31249523162841797, 'diffraction_cosine': 0.9499193429946899, 'diffraction_training_loss': 0.05008065700531006, 'original_amplitude_relative_mae': 0.252334326505661, 'weighted_score': 0.22337910532951355}
+2026-10-29 13:09:14,826 | INFO | Same-image exploratory fit; BN fixed, phase and refiner trainable; prior checkpoints preserved
+2026-10-29 13:09:15,176 | INFO | Step=1/3000 | target_fit=0.334874 | Fourier=0.418469 | amplitude_mae=0.438103 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:18,467 | INFO | Step=25/3000 | target_fit=0.227861 | Fourier=0.318151 | amplitude_mae=0.270431 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:22,201 | INFO | Step=50/3000 | target_fit=0.226051 | Fourier=0.316660 | amplitude_mae=0.258294 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:26,213 | INFO | Step=75/3000 | target_fit=0.224985 | Fourier=0.315778 | amplitude_mae=0.256125 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:29,610 | INFO | Step=100/3000 | target_fit=0.225637 | Fourier=0.314983 | amplitude_mae=0.257033 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:33,025 | INFO | Step=125/3000 | target_fit=0.225482 | Fourier=0.315728 | amplitude_mae=0.257116 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:35,854 | INFO | Step=150/3000 | target_fit=0.223978 | Fourier=0.314226 | amplitude_mae=0.255108 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:39,785 | INFO | Step=175/3000 | target_fit=0.224107 | Fourier=0.314326 | amplitude_mae=0.255957 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:43,012 | INFO | Step=200/3000 | target_fit=0.224038 | Fourier=0.314176 | amplitude_mae=0.256519 | Fourier_weight=0.000 | eligible=False | best_step=0
+2026-10-29 13:09:46,938 | INFO | Step=225/3000 | target_fit=0.223603 | Fourier=0.313341 | amplitude_mae=0.258430 | Fourier_weight=0.000 | eligible=False | best_step=223
+2026-10-29 13:09:51,444 | INFO | Step=250/3000 | target_fit=0.223938 | Fourier=0.313670 | amplitude_mae=0.257413 | Fourier_weight=0.000 | eligible=False | best_step=226
+2026-10-29 13:09:56,560 | INFO | Step=275/3000 | target_fit=0.223552 | Fourier=0.313397 | amplitude_mae=0.260514 | Fourier_weight=0.000 | eligible=False | best_step=226
+2026-10-29 13:10:00,561 | INFO | Step=300/3000 | target_fit=0.223162 | Fourier=0.312654 | amplitude_mae=0.265168 | Fourier_weight=0.000 | eligible=True | best_step=295
+2026-10-29 13:10:04,387 | INFO | Step=325/3000 | target_fit=0.224103 | Fourier=0.313694 | amplitude_mae=0.267174 | Fourier_weight=0.000 | eligible=False | best_step=295
+2026-10-29 13:10:08,112 | INFO | Step=350/3000 | target_fit=0.223249 | Fourier=0.312757 | amplitude_mae=0.269310 | Fourier_weight=0.000 | eligible=True | best_step=295
+2026-10-29 13:10:11,996 | INFO | Step=375/3000 | target_fit=0.223279 | Fourier=0.312398 | amplitude_mae=0.273396 | Fourier_weight=0.000 | eligible=True | best_step=295
+2026-10-29 13:10:14,937 | INFO | Stopping after 100 steps without score improvement
+2026-10-29 13:10:16,022 | INFO | DONE | best_step=295 | eligible=True | target_fit=0.223379 -> 0.222860 | Fourier=0.312495 -> 0.312242 | amplitude_mae=0.252334 -> 0.266950 | checkpoint=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_mae_only_1029b/checkpoint_best.pt

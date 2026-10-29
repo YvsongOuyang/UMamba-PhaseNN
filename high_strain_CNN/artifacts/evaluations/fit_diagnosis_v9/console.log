@@ -1,0 +1,14 @@
+2026-10-16 19:45:59,688 | INFO | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-16 19:45:59,688 | INFO | NumExpr defaulting to 16 threads.
+2026-10-16 19:46:02,272 | INFO | TRAIN samples=12, two per material | joint fitting | BN fixed | dropout off
+2026-10-16 19:46:02,273 | INFO | Before | train_nrmse=0.133793 | val48_nrmse=0.101424
+2026-10-16 19:46:02,645 | INFO | Gradient verified | phase_norm=0.695543
+2026-10-16 19:46:02,649 | INFO | Gradient verified | refiner_norm=0.21869
+2026-10-16 19:46:08,142 | INFO | Step=20/120 | train_nrmse=0.129752 | reduction=3.0% | elapsed=5.9s
+2026-10-16 19:46:13,882 | INFO | Step=40/120 | train_nrmse=0.126495 | reduction=5.5% | elapsed=11.6s
+2026-10-16 19:46:19,641 | INFO | Step=60/120 | train_nrmse=0.123687 | reduction=7.6% | elapsed=17.4s
+2026-10-16 19:46:25,244 | INFO | Step=80/120 | train_nrmse=0.121194 | reduction=9.4% | elapsed=23.0s
+2026-10-16 19:46:31,050 | INFO | Step=100/120 | train_nrmse=0.119194 | reduction=10.9% | elapsed=28.8s
+2026-10-16 19:46:36,826 | INFO | Step=120/120 | train_nrmse=0.116935 | reduction=12.6% | elapsed=34.6s
+2026-10-16 19:46:38,449 | INFO | DONE | train=0.133793 -> 0.116935 | val48=0.101424 -> 0.103996 | reason=step_limit
+2026-10-16 19:46:38,449 | INFO | Diagnostic only; source model unchanged. Results=/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/evaluations/fit_diagnosis_v9

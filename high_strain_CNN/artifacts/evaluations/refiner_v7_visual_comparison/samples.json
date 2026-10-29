@@ -1,0 +1,148 @@
+{
+  "old_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_v3_nrmse/checkpoint_best.pt",
+  "new_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/refiner_aligned_v7/checkpoint_best.pt",
+  "selection_rule": "Baseline median and 90th-percentile error per material, plus two largest regressions. No training or parameter selection.",
+  "display": "Whole-image RMS normalized, common amplitude display scale; phase and complex errors after V7 target-based rigid alignment.",
+  "samples": [
+    {
+      "sample": 1496,
+      "material": "graphite_anode",
+      "thickness_a": 30.74467119995875,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.09339766204357147,
+      "new_score_csv": 0.08143462985754013
+    },
+    {
+      "sample": 4112,
+      "material": "graphite_anode",
+      "thickness_a": 28.813183588594583,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.13813170790672302,
+      "new_score_csv": 0.14355506002902985
+    },
+    {
+      "sample": 9268,
+      "material": "licoo2_cathode",
+      "thickness_a": 34.140765106555754,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.1590747833251953,
+      "new_score_csv": 0.14616511762142181
+    },
+    {
+      "sample": 3196,
+      "material": "licoo2_cathode",
+      "thickness_a": 31.920984395696337,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.25502556562423706,
+      "new_score_csv": 0.25588753819465637
+    },
+    {
+      "sample": 8553,
+      "material": "lifepo4_cathode",
+      "thickness_a": 23.80301637608451,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.1355791687965393,
+      "new_score_csv": 0.12931938469409943
+    },
+    {
+      "sample": 8199,
+      "material": "lifepo4_cathode",
+      "thickness_a": 39.28751127279229,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.18541450798511505,
+      "new_score_csv": 0.18151670694351196
+    },
+    {
+      "sample": 9311,
+      "material": "limn2o4_cathode",
+      "thickness_a": 14.002957921016042,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.13636325299739838,
+      "new_score_csv": 0.13769671320915222
+    },
+    {
+      "sample": 815,
+      "material": "limn2o4_cathode",
+      "thickness_a": 30.405663279642443,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.2591399550437927,
+      "new_score_csv": 0.2577614486217499
+    },
+    {
+      "sample": 9019,
+      "material": "lithium_metal_anode",
+      "thickness_a": 36.93216215228111,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.03988100588321686,
+      "new_score_csv": 0.03215385600924492
+    },
+    {
+      "sample": 9433,
+      "material": "lithium_metal_anode",
+      "thickness_a": 26.205211871594756,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.07212400436401367,
+      "new_score_csv": 0.07511062175035477
+    },
+    {
+      "sample": 1446,
+      "material": "silicon_reference",
+      "thickness_a": 39.60886501511909,
+      "selection": [
+        "baseline_median"
+      ],
+      "old_score_csv": 0.07962684333324432,
+      "new_score_csv": 0.06991192698478699
+    },
+    {
+      "sample": 9822,
+      "material": "silicon_reference",
+      "thickness_a": 36.8661535595967,
+      "selection": [
+        "baseline_90th_percentile"
+      ],
+      "old_score_csv": 0.1480831801891327,
+      "new_score_csv": 0.14954684674739838
+    },
+    {
+      "sample": 9398,
+      "material": "graphite_anode",
+      "thickness_a": 27.239171108050748,
+      "selection": [
+        "largest_regression"
+      ],
+      "old_score_csv": 0.12994974851608276,
+      "new_score_csv": 0.1587805449962616
+    },
+    {
+      "sample": 1958,
+      "material": "graphite_anode",
+      "thickness_a": 35.60608706501099,
+      "selection": [
+        "largest_regression"
+      ],
+      "old_score_csv": 0.15959079563617706,
+      "new_score_csv": 0.17896121740341187
+    }
+  ]
+}

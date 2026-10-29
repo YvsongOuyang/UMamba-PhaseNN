@@ -1,0 +1,4 @@
+2026-10-19 21:23:15,965 | INFO | Note: NumExpr detected 24 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 16.
+2026-10-19 21:23:15,965 | INFO | NumExpr defaulting to 16 threads.
+2026-10-19 21:23:16,571 | INFO | Original complete cascade | checkpoint=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt | epoch=48 | sha256=496677be43f23b8ec18202db36ffb9b832a2f2018e164f36056207f483ea1671
+2026-10-19 21:23:16,571 | INFO | Scoring all TRAIN samples=8500; no training and no test-set access.

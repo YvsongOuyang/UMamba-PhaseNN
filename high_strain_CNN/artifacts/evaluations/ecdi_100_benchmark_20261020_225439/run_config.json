@@ -1,0 +1,64 @@
+{
+  "purpose": "Internal exploratory comparison only; not a formal acceptance test.",
+  "sample_count": 100,
+  "sample_bundle": "/data_ssd/oyys/eCDI/test_data/ecdi_100",
+  "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt",
+  "dataset_sha256": {
+    "ecdi_100_samples.h5": "d711ec27c40e0d1adc950844ae3989a59fb52ae4ac5336131724cfa206d31a69",
+    "ecdi_100_samples.csv": "cd47ad5303fb559f49250fc3231c57db3f98221216665571682be2aaa7389370"
+  },
+  "checkpoint_sha256": "496677be43f23b8ec18202db36ffb9b832a2f2018e164f36056207f483ea1671",
+  "checkpoint_epoch": 48,
+  "metric_protocol": "Full 512x512 COMPLEX field. Original evaluation alignment: amplitude COM, MAE-selected direct/conjugate-twin, global phase fitted on the reference amplitude>=0.3 support. Each field is whole-image RMS normalized; BOTH are then divided by the same aligned-reference peak modulus. MAE=mean(abs(pred-reference)); MSE=mean(abs(pred-reference)**2); PSNR=-10*log10(MSE), peak modulus=1. No scoring crop/mask, no clipping, and no real/imaginary-channel averaging. Local phase errors count.",
+  "precision_thresholds": {
+    "psnr_db_strict_gt": 20.0,
+    "mae_strict_lt": 0.1,
+    "required_count": 95
+  },
+  "system_time_requirement": "Every sample < 300 seconds; 100/100 required.",
+  "timing_scope": "System timing starts after the sample has been read, transferred CPU-to-device, and preprocessed. It includes model inference and copying the final complex array to CPU memory. It excludes model loading, file reading, transfer, preprocessing, truth alignment, scoring and disk writes.",
+  "traditional_algorithm": "Random-start complex HIO + terminal ER, adaptive shrinkwrap; no positivity constraint.",
+  "hio_parameters": {
+    "beta": 0.9,
+    "hio_iterations": 1500,
+    "er_iterations": 100,
+    "restarts": 4,
+    "initial_autocorrelation_threshold": 0.04,
+    "shrinkwrap_every": 20,
+    "shrinkwrap_until": 1200,
+    "shrinkwrap_threshold": 0.2,
+    "sigma_start_px": 3.0,
+    "sigma_min_px": 1.5,
+    "sigma_decay": 0.99
+  },
+  "hio_parameter_source_and_deviations": "Marchesini et al. (2003): beta=0.9, initial autocorrelation contour=4%, shrinkwrap every 20 iterations, threshold=20% of blurred amplitude maximum, Gaussian sigma=3 px reduced by 1% per update to 1.5 px. Project-fixed settings not specified by that paper: 1500 HIO iterations, 100 terminal ER iterations, four random starts, and stopping support updates at iteration 1200.",
+  "seed_rule": "global seed + zero-based sample display order",
+  "seed": 20261019,
+  "references": [
+    "https://doi.org/10.1364/AO.21.002758",
+    "https://arxiv.org/abs/physics/0306174"
+  ],
+  "source_code_sha256": {
+    "benchmark": "a879cd55b2d29546677ddd2006c704764f9627e45db0d3a91f6bcab33a2e7d22",
+    "evaluation_metrics": "f332a3574510da0477f4c8ef22278b678ead275a3fe7345380f85868646052ff",
+    "metric_definition": "1852c664be2aee90fb64dda285c655277bd2b0cf3ae3354dee78b7a38a8ff952",
+    "data_loading": "91ab88e213d18905731d642a85c98840fcdf87c7a61f1d412168f05d082894d7",
+    "model_loading": "05b50e8fa3d6178e793887e59e960e4caf59d1b6cfbdbfa8e2ccdc3b56473882",
+    "physics_reconstruction": "f80a6dd561c1319260baffafc9ed294fe628e1f19a8d75f95b06add8470a5839",
+    "phase_model": "73df05a06d10581397c0cb4676e1869fb4acab0e53a0cd0d6e67b9e6719d95de",
+    "refiner_model": "0e663dca4cf663cfe3170224a39960b30603abdbcef8d4b32a019795193a3614"
+  },
+  "environment": {
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "cpu": "x86_64",
+    "python": "3.10.18 (main, Jun  5 2025, 13:14:17) [GCC 11.2.0]",
+    "torch": "2.2.2",
+    "torch_cuda_runtime": "11.8",
+    "execution_device": "cuda",
+    "cuda_visible_devices": "0",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "gpu_total_bytes": 25250627584,
+    "nvidia_smi": "0, NVIDIA GeForce RTX 4090, 580.178.04, 24564 MiB, 91 MiB\n1, NVIDIA GeForce RTX 4090, 580.178.04, 24564 MiB, 22499 MiB\n",
+    "ram_total_bytes": 134841868288
+  }
+}

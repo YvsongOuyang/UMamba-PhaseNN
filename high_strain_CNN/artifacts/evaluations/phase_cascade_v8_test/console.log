@@ -1,0 +1,7 @@
+2026-10-16 18:40:50,244 | INFO | Experiment=registered_refiner_v7 | objective=rigid_complex_nrmse_v7 | radius=4.000 | batch=12
+2026-10-16 18:40:56,624 | INFO | VAL | batch=20/84
+2026-10-16 18:41:02,787 | INFO | VAL | batch=40/84
+2026-10-16 18:41:08,978 | INFO | VAL | batch=60/84
+2026-10-16 18:41:15,202 | INFO | VAL | batch=80/84
+2026-10-16 18:41:16,256 | INFO | VAL | batch=84/84
+2026-10-16 18:41:16,359 | INFO | Evaluation complete | registered_complex_nrmse=0.107813

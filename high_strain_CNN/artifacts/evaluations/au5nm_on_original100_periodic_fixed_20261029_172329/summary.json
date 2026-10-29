@@ -1,0 +1,71 @@
+{
+  "original": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 37.07410512353791,
+    "mean_complex_mae": 0.0060366550359094665,
+    "passed_count": 100,
+    "passed_percent": 100.0,
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_refiner/checkpoint_best.pt"
+  },
+  "finetuned": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 28.718093148864437,
+    "mean_complex_mae": 0.018849540071106022,
+    "passed_count": 100,
+    "passed_percent": 100.0,
+    "checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_from_original_1029/checkpoint_best.pt"
+  },
+  "hio": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 27.220715279133177,
+    "mean_complex_mae": 0.02907920900411995,
+    "passed_count": 95,
+    "passed_percent": 95.0
+  },
+  "model_hio": {
+    "sample_count": 100,
+    "mean_complex_psnr_db": 28.372018993825318,
+    "mean_complex_mae": 0.02243728697237045,
+    "passed_count": 100,
+    "passed_percent": 100.0
+  },
+  "metric_protocol": "periodic_integer_translation_twin_global_phase_rms_reference_peak",
+  "hio_parameters": {
+    "beta": 0.9,
+    "restarts": 12,
+    "initial_er_iterations": 20,
+    "cycles": 10,
+    "hio_iterations_per_cycle": 300,
+    "er_iterations_per_cycle": 50,
+    "final_er_iterations": 500,
+    "initial_autocorrelation_threshold": 0.04,
+    "support_update": "fixed"
+  },
+  "hio_method": "fixed",
+  "model_initialized_hio": {
+    "initial_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/au5nm_from_original_1029/checkpoint_best.pt",
+    "initialization": "one direct model output + one model output with fixed-seed 0.15-rad phase noise",
+    "starts": 2,
+    "phase_perturbation_std_rad": 0.15,
+    "selection": "lowest measured-modulus residual; reference metrics are not used",
+    "same_hio_schedule_and_fixed_support": true
+  },
+  "paired_comparison": {
+    "mean_psnr_change_db": -8.356011974673475,
+    "mean_mae_change": 0.012812885035196555,
+    "higher_psnr_count": 0,
+    "lower_mae_count": 0
+  },
+  "model_hio_vs_finetuned": {
+    "mean_psnr_change_db": -0.3460741550391191,
+    "mean_mae_change": 0.003587746901264427,
+    "higher_psnr_count": 34,
+    "lower_mae_count": 16
+  },
+  "model_hio_vs_random_hio": {
+    "mean_psnr_change_db": 1.1513037146921405,
+    "mean_mae_change": -0.0066419220317495,
+    "higher_psnr_count": 57,
+    "lower_mae_count": 58
+  }
+}

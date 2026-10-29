@@ -1,0 +1,20 @@
+2026-10-16 19:53:50,168 | INFO | VAL | batch=20/42
+2026-10-16 19:53:56,416 | INFO | VAL | batch=40/42
+2026-10-16 19:53:56,930 | INFO | VAL | batch=42/42
+2026-10-16 19:53:56,955 | INFO | Joint phase + refiner | full TRAIN pool=8500 | full VAL=500 | effective_batch=12
+2026-10-16 19:53:56,956 | INFO | Reference val=0.103285 | max_updates=240 | check_every=120
+2026-10-16 19:53:58,132 | INFO | Gradient verified | phase_norm=0.179328
+2026-10-16 19:53:58,136 | INFO | Gradient verified | refiner_norm=0.120297
+2026-10-16 19:54:13,661 | INFO | TRAIN | update=20/240 | samples=240 | loss=0.093624 | elapsed=16.7s
+2026-10-16 19:54:30,124 | INFO | TRAIN | update=40/240 | samples=480 | loss=0.065937 | elapsed=33.2s
+2026-10-16 19:54:46,724 | INFO | TRAIN | update=60/240 | samples=720 | loss=0.114772 | elapsed=49.8s
+2026-10-16 19:55:03,378 | INFO | TRAIN | update=80/240 | samples=960 | loss=0.061437 | elapsed=66.4s
+2026-10-16 19:55:20,071 | INFO | TRAIN | update=100/240 | samples=1200 | loss=0.136110 | elapsed=83.1s
+2026-10-16 19:55:36,850 | INFO | TRAIN | update=120/240 | samples=1440 | loss=0.149624 | elapsed=99.9s
+2026-10-16 19:55:43,695 | INFO | VAL | batch=20/42
+2026-10-16 19:55:50,210 | INFO | VAL | batch=40/42
+2026-10-16 19:55:50,732 | INFO | VAL | batch=42/42
+2026-10-16 19:55:50,763 | INFO | Step=120 | val=0.102872 | gain=0.40% | worst_material_change=-0.23% | accepted=False
+2026-10-16 19:55:50,784 | INFO | DONE | reference=0.103285 | best_accepted=0.103285 | stop=validation_gate_not_met
+2026-10-16 19:55:50,784 | INFO | Selected checkpoint=/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/phase_cascade_v8/checkpoint_best.pt
+2026-10-16 19:55:50,784 | INFO | Source checkpoint preserved. No test evaluation performed.

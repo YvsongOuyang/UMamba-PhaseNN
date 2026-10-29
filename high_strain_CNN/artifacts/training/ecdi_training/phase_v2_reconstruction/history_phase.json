@@ -1,0 +1,202 @@
+[
+  {
+    "epoch": 1,
+    "train": {
+      "phase_wca": 0.5132068473170786,
+      "reconstruction_mae": 0.13570650400834924,
+      "loss": 0.5267774978946237,
+      "probe_wca_phase_grad_norm": 0.014859305694699287,
+      "probe_reconstruction_phase_grad_norm": 0.0823337733745575,
+      "probe_phase_grad_cosine": 0.042119476944208145,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.5540889666461883,
+      "samples": 8500,
+      "elapsed_seconds": 140.86228414298967
+    },
+    "val": {
+      "phase_wca": 0.5125765614509582,
+      "reconstruction_mae": 0.13515187162160874,
+      "complex_nrmse": 0.2151948232650757,
+      "loss": 0.52609174990654,
+      "samples": 500,
+      "elapsed_seconds": 3.41076159797376
+    },
+    "lr": 9.623203685930869e-05
+  },
+  {
+    "epoch": 2,
+    "train": {
+      "phase_wca": 0.5108184465660769,
+      "reconstruction_mae": 0.13528985445289052,
+      "loss": 0.5243474322487326,
+      "probe_wca_phase_grad_norm": 0.01379422191530466,
+      "probe_reconstruction_phase_grad_norm": 0.03350267559289932,
+      "probe_phase_grad_cosine": 0.1695483773946762,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.24287470361578115,
+      "samples": 8500,
+      "elapsed_seconds": 140.5565313550178
+    },
+    "val": {
+      "phase_wca": 0.511955322265625,
+      "reconstruction_mae": 0.13490545737743379,
+      "complex_nrmse": 0.21591145610809326,
+      "loss": 0.5254458675384521,
+      "samples": 500,
+      "elapsed_seconds": 3.325991291028913
+    },
+    "lr": 8.55017856687341e-05
+  },
+  {
+    "epoch": 3,
+    "train": {
+      "phase_wca": 0.509412475010928,
+      "reconstruction_mae": 0.1350821706512395,
+      "loss": 0.5229206916724934,
+      "probe_wca_phase_grad_norm": 0.007844710722565651,
+      "probe_reconstruction_phase_grad_norm": 0.041901521384716034,
+      "probe_phase_grad_cosine": 0.10347747057676315,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.534137240576437,
+      "samples": 8500,
+      "elapsed_seconds": 140.51966264401563
+    },
+    "val": {
+      "phase_wca": 0.5131380929946899,
+      "reconstruction_mae": 0.13559584921598433,
+      "complex_nrmse": 0.21444481587409972,
+      "loss": 0.5266976771354676,
+      "samples": 500,
+      "elapsed_seconds": 3.317067865980789
+    },
+    "lr": 6.944282990207195e-05
+  },
+  {
+    "epoch": 4,
+    "train": {
+      "phase_wca": 0.5079340830971213,
+      "reconstruction_mae": 0.1349649670579854,
+      "loss": 0.5214305800830616,
+      "probe_wca_phase_grad_norm": 0.014679784886538982,
+      "probe_reconstruction_phase_grad_norm": 0.05273604765534401,
+      "probe_phase_grad_cosine": 0.05098447576165199,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.3592426460124884,
+      "samples": 8500,
+      "elapsed_seconds": 140.52409223699942
+    },
+    "val": {
+      "phase_wca": 0.5112182450294495,
+      "reconstruction_mae": 0.13483856785297393,
+      "complex_nrmse": 0.2173981260061264,
+      "loss": 0.5247021045684814,
+      "samples": 500,
+      "elapsed_seconds": 3.3157705169869587
+    },
+    "lr": 5.05e-05
+  },
+  {
+    "epoch": 5,
+    "train": {
+      "phase_wca": 0.5067988003562478,
+      "reconstruction_mae": 0.13480106447374118,
+      "loss": 0.5202789060929243,
+      "probe_wca_phase_grad_norm": 0.0077070025727152824,
+      "probe_reconstruction_phase_grad_norm": 0.03354090079665184,
+      "probe_phase_grad_cosine": 0.09061365574598312,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.4352003321679822,
+      "samples": 8500,
+      "elapsed_seconds": 140.74925619596615
+    },
+    "val": {
+      "phase_wca": 0.5114995510578155,
+      "reconstruction_mae": 0.13494828110933305,
+      "complex_nrmse": 0.2165156832933426,
+      "loss": 0.5249943790435792,
+      "samples": 500,
+      "elapsed_seconds": 3.3423450749833137
+    },
+    "lr": 3.1557170097928055e-05
+  },
+  {
+    "epoch": 6,
+    "train": {
+      "phase_wca": 0.5056844529123867,
+      "reconstruction_mae": 0.13466643211420845,
+      "loss": 0.5191510963019202,
+      "probe_wca_phase_grad_norm": 0.009713905863463879,
+      "probe_reconstruction_phase_grad_norm": 0.019429849460721016,
+      "probe_phase_grad_cosine": 0.11851807683706284,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.2000209774916692,
+      "samples": 8500,
+      "elapsed_seconds": 140.56308959802845
+    },
+    "val": {
+      "phase_wca": 0.5111018514633179,
+      "reconstruction_mae": 0.1350252874493599,
+      "complex_nrmse": 0.2164360588788986,
+      "loss": 0.5246043815612793,
+      "samples": 500,
+      "elapsed_seconds": 3.3330606380477548
+    },
+    "lr": 1.54982143312659e-05
+  },
+  {
+    "epoch": 7,
+    "train": {
+      "phase_wca": 0.5050468415372512,
+      "reconstruction_mae": 0.13462541143683826,
+      "loss": 0.5185093830753775,
+      "probe_wca_phase_grad_norm": 0.012935908511281013,
+      "probe_reconstruction_phase_grad_norm": 0.02649088203907013,
+      "probe_phase_grad_cosine": 0.20451046526432037,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.20478563230381722,
+      "samples": 8500,
+      "elapsed_seconds": 140.5777204769547
+    },
+    "val": {
+      "phase_wca": 0.5107915363311768,
+      "reconstruction_mae": 0.13511250412464143,
+      "complex_nrmse": 0.21620092308521272,
+      "loss": 0.5243027877807617,
+      "samples": 500,
+      "elapsed_seconds": 3.350166892982088
+    },
+    "lr": 4.767963140691306e-06
+  },
+  {
+    "epoch": 8,
+    "train": {
+      "phase_wca": 0.5045314594016356,
+      "reconstruction_mae": 0.13451771365544377,
+      "loss": 0.5179832302542294,
+      "probe_wca_phase_grad_norm": 0.012644445523619652,
+      "probe_reconstruction_phase_grad_norm": 0.04365477338433266,
+      "probe_phase_grad_cosine": 0.11545835435390472,
+      "probe_twin_branch_disagreement": 0.0,
+      "probe_samples": 2,
+      "probe_weighted_grad_ratio": 0.3452486176858142,
+      "samples": 8500,
+      "elapsed_seconds": 140.52135475497926
+    },
+    "val": {
+      "phase_wca": 0.51078875041008,
+      "reconstruction_mae": 0.13520906925201415,
+      "complex_nrmse": 0.21607553255558015,
+      "loss": 0.5243096573352813,
+      "samples": 500,
+      "elapsed_seconds": 3.3265408059814945
+    },
+    "lr": 1e-06
+  }
+]

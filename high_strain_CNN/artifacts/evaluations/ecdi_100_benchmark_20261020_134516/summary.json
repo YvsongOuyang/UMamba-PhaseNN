@@ -1,0 +1,19 @@
+{
+  "num_samples": 100,
+  "time_pass_count": 100,
+  "time_pass": true,
+  "maximum_system_seconds": 0.5348277360899374,
+  "precision_pass_count": 100,
+  "precision_pass_rate": 1.0,
+  "absolute_precision_pass": true,
+  "system_mean_PSNR_dB": 35.801725745661216,
+  "system_mean_MAE": 0.006713844448521936,
+  "traditional_mean_PSNR_dB": 19.94372118938805,
+  "traditional_mean_MAE": 0.06575406700402138,
+  "traditional_comparison_pass": true,
+  "reconstruction_precision_pass": true,
+  "numerical_performance_criteria_pass": true,
+  "formal_test_data_requirement_pass": false,
+  "formal_test_plan_pass": false,
+  "scope": "Numerical checks on performance-selected TRAIN samples. The test plan requires a fixed test set that was not selected according to reconstruction results; this dataset therefore cannot certify formal test-plan compliance."
+}

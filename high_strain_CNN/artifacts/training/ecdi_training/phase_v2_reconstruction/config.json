@@ -1,0 +1,153 @@
+{
+  "experiment_version": "phase_recon_v2_controlled",
+  "config": {
+    "schema_version": 1,
+    "experiment_version": "phase_recon_v2_controlled",
+    "dataset_name": "ecdi_10k_exitwave",
+    "storage": "ecdi_hdf5",
+    "spatial_dims": 2,
+    "shape": [
+      512,
+      512
+    ],
+    "root": "/data_ssd/oyys/eCDI",
+    "manifest": "manifests/splits_training_with_val.json",
+    "quality_report": "quality/validation_report.json",
+    "diffraction_kind": "intensity",
+    "input_log_data": true,
+    "center_targets": true,
+    "training": {
+      "model_variant": "reduced_bn_no_outer_skip",
+      "phase": {
+        "epochs": 8,
+        "learning_rate": 0.0001,
+        "scheduler": "cosine",
+        "reconstruction_loss_weight": 0.1
+      },
+      "refiner": {
+        "epochs": 50,
+        "learning_rate": 0.0002,
+        "scheduler": "cosine"
+      },
+      "base_channels": 4,
+      "num_experts": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "top_k": 2,
+      "router_heads": 2,
+      "router_dropout": 0.2,
+      "position_dropout": 0.1,
+      "codec_dropout": 0.1,
+      "d_state": 16,
+      "d_conv": 4,
+      "expand": 2,
+      "support_threshold": 0.3,
+      "physics_loss_weight": 0.0,
+      "gradient_clip": 1.0
+    },
+    "config_path": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d_v2.json"
+  },
+  "args": {
+    "stage": "phase",
+    "data_config": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/ecdi_training/configs/ecdi_2d_v2.json",
+    "data_dir": "/data_ssd/oyys/eCDI",
+    "phase_checkpoint": "",
+    "init_phase_checkpoint": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d/ecdi_2d512_20261014_224534_phase/checkpoint_best.pt",
+    "reconstruction_loss_weight": 0.1,
+    "resume": "",
+    "epochs": null,
+    "learning_rate": null,
+    "batch_size": 12,
+    "num_workers": 4,
+    "num_samples_train": 0,
+    "num_samples_val": 0,
+    "max_batches_per_epoch": 0,
+    "print_freq": 50,
+    "seed": 42,
+    "device": "cuda",
+    "run_name": "phase_v2_reconstruction",
+    "checkpoint_root": "/data_ssd/oyys/high_strain_cnn/pipeline_output_2d",
+    "runs_dir": "/home/oyys/code/UMamba-AutoPhaseNN/high_strain_CNN/artifacts/training/ecdi_training"
+  },
+  "runtime": {
+    "project_version": "1.9.0",
+    "git_commit": "dd1081fde928ce320538711b7ef822686da4604b",
+    "git_dirty": true,
+    "python": "3.10.18",
+    "python_executable": "/home/oyys/anaconda3/envs/mamba/bin/python",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "numpy": "1.26.4",
+    "torch": "2.2.2",
+    "cuda_runtime": "11.8",
+    "cudnn": 8700,
+    "device": "cuda",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "train": {
+    "storage": "ecdi_hdf5",
+    "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+    "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+    "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+    "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+    "sample_count": 10000,
+    "counts": {
+      "train": 8500,
+      "val": 500,
+      "test": 1000
+    },
+    "split_type": "train_val_test_stratified_by_material",
+    "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+    "geometry": "extended_crystal",
+    "input_field": "observed_counts",
+    "target_fields": [
+      "exit_wave_real",
+      "exit_wave_imag"
+    ],
+    "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+    "split": "train",
+    "available_samples": 8500,
+    "selected_samples": 8500,
+    "selected_indices_sha256": "87add2ed7faa5be56c2365bc1bac09eb8602b6f17e3cd46d1003df77457ce75b",
+    "shape": [
+      512,
+      512
+    ],
+    "diffraction_kind": "intensity"
+  },
+  "val": {
+    "storage": "ecdi_hdf5",
+    "manifest_path": "/data_ssd/oyys/eCDI/manifests/splits_training_with_val.json",
+    "manifest_sha256": "8ba0819b5123e308e2288aa285dd4ad29bb81af6030c565f74604203e046ac74",
+    "dataset_path": "/data_ssd/oyys/eCDI/data/ecdi_10k.h5",
+    "config_sha256": "9d193be97aa57088d869c27d7d7287bc135a79875686eb521b2aa2e3021663c3",
+    "sample_count": 10000,
+    "counts": {
+      "train": 8500,
+      "val": 500,
+      "test": 1000
+    },
+    "split_type": "train_val_test_stratified_by_material",
+    "interpretation": "Independent draws from the same six source structures, not new-material generalization",
+    "geometry": "extended_crystal",
+    "input_field": "observed_counts",
+    "target_fields": [
+      "exit_wave_real",
+      "exit_wave_imag"
+    ],
+    "support_semantics": "stored support ignored; amplitude threshold is an effective illumination region",
+    "split": "val",
+    "available_samples": 500,
+    "selected_samples": 500,
+    "selected_indices_sha256": "35ec8a6d0ce7bf531698ff0304a0c6a095bf28091d90cb7b001729ca68ef9d3d",
+    "shape": [
+      512,
+      512
+    ],
+    "diffraction_kind": "intensity"
+  },
+  "parameters": 13109217,
+  "trainable_parameters": 13109217
+}

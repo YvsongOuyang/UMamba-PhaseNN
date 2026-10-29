@@ -1,0 +1,21 @@
+{
+  "complex_psnr_db": 32.743271612993354,
+  "complex_mae": 0.012629068298067267,
+  "metric_protocol": "periodic_integer_translation_twin_global_phase_rms_reference_peak",
+  "hio": {
+    "complex_psnr_db": 24.43549250431567,
+    "complex_mae": 0.05080116137979992
+  },
+  "hio_method": "fixed",
+  "hio_parameters": {
+    "beta": 0.9,
+    "restarts": 12,
+    "initial_er_iterations": 20,
+    "cycles": 10,
+    "hio_iterations_per_cycle": 300,
+    "er_iterations_per_cycle": 50,
+    "final_er_iterations": 500,
+    "initial_autocorrelation_threshold": 0.04,
+    "support_update": "fixed"
+  }
+}
